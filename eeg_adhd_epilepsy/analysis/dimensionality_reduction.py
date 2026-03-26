@@ -89,14 +89,16 @@ def compute_embeddings(
             results[name]["embedding_2d"] = dr_2d.fit_transform(X)
             results[name]["reducer_2d"] = dr_2d
         except Exception as err:
-            logger.warning(f"Failed to compute 2D {name}: {err}")
+            import traceback
+            logger.warning(f"Failed to compute 2D {name}: {err}\n{traceback.format_exc()}")
 
         try:
             dr_3d = DimReduction(method=name, n_components=3)
             results[name]["embedding_3d"] = dr_3d.fit_transform(X)
             results[name]["reducer_3d"] = dr_3d
         except Exception as err:
-            logger.warning(f"Failed to compute 3D {name}: {err}")
+            import traceback
+            logger.warning(f"Failed to compute 3D {name}: {err}\n{traceback.format_exc()}")
     return results
 
 
@@ -117,11 +119,19 @@ def compute_embedding_separation_score(
         return np.nan
 
     subject_labels = pd.DataFrame({"group": group_ids, "label": y})
-    if subject_labels.groupby("group")["label"].nunique(dropna=False).max() > 1:
-        raise ValueError("Each Study ID must map to a single target label.")
+    
+    # Check if this is a subject-level target (each ID has 1 label) or intra-subject (multiple labels per ID)
+    is_subject_level = subject_labels.groupby("group")["label"].nunique(dropna=False).max() == 1
+    
+    if is_subject_level:
+        grouped_y = subject_labels.groupby("group")["label"].first()
+        min_count = int(grouped_y.value_counts().min())
+    else:
+        # For intra-subject (like EO_EC), we just make sure there are enough independent groups with both labels
+        # min_count becomes the number of unique groups with the minority class
+        group_class_counts = subject_labels.drop_duplicates().groupby("label").size()
+        min_count = int(group_class_counts.min())
 
-    grouped_y = subject_labels.groupby("group")["label"].first()
-    min_count = int(grouped_y.value_counts().min())
     if min_count < 2:
         return np.nan
 
@@ -295,10 +305,10 @@ def create_condition_section(
     """Create one report section for a single condition."""
     section = Section(title=condition, icon="🧠")
     section.add_markdown(
-        f"Condition-specific embeddings for **{condition}**. "
-        f"Loaded subjects: **{loaded_subjects}**. "
-        f"Loaded epochs: **{loaded_epochs}**. "
-        f"Samples used after representation: **{samples_used}**."
+        f"Condition-specific embeddings for <b>{condition}</b>. "
+        f"Loaded subjects: <b>{loaded_subjects}</b>. "
+        f"Loaded epochs: <b>{loaded_epochs}</b>. "
+        f"Samples used after representation: <b>{samples_used}</b>."
     )
     ranking_df = pd.DataFrame(ranking_rows)
     if not ranking_df.empty:
@@ -598,7 +608,7 @@ def main():
     )
     overview_sec = Section("Overview", icon="📋")
     overview_sec.add_markdown(
-        "This report ranks **conditions** by how well each reducer separates the target labels "
+        "This report ranks <b>conditions</b> by how well each reducer separates the target labels "
         "in 2D and 3D embeddings."
     )
     overview_sec.add_element(TableElement(overview_df, title="Run Configuration"))
