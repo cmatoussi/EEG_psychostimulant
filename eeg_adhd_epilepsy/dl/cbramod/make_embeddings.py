@@ -235,7 +235,32 @@ def compute_embedding(
         for h in hooks:
             h.remove()
 
-    return emb_flat, patches.shape[0], S, P
+    # Extract event labels from annotations
+    # We categorize segments by BLOCK_* annotations
+    segment_labels = []
+    annots = raw.annotations
+    if len(annots) > 0:
+        block_annots = [a for a in annots if a['description'].startswith('BLOCK_')]
+        if block_annots:
+            block_annots.sort(key=lambda x: x['onset'])
+            
+            # Duration per segment in seconds
+            dur = points_per_patch / sfreq if points_per_patch else 1.0 # fallback to 1s
+            
+            for s_idx in range(S):
+                t_start = s_idx * dur
+                t_stop = (s_idx + 1) * dur
+                t_mid = (t_start + t_stop) / 2.0
+                
+                # Find block that contains the midpoint of segment
+                found_label = "unknown"
+                for a in block_annots:
+                    if a['onset'] <= t_mid <= a['onset'] + a['duration']:
+                        found_label = a['description'].replace('BLOCK_', '')
+                        break
+                segment_labels.append(found_label)
+
+    return emb_flat, patches.shape[0], S, P, segment_labels
 
 
 # ---------------------------------------------------------------------
@@ -303,7 +328,7 @@ def main():
             continue
             
         try:
-            emb_flat, C, S, P = compute_embedding(
+            emb_flat, C, S, P, segment_labels = compute_embedding(
                 target_file,
                 model,
                 device,
@@ -361,7 +386,8 @@ def main():
                 "n_features": int(current_n_feats),
                 "points_per_patch": int(P),
                 "embedding_shape": list(emb_flat.shape),
-                "all_layers": getattr(args, "all_layers", False)
+                "all_layers": getattr(args, "all_layers", False),
+                "event_labels": segment_labels
             }
             with open(meta_file, 'w') as f:
                 json.dump(metadata, f, indent=2)
