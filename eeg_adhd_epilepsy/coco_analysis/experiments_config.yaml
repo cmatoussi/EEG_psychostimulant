@@ -1,0 +1,157 @@
+paths:
+  data_root: "/home/mat/scratch/preproc/"          # .fif files live here
+  label_csv: "/home/mat/scratch/epilepsy_label_cleaned.csv"
+  output_dir: "/home/mat/scratch/results"          # Base directory for all outputs
+
+# Range of subjects to exclude from analysis (e.g. [[1, 10], [200, 230]]). Set to null by default.
+exclude_subjects: null
+
+# Cohort stratification (unchanged from today)
+groups:
+  sex: ["F", "M", "ALL"]
+  age: ["0-4", "5-8", "9-12", "13-18", "ALL"]
+  comorbidities: ["none", "ASD", "ADHD", "ASD & ADHD"]
+  medication: ["ASM", "no med", "psychostimulant", "ASM & psychostimulant"]
+
+# Signal metadata (used by all FM-based modes)
+signal:
+  sfreq: 200.0
+  ch_names: ["Fp1", "Fp2", "F7", "F3", "Fz", "F4", "F8", "T3", "C3", "Cz", "C4", "T4", "T5", "P3", "Pz", "P4", "T6", "O1", "O2"]  # 19 standard 10-20 channels
+  epoch_desc: "base"          # options: [desc-base_epo.fif, desc-base_eeg.fif, desc-correctDss_eeg.fif, desc-denoiseWienerDss_eeg.fif]
+  conditions: ["EO_baseline", "EC_baseline"]  # options: [EO_baseline, EC_baseline, HV_EC, HV_EO, PostHV_EC, PostHV_EO, PHOTO_EC, PHOTO_EO] | null = all
+
+# --------------------------------------------------------------------------
+# Analysis blocks — set enabled: true/false to control which run
+# --------------------------------------------------------------------------
+analyses:
+  - id: "cbramod_embed"
+    enabled: true
+    mode: "fm_embed"          # frozen FM → classical head
+    model_key: "cbramod"      # options: [cbramod, reve, biot, labram, luna, eegpt, signaljepa, bendr]
+    models:                   # multiple heads run in one sweep
+      svc:
+        method: "SVC"
+        C: 1.0
+        kernel: "rbf"
+        class_weight: "balanced"
+      logreg:
+        method: "LogisticRegression"
+        max_iter: 500
+        class_weight: "balanced"
+      rf:
+        method: "RandomForestClassifier"
+        n_estimators: 200
+        class_weight: "balanced"
+    metrics: ["accuracy", "roc_auc", "balanced_accuracy", "f1"]
+    cv:
+      strategy: "group_kfold"
+      n_splits: 5
+    slurm:
+      gres: "gpu:1"
+      mem: "64G"
+      time: "04:00:00"
+
+  - id: "cbramod_lora"
+    enabled: true
+    mode: "fm_lora"           # LoRA fine-tuning (end-to-end)
+    model_key: "cbramod"      # options: [cbramod, reve, biot, labram, luna, eegpt, signaljepa, bendr]
+    train_mode: "lora"
+    class_weight: "balanced"  # coco_pipe auto-computes weights for PyTorch CrossEntropyLoss
+    lora:
+      r: 8
+      alpha: 16
+      dropout: 0.05
+      target_modules: "all-linear"
+    stages:
+      - name: "linear_probe"
+        epochs: 5
+        train_backbone: false
+        train_head: true
+      - name: "lora_finetune"
+        epochs: 15
+        train_backbone: true
+        train_head: true
+    trainer:
+      batch_size: 64
+      early_stopping_patience: 5
+    optimizer:
+      name: "adamw"
+      lr: 1e-4
+      weight_decay: 0.01
+    metrics: ["accuracy", "roc_auc", "balanced_accuracy", "f1"]
+    cv:
+      strategy: "group_kfold"
+      n_splits: 5
+    slurm:
+      gres: "gpu:2"
+      mem: "64G"
+      time: "24:00:00"
+
+  - id: "dim_reduction_analysis"
+    enabled: true
+    mode: "dim_reduction"     # Use coco_pipe/dim_reduction module
+    models:
+      pca:
+        method: "PCA"
+        n_components: 2
+      umap:
+        method: "UMAP"
+        n_components: 2
+        n_neighbors: 15
+    evaluation:
+      metrics: ["trustworthiness", "continuity", "lcmc"]
+      k_range: [5, 10, 20]
+      selection_metric: "trustworthiness"
+      
+  - id: "handcrafted_ml"
+    enabled: true
+    mode: "handcrafted"       # pre-computed features CSV → classical decoding
+    # 1. Select the aggregation level (subject vs epoch, pooled vs per-sensor)
+    # Options:
+    #   - "/home/mat/scratch/signal_features/descriptors/combined/pooled_subject_features.csv"
+    #   - "/home/mat/scratch/signal_features/descriptors/combined/sensor_subject_features.csv"
+    #   - "/home/mat/scratch/signal_features/descriptors/combined/pooled_epoch_features.csv"
+    #   - "/home/mat/scratch/signal_features/descriptors/combined/sensor_epoch_features.csv"
+    data_path: "/home/mat/scratch/signal_features/descriptors/combined/pooled_subject_features.csv"
+    target_col: "Epilepsy"
+    feature_names: "all"      # or list specific descriptors
+    spatial_units: "all"      # or list specific sensors: ["Fp1", "Fz", "Cz"]
+    analysis_unit: "all"      # Slice the dataset into multiple experiments automatically:
+                              # "all"     → all sensors all features (1 multivariate run)
+                              # "sensor"  → 1 sensor all features (19 separate runs)
+                              # "feature" → 1 feature all sensors/regions (N separate runs)
+                              # "region"  → 1 region all features (9 runs: front_left, posterior_right, etc.)
+    representation: "subject" # "subject" → Pool features/embeddings to make 1 prediction per patient
+    balance:
+      strategy: "undersample"
+      covariates: ["Age", "Sex"]
+    feature_selection:
+      enabled: true
+      method: "sfs"           # Sequential Forward Selection (recursive feature addition)
+      direction: "forward"
+      n_features: 20          # Stop after picking the top 20 features
+      cv:                     # Inner CV loop to pick features safely without leaking test data
+        strategy: "group_kfold"
+        n_splits: 3
+    models:
+      svc:
+        method: "SVC"
+        C: 1.0
+        kernel: "rbf"
+        class_weight: "balanced"
+      logreg:
+        method: "LogisticRegression"
+        max_iter: 500
+        class_weight: "balanced"
+      rf:
+        method: "RandomForestClassifier"
+        n_estimators: 200
+        class_weight: "balanced"
+    metrics: ["accuracy", "roc_auc", "balanced_accuracy", "f1"]
+    cv:
+      strategy: "group_kfold"
+      n_splits: 5
+    slurm:
+      cpus-per-task: "16"
+      mem: "32G"
+      time: "08:00:00"
