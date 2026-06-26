@@ -55,7 +55,7 @@
     "analysis": {
       "type": "handcrafted",
       "unit": "feature",
-      "regression_head": "SVC",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -71,7 +71,7 @@
     "analysis": {
       "type": "handcrafted",
       "unit": "feature",
-      "regression_head": "LogisticRegression",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -86,8 +86,8 @@
     },
     "analysis": {
       "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "RandomForestClassifier",
+      "unit": "sensor",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -103,7 +103,7 @@
     "analysis": {
       "type": "handcrafted",
       "unit": "sensor",
-      "regression_head": "SVC",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -118,7 +118,7 @@
     },
     "analysis": {
       "type": "handcrafted",
-      "unit": "sensor",
+      "unit": "region",
       "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
@@ -134,7 +134,7 @@
     },
     "analysis": {
       "type": "handcrafted",
-      "unit": "sensor",
+      "unit": "region",
       "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
@@ -149,9 +149,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "SVC",
+      "type": "embedding",
+      "model": "cbramod",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -165,9 +165,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "LogisticRegression",
+      "type": "embedding",
+      "model": "cbramod",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -181,9 +181,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "RandomForestClassifier",
+      "type": "embedding",
+      "model": "reve",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -198,7 +198,8 @@
     },
     "analysis": {
       "type": "embedding",
-      "model": "cbramod",
+      "model": "reve",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -213,7 +214,8 @@
     },
     "analysis": {
       "type": "embedding",
-      "model": "reve",
+      "model": "biot",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -229,6 +231,7 @@
     "analysis": {
       "type": "embedding",
       "model": "biot",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -244,6 +247,7 @@
     "analysis": {
       "type": "embedding",
       "model": "labram",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -258,7 +262,8 @@
     },
     "analysis": {
       "type": "embedding",
-      "model": "luna",
+      "model": "labram",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -273,7 +278,8 @@
     },
     "analysis": {
       "type": "embedding",
-      "model": "eegpt",
+      "model": "luna",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -288,7 +294,8 @@
     },
     "analysis": {
       "type": "embedding",
-      "model": "signaljepa",
+      "model": "luna",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -303,7 +310,8 @@
     },
     "analysis": {
       "type": "embedding",
-      "model": "bendr",
+      "model": "signaljepa",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -317,8 +325,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "cbramod",
+      "type": "embedding",
+      "model": "signaljepa",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -332,8 +341,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "reve",
+      "type": "embedding",
+      "model": "bendr",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -347,8 +357,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "biot",
+      "type": "embedding",
+      "model": "bendr",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -363,7 +374,8 @@
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "labram",
+      "model": "cbramod",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -378,7 +390,8 @@
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "luna",
+      "model": "cbramod",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -393,7 +406,8 @@
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "eegpt",
+      "model": "reve",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -408,7 +422,8 @@
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "signaljepa",
+      "model": "reve",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -423,13 +438,158 @@
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "bendr",
+      "model": "biot",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
   },
   {
     "id": 28,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ALL",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "biot",
+      "condition": "EC",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 29,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ALL",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "labram",
+      "condition": "EO",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 30,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ALL",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "labram",
+      "condition": "EC",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 31,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ALL",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "luna",
+      "condition": "EO",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 32,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ALL",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "luna",
+      "condition": "EC",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 33,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ALL",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "signaljepa",
+      "condition": "EO",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 34,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ALL",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "signaljepa",
+      "condition": "EC",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 35,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ALL",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "bendr",
+      "condition": "EO",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 36,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ALL",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "bendr",
+      "condition": "EC",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 37,
     "cohort": {
       "sex": "F",
       "age": "ALL",
@@ -444,7 +604,7 @@
     }
   },
   {
-    "id": 29,
+    "id": 38,
     "cohort": {
       "sex": "F",
       "age": "ALL",
@@ -459,7 +619,7 @@
     }
   },
   {
-    "id": 30,
+    "id": 39,
     "cohort": {
       "sex": "F",
       "age": "ALL",
@@ -474,150 +634,6 @@
     }
   },
   {
-    "id": 31,
-    "cohort": {
-      "sex": "F",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ALL"
-    },
-    "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "SVC",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 32,
-    "cohort": {
-      "sex": "F",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ALL"
-    },
-    "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "LogisticRegression",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 33,
-    "cohort": {
-      "sex": "F",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ALL"
-    },
-    "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "RandomForestClassifier",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 34,
-    "cohort": {
-      "sex": "F",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ALL"
-    },
-    "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "SVC",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 35,
-    "cohort": {
-      "sex": "F",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ALL"
-    },
-    "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "LogisticRegression",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 36,
-    "cohort": {
-      "sex": "F",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ALL"
-    },
-    "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "RandomForestClassifier",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 37,
-    "cohort": {
-      "sex": "F",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ALL"
-    },
-    "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "SVC",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 38,
-    "cohort": {
-      "sex": "F",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ALL"
-    },
-    "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "LogisticRegression",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 39,
-    "cohort": {
-      "sex": "F",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ALL"
-    },
-    "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "RandomForestClassifier",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
     "id": 40,
     "cohort": {
       "sex": "F",
@@ -626,8 +642,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "cbramod",
+      "type": "handcrafted",
+      "unit": "feature",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -641,8 +658,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "reve",
+      "type": "handcrafted",
+      "unit": "feature",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -656,8 +674,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "biot",
+      "type": "handcrafted",
+      "unit": "sensor",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -671,8 +690,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "labram",
+      "type": "handcrafted",
+      "unit": "sensor",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -686,8 +706,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "luna",
+      "type": "handcrafted",
+      "unit": "region",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -701,8 +722,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "eegpt",
+      "type": "handcrafted",
+      "unit": "region",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -717,7 +739,8 @@
     },
     "analysis": {
       "type": "embedding",
-      "model": "signaljepa",
+      "model": "cbramod",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -732,7 +755,8 @@
     },
     "analysis": {
       "type": "embedding",
-      "model": "bendr",
+      "model": "cbramod",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -746,8 +770,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "cbramod",
+      "type": "embedding",
+      "model": "reve",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -761,8 +786,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
+      "type": "embedding",
       "model": "reve",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -776,8 +802,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
+      "type": "embedding",
       "model": "biot",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -791,8 +818,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "labram",
+      "type": "embedding",
+      "model": "biot",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -806,8 +834,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "luna",
+      "type": "embedding",
+      "model": "labram",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -821,8 +850,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "eegpt",
+      "type": "embedding",
+      "model": "labram",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -836,8 +866,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "signaljepa",
+      "type": "embedding",
+      "model": "luna",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -851,8 +882,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "bendr",
+      "type": "embedding",
+      "model": "luna",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -860,14 +892,15 @@
   {
     "id": 56,
     "cohort": {
-      "sex": "M",
+      "sex": "F",
       "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "PCA",
+      "type": "embedding",
+      "model": "signaljepa",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -875,14 +908,15 @@
   {
     "id": 57,
     "cohort": {
-      "sex": "M",
+      "sex": "F",
       "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "UMAP",
+      "type": "embedding",
+      "model": "signaljepa",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -890,14 +924,15 @@
   {
     "id": 58,
     "cohort": {
-      "sex": "M",
+      "sex": "F",
       "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "t-SNE",
+      "type": "embedding",
+      "model": "bendr",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -905,15 +940,15 @@
   {
     "id": 59,
     "cohort": {
-      "sex": "M",
+      "sex": "F",
       "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "SVC",
+      "type": "embedding",
+      "model": "bendr",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -921,15 +956,15 @@
   {
     "id": 60,
     "cohort": {
-      "sex": "M",
+      "sex": "F",
       "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "LogisticRegression",
+      "type": "fine_tune",
+      "model": "cbramod",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -937,15 +972,15 @@
   {
     "id": 61,
     "cohort": {
-      "sex": "M",
+      "sex": "F",
       "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "RandomForestClassifier",
+      "type": "fine_tune",
+      "model": "cbramod",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -953,15 +988,15 @@
   {
     "id": 62,
     "cohort": {
-      "sex": "M",
+      "sex": "F",
       "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "SVC",
+      "type": "fine_tune",
+      "model": "reve",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -969,15 +1004,15 @@
   {
     "id": 63,
     "cohort": {
-      "sex": "M",
+      "sex": "F",
       "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "LogisticRegression",
+      "type": "fine_tune",
+      "model": "reve",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -985,15 +1020,15 @@
   {
     "id": 64,
     "cohort": {
-      "sex": "M",
+      "sex": "F",
       "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "RandomForestClassifier",
+      "type": "fine_tune",
+      "model": "biot",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1001,15 +1036,15 @@
   {
     "id": 65,
     "cohort": {
-      "sex": "M",
+      "sex": "F",
       "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "SVC",
+      "type": "fine_tune",
+      "model": "biot",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1017,15 +1052,15 @@
   {
     "id": 66,
     "cohort": {
-      "sex": "M",
+      "sex": "F",
       "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "LogisticRegression",
+      "type": "fine_tune",
+      "model": "labram",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1033,15 +1068,15 @@
   {
     "id": 67,
     "cohort": {
-      "sex": "M",
+      "sex": "F",
       "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "RandomForestClassifier",
+      "type": "fine_tune",
+      "model": "labram",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1049,14 +1084,15 @@
   {
     "id": 68,
     "cohort": {
-      "sex": "M",
+      "sex": "F",
       "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "cbramod",
+      "type": "fine_tune",
+      "model": "luna",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1064,14 +1100,15 @@
   {
     "id": 69,
     "cohort": {
-      "sex": "M",
+      "sex": "F",
       "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "reve",
+      "type": "fine_tune",
+      "model": "luna",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1079,14 +1116,15 @@
   {
     "id": 70,
     "cohort": {
-      "sex": "M",
+      "sex": "F",
       "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "biot",
+      "type": "fine_tune",
+      "model": "signaljepa",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1094,14 +1132,15 @@
   {
     "id": 71,
     "cohort": {
-      "sex": "M",
+      "sex": "F",
       "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "labram",
+      "type": "fine_tune",
+      "model": "signaljepa",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1109,14 +1148,15 @@
   {
     "id": 72,
     "cohort": {
-      "sex": "M",
+      "sex": "F",
       "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "luna",
+      "type": "fine_tune",
+      "model": "bendr",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1124,14 +1164,15 @@
   {
     "id": 73,
     "cohort": {
-      "sex": "M",
+      "sex": "F",
       "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "eegpt",
+      "type": "fine_tune",
+      "model": "bendr",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1145,8 +1186,8 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "signaljepa",
+      "type": "dim_reduction",
+      "method": "PCA",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1160,8 +1201,8 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "bendr",
+      "type": "dim_reduction",
+      "method": "UMAP",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1175,8 +1216,8 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "cbramod",
+      "type": "dim_reduction",
+      "method": "t-SNE",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1190,8 +1231,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "reve",
+      "type": "handcrafted",
+      "unit": "feature",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1205,8 +1247,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "biot",
+      "type": "handcrafted",
+      "unit": "feature",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1220,8 +1263,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "labram",
+      "type": "handcrafted",
+      "unit": "sensor",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1235,8 +1279,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "luna",
+      "type": "handcrafted",
+      "unit": "sensor",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1250,8 +1295,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "eegpt",
+      "type": "handcrafted",
+      "unit": "region",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1265,8 +1311,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "signaljepa",
+      "type": "handcrafted",
+      "unit": "region",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1280,8 +1327,9 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "bendr",
+      "type": "embedding",
+      "model": "cbramod",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1289,14 +1337,15 @@
   {
     "id": 84,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "PCA",
+      "type": "embedding",
+      "model": "cbramod",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1304,14 +1353,15 @@
   {
     "id": 85,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "UMAP",
+      "type": "embedding",
+      "model": "reve",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1319,14 +1369,15 @@
   {
     "id": 86,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "t-SNE",
+      "type": "embedding",
+      "model": "reve",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1334,15 +1385,15 @@
   {
     "id": 87,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "SVC",
+      "type": "embedding",
+      "model": "biot",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1350,15 +1401,15 @@
   {
     "id": 88,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "LogisticRegression",
+      "type": "embedding",
+      "model": "biot",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1366,15 +1417,15 @@
   {
     "id": 89,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "RandomForestClassifier",
+      "type": "embedding",
+      "model": "labram",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1382,15 +1433,15 @@
   {
     "id": 90,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "SVC",
+      "type": "embedding",
+      "model": "labram",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1398,15 +1449,15 @@
   {
     "id": 91,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "LogisticRegression",
+      "type": "embedding",
+      "model": "luna",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1414,15 +1465,15 @@
   {
     "id": 92,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "RandomForestClassifier",
+      "type": "embedding",
+      "model": "luna",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1430,15 +1481,15 @@
   {
     "id": 93,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "SVC",
+      "type": "embedding",
+      "model": "signaljepa",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1446,15 +1497,15 @@
   {
     "id": 94,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "LogisticRegression",
+      "type": "embedding",
+      "model": "signaljepa",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1462,15 +1513,15 @@
   {
     "id": 95,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "RandomForestClassifier",
+      "type": "embedding",
+      "model": "bendr",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1478,14 +1529,15 @@
   {
     "id": 96,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "cbramod",
+      "model": "bendr",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1493,14 +1545,15 @@
   {
     "id": 97,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "reve",
+      "type": "fine_tune",
+      "model": "cbramod",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1508,14 +1561,15 @@
   {
     "id": 98,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "biot",
+      "type": "fine_tune",
+      "model": "cbramod",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1523,14 +1577,15 @@
   {
     "id": 99,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "labram",
+      "type": "fine_tune",
+      "model": "reve",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1538,14 +1593,15 @@
   {
     "id": 100,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "luna",
+      "type": "fine_tune",
+      "model": "reve",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1553,14 +1609,15 @@
   {
     "id": 101,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "eegpt",
+      "type": "fine_tune",
+      "model": "biot",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1568,14 +1625,15 @@
   {
     "id": 102,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "signaljepa",
+      "type": "fine_tune",
+      "model": "biot",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1583,14 +1641,15 @@
   {
     "id": 103,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "bendr",
+      "type": "fine_tune",
+      "model": "labram",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1598,14 +1657,15 @@
   {
     "id": 104,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "cbramod",
+      "model": "labram",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1613,14 +1673,15 @@
   {
     "id": 105,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "reve",
+      "model": "luna",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1628,14 +1689,15 @@
   {
     "id": 106,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "biot",
+      "model": "luna",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1643,14 +1705,15 @@
   {
     "id": 107,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "labram",
+      "model": "signaljepa",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1658,14 +1721,15 @@
   {
     "id": 108,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "luna",
+      "model": "signaljepa",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1673,14 +1737,15 @@
   {
     "id": 109,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "eegpt",
+      "model": "bendr",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1688,14 +1753,15 @@
   {
     "id": 110,
     "cohort": {
-      "sex": "ALL",
-      "age": "0-4",
+      "sex": "M",
+      "age": "ALL",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "signaljepa",
+      "model": "bendr",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1709,8 +1775,8 @@
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "bendr",
+      "type": "dim_reduction",
+      "method": "PCA",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1719,22 +1785,7 @@
     "id": 112,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
-      "comorbidities": "ALL",
-      "medication": "ALL"
-    },
-    "analysis": {
-      "type": "dim_reduction",
-      "method": "PCA",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 113,
-    "cohort": {
-      "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
@@ -1746,10 +1797,10 @@
     }
   },
   {
-    "id": 114,
+    "id": 113,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
@@ -1761,17 +1812,33 @@
     }
   },
   {
-    "id": 115,
+    "id": 114,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "handcrafted",
       "unit": "feature",
-      "regression_head": "SVC",
+      "regression_head": "LogisticRegression",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 115,
+    "cohort": {
+      "sex": "ALL",
+      "age": "0-4",
+      "comorbidities": "ALL",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "handcrafted",
+      "unit": "feature",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1780,13 +1847,13 @@
     "id": 116,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "handcrafted",
-      "unit": "feature",
+      "unit": "sensor",
       "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
@@ -1796,13 +1863,13 @@
     "id": 117,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "handcrafted",
-      "unit": "feature",
+      "unit": "sensor",
       "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
@@ -1812,14 +1879,14 @@
     "id": 118,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "SVC",
+      "unit": "region",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1828,14 +1895,14 @@
     "id": 119,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "LogisticRegression",
+      "unit": "region",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1844,14 +1911,14 @@
     "id": 120,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "RandomForestClassifier",
+      "type": "embedding",
+      "model": "cbramod",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1860,14 +1927,14 @@
     "id": 121,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "SVC",
+      "type": "embedding",
+      "model": "cbramod",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1876,14 +1943,14 @@
     "id": 122,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "LogisticRegression",
+      "type": "embedding",
+      "model": "reve",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1892,14 +1959,14 @@
     "id": 123,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "RandomForestClassifier",
+      "type": "embedding",
+      "model": "reve",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1908,13 +1975,14 @@
     "id": 124,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "cbramod",
+      "model": "biot",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1923,13 +1991,14 @@
     "id": 125,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "reve",
+      "model": "biot",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1938,13 +2007,14 @@
     "id": 126,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "biot",
+      "model": "labram",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1953,13 +2023,14 @@
     "id": 127,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
       "model": "labram",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1968,13 +2039,14 @@
     "id": 128,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
       "model": "luna",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1983,13 +2055,14 @@
     "id": 129,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "eegpt",
+      "model": "luna",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -1998,13 +2071,14 @@
     "id": 130,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
       "model": "signaljepa",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2013,13 +2087,14 @@
     "id": 131,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "bendr",
+      "model": "signaljepa",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2028,13 +2103,14 @@
     "id": 132,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "cbramod",
+      "type": "embedding",
+      "model": "bendr",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2043,13 +2119,14 @@
     "id": 133,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "reve",
+      "type": "embedding",
+      "model": "bendr",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2058,13 +2135,14 @@
     "id": 134,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "biot",
+      "model": "cbramod",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2073,13 +2151,14 @@
     "id": 135,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "labram",
+      "model": "cbramod",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2088,13 +2167,14 @@
     "id": 136,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "luna",
+      "model": "reve",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2103,13 +2183,14 @@
     "id": 137,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "eegpt",
+      "model": "reve",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2118,13 +2199,14 @@
     "id": 138,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "signaljepa",
+      "model": "biot",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2133,13 +2215,14 @@
     "id": 139,
     "cohort": {
       "sex": "ALL",
-      "age": "5-8",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "bendr",
+      "model": "biot",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2148,13 +2231,14 @@
     "id": 140,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "PCA",
+      "type": "fine_tune",
+      "model": "labram",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2163,13 +2247,14 @@
     "id": 141,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "UMAP",
+      "type": "fine_tune",
+      "model": "labram",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2178,13 +2263,14 @@
     "id": 142,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "t-SNE",
+      "type": "fine_tune",
+      "model": "luna",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2193,14 +2279,14 @@
     "id": 143,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "SVC",
+      "type": "fine_tune",
+      "model": "luna",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2209,14 +2295,14 @@
     "id": 144,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "LogisticRegression",
+      "type": "fine_tune",
+      "model": "signaljepa",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2225,14 +2311,14 @@
     "id": 145,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "RandomForestClassifier",
+      "type": "fine_tune",
+      "model": "signaljepa",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2241,14 +2327,14 @@
     "id": 146,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "SVC",
+      "type": "fine_tune",
+      "model": "bendr",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2257,14 +2343,14 @@
     "id": 147,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "0-4",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "LogisticRegression",
+      "type": "fine_tune",
+      "model": "bendr",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2273,14 +2359,13 @@
     "id": 148,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "RandomForestClassifier",
+      "type": "dim_reduction",
+      "method": "PCA",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2289,14 +2374,13 @@
     "id": 149,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "SVC",
+      "type": "dim_reduction",
+      "method": "UMAP",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2305,14 +2389,13 @@
     "id": 150,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "LogisticRegression",
+      "type": "dim_reduction",
+      "method": "t-SNE",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2321,14 +2404,14 @@
     "id": 151,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "RandomForestClassifier",
+      "unit": "feature",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2337,13 +2420,14 @@
     "id": 152,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "cbramod",
+      "type": "handcrafted",
+      "unit": "feature",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2352,13 +2436,14 @@
     "id": 153,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "reve",
+      "type": "handcrafted",
+      "unit": "sensor",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2367,13 +2452,14 @@
     "id": 154,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "biot",
+      "type": "handcrafted",
+      "unit": "sensor",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2382,13 +2468,14 @@
     "id": 155,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "labram",
+      "type": "handcrafted",
+      "unit": "region",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2397,13 +2484,14 @@
     "id": 156,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "luna",
+      "type": "handcrafted",
+      "unit": "region",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2412,13 +2500,14 @@
     "id": 157,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "eegpt",
+      "model": "cbramod",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2427,13 +2516,14 @@
     "id": 158,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "signaljepa",
+      "model": "cbramod",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2442,13 +2532,14 @@
     "id": 159,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "bendr",
+      "model": "reve",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2457,13 +2548,14 @@
     "id": 160,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "cbramod",
+      "type": "embedding",
+      "model": "reve",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2472,13 +2564,14 @@
     "id": 161,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "reve",
+      "type": "embedding",
+      "model": "biot",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2487,13 +2580,14 @@
     "id": 162,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
+      "type": "embedding",
       "model": "biot",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2502,13 +2596,14 @@
     "id": 163,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
+      "type": "embedding",
       "model": "labram",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2517,13 +2612,14 @@
     "id": 164,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "luna",
+      "type": "embedding",
+      "model": "labram",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2532,13 +2628,14 @@
     "id": 165,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "eegpt",
+      "type": "embedding",
+      "model": "luna",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2547,13 +2644,14 @@
     "id": 166,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "signaljepa",
+      "type": "embedding",
+      "model": "luna",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2562,13 +2660,14 @@
     "id": 167,
     "cohort": {
       "sex": "ALL",
-      "age": "9-12",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "bendr",
+      "type": "embedding",
+      "model": "signaljepa",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2577,13 +2676,14 @@
     "id": 168,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "PCA",
+      "type": "embedding",
+      "model": "signaljepa",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2592,13 +2692,14 @@
     "id": 169,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "UMAP",
+      "type": "embedding",
+      "model": "bendr",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2607,13 +2708,14 @@
     "id": 170,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "t-SNE",
+      "type": "embedding",
+      "model": "bendr",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2622,14 +2724,14 @@
     "id": 171,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "SVC",
+      "type": "fine_tune",
+      "model": "cbramod",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2638,14 +2740,14 @@
     "id": 172,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "LogisticRegression",
+      "type": "fine_tune",
+      "model": "cbramod",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2654,14 +2756,14 @@
     "id": 173,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "RandomForestClassifier",
+      "type": "fine_tune",
+      "model": "reve",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2670,14 +2772,14 @@
     "id": 174,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "SVC",
+      "type": "fine_tune",
+      "model": "reve",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2686,14 +2788,14 @@
     "id": 175,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "LogisticRegression",
+      "type": "fine_tune",
+      "model": "biot",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2702,14 +2804,14 @@
     "id": 176,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "RandomForestClassifier",
+      "type": "fine_tune",
+      "model": "biot",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2718,14 +2820,14 @@
     "id": 177,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "SVC",
+      "type": "fine_tune",
+      "model": "labram",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2734,14 +2836,14 @@
     "id": 178,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "LogisticRegression",
+      "type": "fine_tune",
+      "model": "labram",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2750,14 +2852,14 @@
     "id": 179,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "RandomForestClassifier",
+      "type": "fine_tune",
+      "model": "luna",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2766,13 +2868,14 @@
     "id": 180,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "cbramod",
+      "type": "fine_tune",
+      "model": "luna",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2781,13 +2884,14 @@
     "id": 181,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "reve",
+      "type": "fine_tune",
+      "model": "signaljepa",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2796,13 +2900,14 @@
     "id": 182,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "biot",
+      "type": "fine_tune",
+      "model": "signaljepa",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2811,13 +2916,14 @@
     "id": 183,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "labram",
+      "type": "fine_tune",
+      "model": "bendr",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2826,13 +2932,14 @@
     "id": 184,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "5-8",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "luna",
+      "type": "fine_tune",
+      "model": "bendr",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2841,13 +2948,13 @@
     "id": 185,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "9-12",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "eegpt",
+      "type": "dim_reduction",
+      "method": "PCA",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2856,13 +2963,13 @@
     "id": 186,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "9-12",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "signaljepa",
+      "type": "dim_reduction",
+      "method": "UMAP",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2871,13 +2978,13 @@
     "id": 187,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "9-12",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "bendr",
+      "type": "dim_reduction",
+      "method": "t-SNE",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2886,13 +2993,14 @@
     "id": 188,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "9-12",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "cbramod",
+      "type": "handcrafted",
+      "unit": "feature",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2901,13 +3009,14 @@
     "id": 189,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "9-12",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "reve",
+      "type": "handcrafted",
+      "unit": "feature",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2916,13 +3025,14 @@
     "id": 190,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "9-12",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "biot",
+      "type": "handcrafted",
+      "unit": "sensor",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2931,13 +3041,14 @@
     "id": 191,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "9-12",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "labram",
+      "type": "handcrafted",
+      "unit": "sensor",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2946,13 +3057,14 @@
     "id": 192,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "9-12",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "luna",
+      "type": "handcrafted",
+      "unit": "region",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2961,13 +3073,14 @@
     "id": 193,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "9-12",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "eegpt",
+      "type": "handcrafted",
+      "unit": "region",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2976,13 +3089,14 @@
     "id": 194,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "9-12",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "signaljepa",
+      "type": "embedding",
+      "model": "cbramod",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -2991,13 +3105,14 @@
     "id": 195,
     "cohort": {
       "sex": "ALL",
-      "age": "13-18",
+      "age": "9-12",
       "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "bendr",
+      "type": "embedding",
+      "model": "cbramod",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3006,13 +3121,14 @@
     "id": 196,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "PCA",
+      "type": "embedding",
+      "model": "reve",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3021,13 +3137,14 @@
     "id": 197,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "UMAP",
+      "type": "embedding",
+      "model": "reve",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3036,13 +3153,14 @@
     "id": 198,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "t-SNE",
+      "type": "embedding",
+      "model": "biot",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3051,14 +3169,14 @@
     "id": 199,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "SVC",
+      "type": "embedding",
+      "model": "biot",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3067,14 +3185,14 @@
     "id": 200,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "LogisticRegression",
+      "type": "embedding",
+      "model": "labram",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3083,14 +3201,14 @@
     "id": 201,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "RandomForestClassifier",
+      "type": "embedding",
+      "model": "labram",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3099,14 +3217,14 @@
     "id": 202,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "SVC",
+      "type": "embedding",
+      "model": "luna",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3115,14 +3233,14 @@
     "id": 203,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "LogisticRegression",
+      "type": "embedding",
+      "model": "luna",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3131,14 +3249,14 @@
     "id": 204,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "RandomForestClassifier",
+      "type": "embedding",
+      "model": "signaljepa",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3147,14 +3265,14 @@
     "id": 205,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "SVC",
+      "type": "embedding",
+      "model": "signaljepa",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3163,14 +3281,14 @@
     "id": 206,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "LogisticRegression",
+      "type": "embedding",
+      "model": "bendr",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3179,14 +3297,14 @@
     "id": 207,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "RandomForestClassifier",
+      "type": "embedding",
+      "model": "bendr",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3195,13 +3313,14 @@
     "id": 208,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
+      "type": "fine_tune",
       "model": "cbramod",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3210,13 +3329,14 @@
     "id": 209,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "reve",
+      "type": "fine_tune",
+      "model": "cbramod",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3225,13 +3345,14 @@
     "id": 210,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "biot",
+      "type": "fine_tune",
+      "model": "reve",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3240,13 +3361,14 @@
     "id": 211,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "labram",
+      "type": "fine_tune",
+      "model": "reve",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3255,13 +3377,14 @@
     "id": 212,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "luna",
+      "type": "fine_tune",
+      "model": "biot",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3270,13 +3393,14 @@
     "id": 213,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "eegpt",
+      "type": "fine_tune",
+      "model": "biot",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3285,13 +3409,14 @@
     "id": 214,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "signaljepa",
+      "type": "fine_tune",
+      "model": "labram",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3300,13 +3425,14 @@
     "id": 215,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "bendr",
+      "type": "fine_tune",
+      "model": "labram",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3315,13 +3441,14 @@
     "id": 216,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "cbramod",
+      "model": "luna",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3330,13 +3457,14 @@
     "id": 217,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "reve",
+      "model": "luna",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3345,13 +3473,14 @@
     "id": 218,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "biot",
+      "model": "signaljepa",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3360,13 +3489,14 @@
     "id": 219,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "labram",
+      "model": "signaljepa",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3375,13 +3505,14 @@
     "id": 220,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "luna",
+      "model": "bendr",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3390,13 +3521,14 @@
     "id": 221,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "9-12",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "eegpt",
+      "model": "bendr",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3405,13 +3537,13 @@
     "id": 222,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "signaljepa",
+      "type": "dim_reduction",
+      "method": "PCA",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3420,13 +3552,13 @@
     "id": 223,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "none",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "bendr",
+      "type": "dim_reduction",
+      "method": "UMAP",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3435,13 +3567,13 @@
     "id": 224,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "dim_reduction",
-      "method": "PCA",
+      "method": "t-SNE",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3450,13 +3582,14 @@
     "id": 225,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "UMAP",
+      "type": "handcrafted",
+      "unit": "feature",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3465,13 +3598,14 @@
     "id": 226,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "t-SNE",
+      "type": "handcrafted",
+      "unit": "feature",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3480,14 +3614,14 @@
     "id": 227,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "SVC",
+      "unit": "sensor",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3496,14 +3630,14 @@
     "id": 228,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "LogisticRegression",
+      "unit": "sensor",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3512,14 +3646,14 @@
     "id": 229,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "RandomForestClassifier",
+      "unit": "region",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3528,14 +3662,14 @@
     "id": 230,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "SVC",
+      "unit": "region",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3544,14 +3678,14 @@
     "id": 231,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "LogisticRegression",
+      "type": "embedding",
+      "model": "cbramod",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3560,14 +3694,14 @@
     "id": 232,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "RandomForestClassifier",
+      "type": "embedding",
+      "model": "cbramod",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3576,14 +3710,14 @@
     "id": 233,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "SVC",
+      "type": "embedding",
+      "model": "reve",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3592,14 +3726,14 @@
     "id": 234,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "LogisticRegression",
+      "type": "embedding",
+      "model": "reve",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3608,14 +3742,14 @@
     "id": 235,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "RandomForestClassifier",
+      "type": "embedding",
+      "model": "biot",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3624,13 +3758,14 @@
     "id": 236,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "cbramod",
+      "model": "biot",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3639,13 +3774,14 @@
     "id": 237,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "reve",
+      "model": "labram",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3654,13 +3790,14 @@
     "id": 238,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "biot",
+      "model": "labram",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3669,13 +3806,14 @@
     "id": 239,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "labram",
+      "model": "luna",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3684,13 +3822,14 @@
     "id": 240,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
       "model": "luna",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3699,13 +3838,14 @@
     "id": 241,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "eegpt",
+      "model": "signaljepa",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3714,13 +3854,14 @@
     "id": 242,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
       "model": "signaljepa",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3729,13 +3870,14 @@
     "id": 243,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
       "model": "bendr",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3744,13 +3886,14 @@
     "id": 244,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "cbramod",
+      "type": "embedding",
+      "model": "bendr",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3759,13 +3902,14 @@
     "id": 245,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "reve",
+      "model": "cbramod",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3774,13 +3918,14 @@
     "id": 246,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "biot",
+      "model": "cbramod",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3789,13 +3934,14 @@
     "id": 247,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "labram",
+      "model": "reve",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3804,13 +3950,14 @@
     "id": 248,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "luna",
+      "model": "reve",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3819,13 +3966,14 @@
     "id": 249,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "eegpt",
+      "model": "biot",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3834,13 +3982,14 @@
     "id": 250,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "signaljepa",
+      "model": "biot",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3849,13 +3998,14 @@
     "id": 251,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ASD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "bendr",
+      "model": "labram",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3864,13 +4014,14 @@
     "id": 252,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ADHD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "PCA",
+      "type": "fine_tune",
+      "model": "labram",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3879,13 +4030,14 @@
     "id": 253,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ADHD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "UMAP",
+      "type": "fine_tune",
+      "model": "luna",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3894,13 +4046,14 @@
     "id": 254,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ADHD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "t-SNE",
+      "type": "fine_tune",
+      "model": "luna",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3909,14 +4062,14 @@
     "id": 255,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ADHD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "SVC",
+      "type": "fine_tune",
+      "model": "signaljepa",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3925,14 +4078,14 @@
     "id": 256,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ADHD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "LogisticRegression",
+      "type": "fine_tune",
+      "model": "signaljepa",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3941,14 +4094,14 @@
     "id": 257,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ADHD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "RandomForestClassifier",
+      "type": "fine_tune",
+      "model": "bendr",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3957,14 +4110,14 @@
     "id": 258,
     "cohort": {
       "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ADHD",
+      "age": "13-18",
+      "comorbidities": "ALL",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "SVC",
+      "type": "fine_tune",
+      "model": "bendr",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3974,13 +4127,12 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "LogisticRegression",
+      "type": "dim_reduction",
+      "method": "PCA",
       "level": "subject",
       "balance": "balanced"
     }
@@ -3990,13 +4142,12 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "RandomForestClassifier",
+      "type": "dim_reduction",
+      "method": "UMAP",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4006,13 +4157,12 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "SVC",
+      "type": "dim_reduction",
+      "method": "t-SNE",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4022,12 +4172,12 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
       "type": "handcrafted",
-      "unit": "region",
+      "unit": "feature",
       "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
@@ -4038,12 +4188,12 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
       "type": "handcrafted",
-      "unit": "region",
+      "unit": "feature",
       "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
@@ -4054,12 +4204,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "cbramod",
+      "type": "handcrafted",
+      "unit": "sensor",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4069,12 +4220,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "reve",
+      "type": "handcrafted",
+      "unit": "sensor",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4084,12 +4236,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "biot",
+      "type": "handcrafted",
+      "unit": "region",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4099,12 +4252,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "labram",
+      "type": "handcrafted",
+      "unit": "region",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4114,12 +4268,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "luna",
+      "model": "cbramod",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4129,12 +4284,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "eegpt",
+      "model": "cbramod",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4144,12 +4300,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "signaljepa",
+      "model": "reve",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4159,12 +4316,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "bendr",
+      "model": "reve",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4174,12 +4332,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "cbramod",
+      "type": "embedding",
+      "model": "biot",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4189,12 +4348,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "reve",
+      "type": "embedding",
+      "model": "biot",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4204,12 +4364,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "biot",
+      "type": "embedding",
+      "model": "labram",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4219,12 +4380,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
+      "type": "embedding",
       "model": "labram",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4234,12 +4396,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
+      "type": "embedding",
       "model": "luna",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4249,12 +4412,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "eegpt",
+      "type": "embedding",
+      "model": "luna",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4264,12 +4428,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
+      "type": "embedding",
       "model": "signaljepa",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4279,12 +4444,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "bendr",
+      "type": "embedding",
+      "model": "signaljepa",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4294,12 +4460,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "PCA",
+      "type": "embedding",
+      "model": "bendr",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4309,12 +4476,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "UMAP",
+      "type": "embedding",
+      "model": "bendr",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4324,12 +4492,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "t-SNE",
+      "type": "fine_tune",
+      "model": "cbramod",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4339,13 +4508,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "SVC",
+      "type": "fine_tune",
+      "model": "cbramod",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4355,13 +4524,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "LogisticRegression",
+      "type": "fine_tune",
+      "model": "reve",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4371,13 +4540,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "RandomForestClassifier",
+      "type": "fine_tune",
+      "model": "reve",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4387,13 +4556,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "SVC",
+      "type": "fine_tune",
+      "model": "biot",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4403,13 +4572,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "LogisticRegression",
+      "type": "fine_tune",
+      "model": "biot",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4419,13 +4588,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "RandomForestClassifier",
+      "type": "fine_tune",
+      "model": "labram",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4435,13 +4604,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "SVC",
+      "type": "fine_tune",
+      "model": "labram",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4451,13 +4620,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "LogisticRegression",
+      "type": "fine_tune",
+      "model": "luna",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4467,13 +4636,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "RandomForestClassifier",
+      "type": "fine_tune",
+      "model": "luna",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4483,12 +4652,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "cbramod",
+      "type": "fine_tune",
+      "model": "signaljepa",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4498,12 +4668,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "reve",
+      "type": "fine_tune",
+      "model": "signaljepa",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4513,12 +4684,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "biot",
+      "type": "fine_tune",
+      "model": "bendr",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4528,12 +4700,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "none",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "labram",
+      "type": "fine_tune",
+      "model": "bendr",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4543,12 +4716,12 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "ASD",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "luna",
+      "type": "dim_reduction",
+      "method": "PCA",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4558,12 +4731,12 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "ASD",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "eegpt",
+      "type": "dim_reduction",
+      "method": "UMAP",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4573,12 +4746,12 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "ASD",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "signaljepa",
+      "type": "dim_reduction",
+      "method": "t-SNE",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4588,12 +4761,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "ASD",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "bendr",
+      "type": "handcrafted",
+      "unit": "feature",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4603,12 +4777,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "ASD",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "cbramod",
+      "type": "handcrafted",
+      "unit": "feature",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4618,12 +4793,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "ASD",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "reve",
+      "type": "handcrafted",
+      "unit": "sensor",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4633,12 +4809,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "ASD",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "biot",
+      "type": "handcrafted",
+      "unit": "sensor",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4648,12 +4825,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "ASD",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "labram",
+      "type": "handcrafted",
+      "unit": "region",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4663,12 +4841,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "ASD",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "luna",
+      "type": "handcrafted",
+      "unit": "region",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4678,12 +4857,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "ASD",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "eegpt",
+      "type": "embedding",
+      "model": "cbramod",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4693,12 +4873,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "ASD",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "signaljepa",
+      "type": "embedding",
+      "model": "cbramod",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4708,12 +4889,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ASD & ADHD",
+      "comorbidities": "ASD",
       "medication": "ALL"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "bendr",
+      "type": "embedding",
+      "model": "reve",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4723,12 +4905,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
+      "comorbidities": "ASD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "PCA",
+      "type": "embedding",
+      "model": "reve",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4738,12 +4921,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
+      "comorbidities": "ASD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "UMAP",
+      "type": "embedding",
+      "model": "biot",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4753,12 +4937,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
+      "comorbidities": "ASD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "t-SNE",
+      "type": "embedding",
+      "model": "biot",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4768,13 +4953,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
+      "comorbidities": "ASD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "SVC",
+      "type": "embedding",
+      "model": "labram",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4784,13 +4969,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
+      "comorbidities": "ASD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "LogisticRegression",
+      "type": "embedding",
+      "model": "labram",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4800,13 +4985,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
+      "comorbidities": "ASD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "RandomForestClassifier",
+      "type": "embedding",
+      "model": "luna",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4816,13 +5001,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
+      "comorbidities": "ASD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "SVC",
+      "type": "embedding",
+      "model": "luna",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4832,13 +5017,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
+      "comorbidities": "ASD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "LogisticRegression",
+      "type": "embedding",
+      "model": "signaljepa",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -4848,8 +5033,373 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
+      "comorbidities": "ASD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "embedding",
+      "model": "signaljepa",
+      "condition": "EC",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 317,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "embedding",
+      "model": "bendr",
+      "condition": "EO",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 318,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "embedding",
+      "model": "bendr",
+      "condition": "EC",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 319,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "cbramod",
+      "condition": "EO",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 320,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "cbramod",
+      "condition": "EC",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 321,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "reve",
+      "condition": "EO",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 322,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "reve",
+      "condition": "EC",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 323,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "biot",
+      "condition": "EO",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 324,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "biot",
+      "condition": "EC",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 325,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "labram",
+      "condition": "EO",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 326,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "labram",
+      "condition": "EC",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 327,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "luna",
+      "condition": "EO",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 328,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "luna",
+      "condition": "EC",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 329,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "signaljepa",
+      "condition": "EO",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 330,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "signaljepa",
+      "condition": "EC",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 331,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "bendr",
+      "condition": "EO",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 332,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "bendr",
+      "condition": "EC",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 333,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "dim_reduction",
+      "method": "PCA",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 334,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "dim_reduction",
+      "method": "UMAP",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 335,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "dim_reduction",
+      "method": "t-SNE",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 336,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "handcrafted",
+      "unit": "feature",
+      "regression_head": "LogisticRegression",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 337,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "handcrafted",
+      "unit": "feature",
+      "regression_head": "RandomForestClassifier",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 338,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "handcrafted",
+      "unit": "sensor",
+      "regression_head": "LogisticRegression",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 339,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
       "type": "handcrafted",
@@ -4860,365 +5410,16 @@
     }
   },
   {
-    "id": 317,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
-    },
-    "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "SVC",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 318,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
-    },
-    "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "LogisticRegression",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 319,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
-    },
-    "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "RandomForestClassifier",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 320,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
-    },
-    "analysis": {
-      "type": "embedding",
-      "model": "cbramod",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 321,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
-    },
-    "analysis": {
-      "type": "embedding",
-      "model": "reve",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 322,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
-    },
-    "analysis": {
-      "type": "embedding",
-      "model": "biot",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 323,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
-    },
-    "analysis": {
-      "type": "embedding",
-      "model": "labram",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 324,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
-    },
-    "analysis": {
-      "type": "embedding",
-      "model": "luna",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 325,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
-    },
-    "analysis": {
-      "type": "embedding",
-      "model": "eegpt",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 326,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
-    },
-    "analysis": {
-      "type": "embedding",
-      "model": "signaljepa",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 327,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
-    },
-    "analysis": {
-      "type": "embedding",
-      "model": "bendr",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 328,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
-    },
-    "analysis": {
-      "type": "fine_tune",
-      "model": "cbramod",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 329,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
-    },
-    "analysis": {
-      "type": "fine_tune",
-      "model": "reve",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 330,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
-    },
-    "analysis": {
-      "type": "fine_tune",
-      "model": "biot",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 331,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
-    },
-    "analysis": {
-      "type": "fine_tune",
-      "model": "labram",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 332,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
-    },
-    "analysis": {
-      "type": "fine_tune",
-      "model": "luna",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 333,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
-    },
-    "analysis": {
-      "type": "fine_tune",
-      "model": "eegpt",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 334,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
-    },
-    "analysis": {
-      "type": "fine_tune",
-      "model": "signaljepa",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 335,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM"
-    },
-    "analysis": {
-      "type": "fine_tune",
-      "model": "bendr",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 336,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
-    },
-    "analysis": {
-      "type": "dim_reduction",
-      "method": "PCA",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 337,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
-    },
-    "analysis": {
-      "type": "dim_reduction",
-      "method": "UMAP",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 338,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
-    },
-    "analysis": {
-      "type": "dim_reduction",
-      "method": "t-SNE",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 339,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
-    },
-    "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "SVC",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
     "id": 340,
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
       "type": "handcrafted",
-      "unit": "feature",
+      "unit": "region",
       "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
@@ -5229,12 +5430,12 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
       "type": "handcrafted",
-      "unit": "feature",
+      "unit": "region",
       "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
@@ -5245,13 +5446,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "SVC",
+      "type": "embedding",
+      "model": "cbramod",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5261,13 +5462,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "LogisticRegression",
+      "type": "embedding",
+      "model": "cbramod",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5277,13 +5478,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "RandomForestClassifier",
+      "type": "embedding",
+      "model": "reve",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5293,13 +5494,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "SVC",
+      "type": "embedding",
+      "model": "reve",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5309,13 +5510,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "LogisticRegression",
+      "type": "embedding",
+      "model": "biot",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5325,13 +5526,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "RandomForestClassifier",
+      "type": "embedding",
+      "model": "biot",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5341,12 +5542,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "cbramod",
+      "model": "labram",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5356,12 +5558,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "reve",
+      "model": "labram",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5371,12 +5574,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "biot",
+      "model": "luna",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5386,12 +5590,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "labram",
+      "model": "luna",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5401,12 +5606,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "luna",
+      "model": "signaljepa",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5416,12 +5622,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "eegpt",
+      "model": "signaljepa",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5431,12 +5638,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
-      "model": "signaljepa",
+      "model": "bendr",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5446,12 +5654,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
       "type": "embedding",
       "model": "bendr",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5461,12 +5670,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
       "model": "cbramod",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5476,12 +5686,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "reve",
+      "model": "cbramod",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5491,12 +5702,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "biot",
+      "model": "reve",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5506,12 +5718,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "labram",
+      "model": "reve",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5521,12 +5734,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "luna",
+      "model": "biot",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5536,12 +5750,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "eegpt",
+      "model": "biot",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5551,12 +5766,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "signaljepa",
+      "model": "labram",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5566,12 +5782,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "no med"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
       "type": "fine_tune",
-      "model": "bendr",
+      "model": "labram",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5581,12 +5798,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "PCA",
+      "type": "fine_tune",
+      "model": "luna",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5596,12 +5814,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "UMAP",
+      "type": "fine_tune",
+      "model": "luna",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5611,12 +5830,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "dim_reduction",
-      "method": "t-SNE",
+      "type": "fine_tune",
+      "model": "signaljepa",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5626,13 +5846,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "SVC",
+      "type": "fine_tune",
+      "model": "signaljepa",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5642,13 +5862,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "LogisticRegression",
+      "type": "fine_tune",
+      "model": "bendr",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5658,13 +5878,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
+      "comorbidities": "ADHD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "RandomForestClassifier",
+      "type": "fine_tune",
+      "model": "bendr",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -5674,344 +5894,8 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
-    },
-    "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "SVC",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 371,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
-    },
-    "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "LogisticRegression",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 372,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
-    },
-    "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "RandomForestClassifier",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 373,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
-    },
-    "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "SVC",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 374,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
-    },
-    "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "LogisticRegression",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 375,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
-    },
-    "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "RandomForestClassifier",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 376,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
-    },
-    "analysis": {
-      "type": "embedding",
-      "model": "cbramod",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 377,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
-    },
-    "analysis": {
-      "type": "embedding",
-      "model": "reve",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 378,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
-    },
-    "analysis": {
-      "type": "embedding",
-      "model": "biot",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 379,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
-    },
-    "analysis": {
-      "type": "embedding",
-      "model": "labram",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 380,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
-    },
-    "analysis": {
-      "type": "embedding",
-      "model": "luna",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 381,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
-    },
-    "analysis": {
-      "type": "embedding",
-      "model": "eegpt",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 382,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
-    },
-    "analysis": {
-      "type": "embedding",
-      "model": "signaljepa",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 383,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
-    },
-    "analysis": {
-      "type": "embedding",
-      "model": "bendr",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 384,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
-    },
-    "analysis": {
-      "type": "fine_tune",
-      "model": "cbramod",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 385,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
-    },
-    "analysis": {
-      "type": "fine_tune",
-      "model": "reve",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 386,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
-    },
-    "analysis": {
-      "type": "fine_tune",
-      "model": "biot",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 387,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
-    },
-    "analysis": {
-      "type": "fine_tune",
-      "model": "labram",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 388,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
-    },
-    "analysis": {
-      "type": "fine_tune",
-      "model": "luna",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 389,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
-    },
-    "analysis": {
-      "type": "fine_tune",
-      "model": "eegpt",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 390,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
-    },
-    "analysis": {
-      "type": "fine_tune",
-      "model": "signaljepa",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 391,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "psychostimulant"
-    },
-    "analysis": {
-      "type": "fine_tune",
-      "model": "bendr",
-      "level": "subject",
-      "balance": "balanced"
-    }
-  },
-  {
-    "id": 392,
-    "cohort": {
-      "sex": "ALL",
-      "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
     },
     "analysis": {
       "type": "dim_reduction",
@@ -6021,12 +5905,12 @@
     }
   },
   {
-    "id": 393,
+    "id": 371,
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
     },
     "analysis": {
       "type": "dim_reduction",
@@ -6036,12 +5920,12 @@
     }
   },
   {
-    "id": 394,
+    "id": 372,
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
     },
     "analysis": {
       "type": "dim_reduction",
@@ -6051,17 +5935,369 @@
     }
   },
   {
-    "id": 395,
+    "id": 373,
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
     },
     "analysis": {
       "type": "handcrafted",
       "unit": "feature",
-      "regression_head": "SVC",
+      "regression_head": "LogisticRegression",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 374,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "handcrafted",
+      "unit": "feature",
+      "regression_head": "RandomForestClassifier",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 375,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "handcrafted",
+      "unit": "sensor",
+      "regression_head": "LogisticRegression",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 376,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "handcrafted",
+      "unit": "sensor",
+      "regression_head": "RandomForestClassifier",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 377,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "handcrafted",
+      "unit": "region",
+      "regression_head": "LogisticRegression",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 378,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "handcrafted",
+      "unit": "region",
+      "regression_head": "RandomForestClassifier",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 379,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "embedding",
+      "model": "cbramod",
+      "condition": "EO",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 380,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "embedding",
+      "model": "cbramod",
+      "condition": "EC",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 381,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "embedding",
+      "model": "reve",
+      "condition": "EO",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 382,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "embedding",
+      "model": "reve",
+      "condition": "EC",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 383,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "embedding",
+      "model": "biot",
+      "condition": "EO",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 384,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "embedding",
+      "model": "biot",
+      "condition": "EC",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 385,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "embedding",
+      "model": "labram",
+      "condition": "EO",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 386,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "embedding",
+      "model": "labram",
+      "condition": "EC",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 387,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "embedding",
+      "model": "luna",
+      "condition": "EO",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 388,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "embedding",
+      "model": "luna",
+      "condition": "EC",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 389,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "embedding",
+      "model": "signaljepa",
+      "condition": "EO",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 390,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "embedding",
+      "model": "signaljepa",
+      "condition": "EC",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 391,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "embedding",
+      "model": "bendr",
+      "condition": "EO",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 392,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "embedding",
+      "model": "bendr",
+      "condition": "EC",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 393,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "cbramod",
+      "condition": "EO",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 394,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "cbramod",
+      "condition": "EC",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 395,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
+    },
+    "analysis": {
+      "type": "fine_tune",
+      "model": "reve",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6071,13 +6307,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "LogisticRegression",
+      "type": "fine_tune",
+      "model": "reve",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6087,13 +6323,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "feature",
-      "regression_head": "RandomForestClassifier",
+      "type": "fine_tune",
+      "model": "biot",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6103,13 +6339,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "SVC",
+      "type": "fine_tune",
+      "model": "biot",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6119,13 +6355,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "LogisticRegression",
+      "type": "fine_tune",
+      "model": "labram",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6135,13 +6371,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "sensor",
-      "regression_head": "RandomForestClassifier",
+      "type": "fine_tune",
+      "model": "labram",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6151,13 +6387,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "SVC",
+      "type": "fine_tune",
+      "model": "luna",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6167,13 +6403,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "LogisticRegression",
+      "type": "fine_tune",
+      "model": "luna",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6183,13 +6419,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "handcrafted",
-      "unit": "region",
-      "regression_head": "RandomForestClassifier",
+      "type": "fine_tune",
+      "model": "signaljepa",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6199,12 +6435,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "cbramod",
+      "type": "fine_tune",
+      "model": "signaljepa",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6214,12 +6451,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "reve",
+      "type": "fine_tune",
+      "model": "bendr",
+      "condition": "EO",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6229,12 +6467,13 @@
     "cohort": {
       "sex": "ALL",
       "age": "ALL",
-      "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "comorbidities": "ASD & ADHD",
+      "medication": "ALL"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "biot",
+      "type": "fine_tune",
+      "model": "bendr",
+      "condition": "EC",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6245,11 +6484,12 @@
       "sex": "ALL",
       "age": "ALL",
       "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "medication": "ASM"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "labram",
+      "type": "handcrafted",
+      "unit": "feature",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6260,11 +6500,12 @@
       "sex": "ALL",
       "age": "ALL",
       "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "medication": "ASM"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "luna",
+      "type": "handcrafted",
+      "unit": "feature",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6275,11 +6516,12 @@
       "sex": "ALL",
       "age": "ALL",
       "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "medication": "ASM"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "eegpt",
+      "type": "handcrafted",
+      "unit": "sensor",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6290,11 +6532,12 @@
       "sex": "ALL",
       "age": "ALL",
       "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "medication": "ASM"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "signaljepa",
+      "type": "handcrafted",
+      "unit": "sensor",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6305,11 +6548,12 @@
       "sex": "ALL",
       "age": "ALL",
       "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "medication": "ASM"
     },
     "analysis": {
-      "type": "embedding",
-      "model": "bendr",
+      "type": "handcrafted",
+      "unit": "region",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6320,11 +6564,12 @@
       "sex": "ALL",
       "age": "ALL",
       "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "medication": "ASM"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "cbramod",
+      "type": "handcrafted",
+      "unit": "region",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6335,11 +6580,12 @@
       "sex": "ALL",
       "age": "ALL",
       "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "medication": "no med"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "reve",
+      "type": "handcrafted",
+      "unit": "feature",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6350,11 +6596,12 @@
       "sex": "ALL",
       "age": "ALL",
       "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "medication": "no med"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "biot",
+      "type": "handcrafted",
+      "unit": "feature",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6365,11 +6612,12 @@
       "sex": "ALL",
       "age": "ALL",
       "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "medication": "no med"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "labram",
+      "type": "handcrafted",
+      "unit": "sensor",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6380,11 +6628,12 @@
       "sex": "ALL",
       "age": "ALL",
       "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "medication": "no med"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "luna",
+      "type": "handcrafted",
+      "unit": "sensor",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6395,11 +6644,12 @@
       "sex": "ALL",
       "age": "ALL",
       "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "medication": "no med"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "eegpt",
+      "type": "handcrafted",
+      "unit": "region",
+      "regression_head": "LogisticRegression",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6410,11 +6660,12 @@
       "sex": "ALL",
       "age": "ALL",
       "comorbidities": "ALL",
-      "medication": "ASM & psychostimulant"
+      "medication": "no med"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "signaljepa",
+      "type": "handcrafted",
+      "unit": "region",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }
@@ -6425,11 +6676,188 @@
       "sex": "ALL",
       "age": "ALL",
       "comorbidities": "ALL",
+      "medication": "psychostimulant"
+    },
+    "analysis": {
+      "type": "handcrafted",
+      "unit": "feature",
+      "regression_head": "LogisticRegression",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 420,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ALL",
+      "medication": "psychostimulant"
+    },
+    "analysis": {
+      "type": "handcrafted",
+      "unit": "feature",
+      "regression_head": "RandomForestClassifier",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 421,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ALL",
+      "medication": "psychostimulant"
+    },
+    "analysis": {
+      "type": "handcrafted",
+      "unit": "sensor",
+      "regression_head": "LogisticRegression",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 422,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ALL",
+      "medication": "psychostimulant"
+    },
+    "analysis": {
+      "type": "handcrafted",
+      "unit": "sensor",
+      "regression_head": "RandomForestClassifier",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 423,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ALL",
+      "medication": "psychostimulant"
+    },
+    "analysis": {
+      "type": "handcrafted",
+      "unit": "region",
+      "regression_head": "LogisticRegression",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 424,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ALL",
+      "medication": "psychostimulant"
+    },
+    "analysis": {
+      "type": "handcrafted",
+      "unit": "region",
+      "regression_head": "RandomForestClassifier",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 425,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ALL",
       "medication": "ASM & psychostimulant"
     },
     "analysis": {
-      "type": "fine_tune",
-      "model": "bendr",
+      "type": "handcrafted",
+      "unit": "feature",
+      "regression_head": "LogisticRegression",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 426,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ALL",
+      "medication": "ASM & psychostimulant"
+    },
+    "analysis": {
+      "type": "handcrafted",
+      "unit": "feature",
+      "regression_head": "RandomForestClassifier",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 427,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ALL",
+      "medication": "ASM & psychostimulant"
+    },
+    "analysis": {
+      "type": "handcrafted",
+      "unit": "sensor",
+      "regression_head": "LogisticRegression",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 428,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ALL",
+      "medication": "ASM & psychostimulant"
+    },
+    "analysis": {
+      "type": "handcrafted",
+      "unit": "sensor",
+      "regression_head": "RandomForestClassifier",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 429,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ALL",
+      "medication": "ASM & psychostimulant"
+    },
+    "analysis": {
+      "type": "handcrafted",
+      "unit": "region",
+      "regression_head": "LogisticRegression",
+      "level": "subject",
+      "balance": "balanced"
+    }
+  },
+  {
+    "id": 430,
+    "cohort": {
+      "sex": "ALL",
+      "age": "ALL",
+      "comorbidities": "ALL",
+      "medication": "ASM & psychostimulant"
+    },
+    "analysis": {
+      "type": "handcrafted",
+      "unit": "region",
+      "regression_head": "RandomForestClassifier",
       "level": "subject",
       "balance": "balanced"
     }

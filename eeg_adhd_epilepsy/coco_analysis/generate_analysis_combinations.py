@@ -13,6 +13,10 @@ def main():
         config = yaml.safe_load(f)
         
     groups = config.get("groups", {})
+
+    # Conditions to sweep — strip "_baseline" suffix for short names used in file names
+    conditions_full = config.get("signal", {}).get("conditions", ["EO_baseline", "EC_baseline"])
+    conditions = [c.replace("_baseline", "") for c in conditions_full]
     
     # Extract options excluding 'ALL'
     sex_opts = [x for x in groups.get("sex", []) if x != "ALL"]
@@ -54,9 +58,9 @@ def main():
             "balance": "balanced"
         })
         
-    # 2. Handcrafted (3 units x 3 regression heads = 9)
+    # 2. Handcrafted (3 units x 2 regression heads = 6)
     for unit in ["feature", "sensor", "region"]:
-        for reg_head in ["SVC", "LogisticRegression", "RandomForestClassifier"]:
+        for reg_head in ["LogisticRegression", "RandomForestClassifier"]:
             analyses.append({
                 "type": "handcrafted",
                 "unit": unit,
@@ -65,30 +69,38 @@ def main():
                 "balance": "balanced"
             })
             
-    # 3. Embedding (8 models)
-    models = ["cbramod", "reve", "biot", "labram", "luna", "eegpt", "signaljepa", "bendr"]
+    # 3. Embedding (8 models × N conditions)
+    models = ["cbramod", "reve", "biot", "labram", "luna", "signaljepa", "bendr"]
     for model in models:
-        analyses.append({
-            "type": "embedding",
-            "model": model,
-            "level": "subject",
-            "balance": "balanced"
-        })
-        
-    # 4. Fine-tuning (8 models)
+        for cond in conditions:
+            analyses.append({
+                "type": "embedding",
+                "model": model,
+                "condition": cond,
+                "level": "subject",
+                "balance": "balanced"
+            })
+
+    # 4. Fine-tuning (8 models × N conditions)
     for model in models:
-        analyses.append({
-            "type": "fine_tune",
-            "model": model,
-            "level": "subject",
-            "balance": "balanced"
-        })
+        for cond in conditions:
+            analyses.append({
+                "type": "fine_tune",
+                "model": model,
+                "condition": cond,
+                "level": "subject",
+                "balance": "balanced"
+            })
         
     combinations = []
     combo_id = 0
     
     for sex, age, com, med in cohorts:
         for analysis in analyses:
+            # Medication filters must ONLY be applied to handcrafted analyses
+            if med != "ALL" and analysis["type"] != "handcrafted":
+                continue
+                
             combinations.append({
                 "id": combo_id,
                 "cohort": {
@@ -109,13 +121,13 @@ def main():
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow([
-            "id", "sex", "age", "comorbidities", "medication", 
-            "analysis_type", "method_or_model", "handcrafted_unit", "level", "balance"
+            "id", "sex", "age", "comorbidities", "medication",
+            "condition", "analysis_type", "method_or_model", "handcrafted_unit", "level", "balance"
         ])
         for c in combinations:
             cohort = c["cohort"]
             analysis = c["analysis"]
-            
+
             atype = analysis["type"]
             method_or_model = ""
             if atype == "dim_reduction":
@@ -124,12 +136,13 @@ def main():
                 method_or_model = analysis["regression_head"]
             elif atype in ["embedding", "fine_tune"]:
                 method_or_model = analysis["model"]
-                
+
             h_unit = analysis.get("unit", "N/A")
-            
+            cond = analysis.get("condition", "N/A")
+
             writer.writerow([
                 c["id"], cohort["sex"], cohort["age"], cohort["comorbidities"], cohort["medication"],
-                atype, method_or_model, h_unit, analysis["level"], analysis["balance"]
+                cond, atype, method_or_model, h_unit, analysis["level"], analysis["balance"]
             ])
         
     print(f"Generated {len(combinations)} distinct combinations successfully at:")

@@ -193,119 +193,171 @@ def main():
             com_clean = com.replace(" & ", "-").replace(" ", "")
             med_clean = med.replace(" & ", "-").replace(" ", "")
             combo_name = f"sex-{sex_clean}_age-{age_clean}_com-{com_clean}_med-{med_clean}"
-            
+
             subset_csv = cohorts_dir / f"labels_{combo_name}.csv"
             subset.to_csv(subset_csv, index=False)
             generated_cohorts += 1
-            
+
             print(f"Combo {cid}: Cohort '{combo_name}': {len(subset)} patients")
-            
+
             analysis = combo['analysis']
             atype = analysis['type']
-            
+            condition = analysis.get('condition')  # e.g. "EO", "EC", or None for non-signal analyses
+
+            # Append condition to combo_name for analyses that use raw EEG signal
+            if condition:
+                combo_name = f"{combo_name}_cond-{condition}"
+
+            RUN_ANALYSIS = "/home/mat/projects/EEG_psychostimulant/eeg_adhd_epilepsy/coco_analysis/run_analysis.py"
+            # Build signal config; for EEG analyses inject only the relevant single condition
+            SIGNAL_CFG = dict(config.get("signal", {}))
+            if condition:
+                SIGNAL_CFG["conditions"] = [f"{condition}_baseline"]
+
             cmd_args = ""
-            script_path = ""
+            script_path = RUN_ANALYSIS
             slurm_params = {
                 "cpus-per-task": "16",
                 "mem": "64G",
-                "time": "12:00:00"
+                "time": "12:00:00",
             }
-            
+
             if atype == "dim_reduction":
                 method = analysis['method']
                 temp_config = {
-                    "data_path": "/home/mat/scratch/signal_features/descriptors/combined/pooled_subject_features.csv",
-                    "target_columns": "Epilepsy",
+                    "paths": {"data_root": paths.get("data_root", "")},
                     "analyses": [
                         {
                             "id": f"dim_reduction_{method.lower()}",
                             "enabled": True,
                             "mode": "dim_reduction",
+                            "data_path": "/home/mat/scratch/signal_features/descriptors/combined/pooled_subject_features.csv",
+                            "target_col": "Epilepsy",
                             "models": {
-                                method.lower(): {
-                                    "method": method,
-                                    "n_components": 2
-                                }
-                            }
+                                method.lower(): {"method": method, "n_components": 2}
+                            },
                         }
-                    ]
+                    ],
                 }
                 temp_config_path = out_dir / f"temp_config_{cid}.yaml"
                 with open(temp_config_path, 'w') as tf:
                     yaml.dump(temp_config, tf)
-                    
-                script_path = "/home/mat/projects/EEG_psychostimulant/eeg_adhd_epilepsy/coco_analysis/run_analysis.py"
-                cmd_args = f"--config {temp_config_path} --analysis-id dim_reduction_{method.lower()} --group-id '{combo_name}' --output-dir {out_dir}/dimred/{method.lower()}/{combo_name}"
-                
+                cmd_args = (
+                    f"--config {temp_config_path} "
+                    f"--analysis-id dim_reduction_{method.lower()} "
+                    f"--group-id '{combo_name}' "
+                    f"--label-csv {subset_csv} "
+                    f"--output-dir {out_dir}/dimred/{method.lower()}/{combo_name}"
+                )
+
             elif atype == "handcrafted":
                 unit = analysis['unit']
                 reg_head = analysis['regression_head']
-                if unit == "sensor":
-                    feat_file = "/home/mat/scratch/signal_features/descriptors/combined/sensor_subject_features.csv"
-                else:
-                    feat_file = "/home/mat/scratch/signal_features/descriptors/combined/pooled_subject_features.csv"
-                    
+                feat_file = (
+                    "/home/mat/scratch/signal_features/descriptors/combined/sensor_subject_features.csv"
+                    if unit == "sensor"
+                    else "/home/mat/scratch/signal_features/descriptors/combined/pooled_subject_features.csv"
+                )
                 temp_config = {
-                    "data_path": feat_file,
-                    "target_columns": "Epilepsy",
+                    "paths": {"data_root": paths.get("data_root", "")},
                     "analyses": [
                         {
                             "id": f"handcrafted_{unit}_{reg_head.lower()}",
                             "enabled": True,
                             "mode": "handcrafted",
+                            "data_path": feat_file,
+                            "target_col": "Epilepsy",
                             "analysis_unit": "all" if unit != "sensor" else "sensor",
                             "spatial_units": "all",
                             "feature_names": "all",
-                            "representation": "subject",
-                            "balance": {
-                                "strategy": "undersample"
-                            },
                             "models": {
                                 reg_head.lower(): {
                                     "method": reg_head,
-                                    "class_weight": "balanced"
+                                    "class_weight": "balanced",
                                 }
                             },
                             "metrics": ["accuracy", "roc_auc", "balanced_accuracy", "f1"],
-                            "cv": {
-                                "strategy": "group_kfold",
-                                "n_splits": 5
-                            }
+                            "cv": {"strategy": "group_kfold", "n_splits": 5},
                         }
-                    ]
+                    ],
                 }
                 temp_config_path = out_dir / f"temp_config_{cid}.yaml"
                 with open(temp_config_path, 'w') as tf:
                     yaml.dump(temp_config, tf)
-                    
-                script_path = "/home/mat/projects/EEG_psychostimulant/eeg_adhd_epilepsy/coco_analysis/run_analysis.py"
-                cmd_args = f"--config {temp_config_path} --analysis-id handcrafted_{unit}_{reg_head.lower()} --group-id '{combo_name}' --output-dir {out_dir}/handcrafted/{unit}_{reg_head.lower()}/{combo_name}"
-                
+                cmd_args = (
+                    f"--config {temp_config_path} "
+                    f"--analysis-id handcrafted_{unit}_{reg_head.lower()} "
+                    f"--group-id '{combo_name}' "
+                    f"--label-csv {subset_csv} "
+                    f"--output-dir {out_dir}/handcrafted/{unit}_{reg_head.lower()}/{combo_name} "
+                    f"--summary-csv {out_dir}/results_summary.csv"
+                )
+
             elif atype == "embedding":
                 model = analysis['model']
-                if model == "reve":
-                    script_path = "/home/mat/projects/EEG_psychostimulant/eeg_adhd_epilepsy/dl/reve/reve_extract.py"
-                    if not Path(script_path).exists():
-                        script_path = "/home/mat/projects/EEG_psychostimulant/eeg_adhd_epilepsy/dl/reve/embed/extract.py"
-                elif model == "cbramod":
-                    script_path = "/home/mat/projects/EEG_psychostimulant/eeg_adhd_epilepsy/dl/cbramod/make_embeddings.py"
-                else:
-                    script_path = f"/home/mat/projects/EEG_psychostimulant/eeg_adhd_epilepsy/dl/{model}/extract.py"
-                    
-                cmd_args = f"--label-csv {subset_csv} --data-root {paths['data_root']}"
-                slurm_params["gres"] = "gpu:1"
-                
+                temp_config = {
+                    "paths": {"data_root": paths.get("data_root", "")},
+                    "signal": SIGNAL_CFG,
+                    "analyses": [
+                        {
+                            "id": f"fm_embed_{model}",
+                            "enabled": True,
+                            "mode": "fm_embed",
+                            "model_key": model,
+                            "models": {
+                                "logreg": {"method": "LogisticRegression", "max_iter": 500, "class_weight": "balanced"},
+                                "rf": {"method": "RandomForestClassifier", "n_estimators": 200, "class_weight": "balanced"},
+                            },
+                            "metrics": ["accuracy", "roc_auc", "balanced_accuracy", "f1"],
+                            "cv": {"strategy": "group_kfold", "n_splits": 5},
+                        }
+                    ],
+                }
+                temp_config_path = out_dir / f"temp_config_{cid}.yaml"
+                with open(temp_config_path, 'w') as tf:
+                    yaml.dump(temp_config, tf)
+                cmd_args = (
+                    f"--config {temp_config_path} "
+                    f"--analysis-id fm_embed_{model} "
+                    f"--group-id '{combo_name}' "
+                    f"--label-csv {subset_csv} "
+                    f"--output-dir {out_dir}/embedding/{model}/{combo_name} "
+                    f"--summary-csv {out_dir}/results_summary.csv"
+                )
+                slurm_params = {"cpus-per-task": "4", "gres": "gpu:nvidia_h100_80gb_hbm3_2g.20gb:1", "mem": "16G", "time": "04:00:00"}
+
             elif atype == "fine_tune":
                 model = analysis['model']
-                if model == "reve":
-                    script_path = "/home/mat/projects/EEG_psychostimulant/eeg_adhd_epilepsy/dl/reve/fine_tune/reve_finetune_large.py"
-                elif model == "cbramod":
-                    script_path = "/home/mat/projects/EEG_psychostimulant/eeg_adhd_epilepsy/dl/cbramod/cbramod_fine_lp_ft.py"
-                else:
-                    script_path = f"/home/mat/projects/EEG_psychostimulant/eeg_adhd_epilepsy/dl/{model}/fine_tune.py"
-                    
-                cmd_args = f"--label-csv {subset_csv} --data-root {paths['data_root']}"
-                slurm_params["gres"] = "gpu:2"
+                temp_config = {
+                    "paths": {"data_root": paths.get("data_root", "")},
+                    "signal": SIGNAL_CFG,
+                    "analyses": [
+                        {
+                            "id": f"fm_lora_{model}",
+                            "enabled": True,
+                            "mode": "fm_lora",
+                            "model_key": model,
+                            "train_mode": "lora",
+                            "class_weight": "balanced",
+                            "lora": {"r": 8, "alpha": 16, "dropout": 0.05, "target_modules": "all-linear"},
+                            "trainer": {"batch_size": 64, "max_epochs": 15, "early_stopping_patience": 5},
+                            "metrics": ["accuracy", "roc_auc", "balanced_accuracy", "f1"],
+                            "cv": {"strategy": "group_kfold", "n_splits": 5},
+                        }
+                    ],
+                }
+                temp_config_path = out_dir / f"temp_config_{cid}.yaml"
+                with open(temp_config_path, 'w') as tf:
+                    yaml.dump(temp_config, tf)
+                cmd_args = (
+                    f"--config {temp_config_path} "
+                    f"--analysis-id fm_lora_{model} "
+                    f"--group-id '{combo_name}' "
+                    f"--label-csv {subset_csv} "
+                    f"--output-dir {out_dir}/fine_tune/{model}/{combo_name} "
+                    f"--summary-csv {out_dir}/results_summary.csv"
+                )
+                slurm_params = {"cpus-per-task": "4", "gres": "gpu:nvidia_h100_80gb_hbm3_2g.20gb:1", "mem": "16G", "time": "24:00:00"}
                 
             job_name = f"combo_{cid}_{atype}_{combo_name}"
             slurm_file = slurm_dir / f"{job_name}.slurm"
@@ -320,6 +372,7 @@ def main():
                 lines.append(f"#SBATCH --{k}={v}")
                 
             lines.append("")
+            lines.append("source /home/mat/ep/bin/activate")
             lines.append(f"python {script_path} {cmd_args}")
             
             with open(slurm_file, 'w') as f:

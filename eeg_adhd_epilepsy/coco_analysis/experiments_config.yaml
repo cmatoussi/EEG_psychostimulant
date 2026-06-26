@@ -18,22 +18,17 @@ signal:
   sfreq: 200.0
   ch_names: ["Fp1", "Fp2", "F7", "F3", "Fz", "F4", "F8", "T3", "C3", "Cz", "C4", "T4", "T5", "P3", "Pz", "P4", "T6", "O1", "O2"]  # 19 standard 10-20 channels
   epoch_desc: "base"          # options: [desc-base_epo.fif, desc-base_eeg.fif, desc-correctDss_eeg.fif, desc-denoiseWienerDss_eeg.fif]
-  conditions: ["EO_baseline", "EC_baseline"]  # options: [EO_baseline, EC_baseline, HV_EC, HV_EO, PostHV_EC, PostHV_EO, PHOTO_EC, PHOTO_EO] | null = all
+  conditions: ["EO_baseline", "EC_baseline"]  # each condition is run as a separate job; options: [EO_baseline, EC_baseline, HV_EC, HV_EO, PostHV_EC, PostHV_EO, PHOTO_EC, PHOTO_EO]
 
 # --------------------------------------------------------------------------
 # Analysis blocks — set enabled: true/false to control which run
 # --------------------------------------------------------------------------
 analyses:
   - id: "cbramod_embed"
-    enabled: true
+    enabled: false
     mode: "fm_embed"          # frozen FM → classical head
-    model_key: "cbramod"      # options: [cbramod, reve, biot, labram, luna, eegpt, signaljepa, bendr]
+    model_key: "cbramod"      # options: [cbramod, reve, biot, labram, luna, signaljepa, bendr]
     models:                   # multiple heads run in one sweep
-      svc:
-        method: "SVC"
-        C: 1.0
-        kernel: "rbf"
-        class_weight: "balanced"
       logreg:
         method: "LogisticRegression"
         max_iter: 500
@@ -52,9 +47,9 @@ analyses:
       time: "04:00:00"
 
   - id: "cbramod_lora"
-    enabled: true
+    enabled: false
     mode: "fm_lora"           # LoRA fine-tuning (end-to-end)
-    model_key: "cbramod"      # options: [cbramod, reve, biot, labram, luna, eegpt, signaljepa, bendr]
+    model_key: "cbramod"      # options: [cbramod, reve, biot, labram, luna, signaljepa, bendr]
     train_mode: "lora"
     class_weight: "balanced"  # coco_pipe auto-computes weights for PyTorch CrossEntropyLoss
     lora:
@@ -88,7 +83,7 @@ analyses:
       time: "24:00:00"
 
   - id: "dim_reduction_analysis"
-    enabled: true
+    enabled: false
     mode: "dim_reduction"     # Use coco_pipe/dim_reduction module
     models:
       pca:
@@ -104,7 +99,7 @@ analyses:
       selection_metric: "trustworthiness"
       
   - id: "handcrafted_ml"
-    enabled: true
+    enabled: false
     mode: "handcrafted"       # pre-computed features CSV → classical decoding
     # 1. Select the aggregation level (subject vs epoch, pooled vs per-sensor)
     # Options:
@@ -134,11 +129,6 @@ analyses:
         strategy: "group_kfold"
         n_splits: 3
     models:
-      svc:
-        method: "SVC"
-        C: 1.0
-        kernel: "rbf"
-        class_weight: "balanced"
       logreg:
         method: "LogisticRegression"
         max_iter: 500
