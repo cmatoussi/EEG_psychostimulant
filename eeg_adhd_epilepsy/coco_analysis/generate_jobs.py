@@ -52,9 +52,9 @@ SKIP_MODELS = {"eegpt"}
 # time:       wall-clock limit override (default GPU_TIME)
 # extra_env:  extra shell exports added to the SLURM script
 MODEL_REQS = {
-    "cbramod":    {"gpu": "2g.20gb", "batch_size": 32},
+    "cbramod":    {"gpu": "2g.20gb", "batch_size": 32, "lr": 1e-3},
     "reve":       {"gpu": "2g.20gb", "batch_size": 32, "extra_env": "export HF_HUB_OFFLINE=1\nexport TRANSFORMERS_OFFLINE=1\nexport HF_HOME=/home/mat/.cache/huggingface"},
-    "biot":       {"gpu": "2g.20gb", "batch_size": 32},
+    "biot":       {"gpu": "2g.20gb", "batch_size": 32, "lr": 1e-2},
     "labram":     {"gpu": "2g.20gb", "batch_size": 8,  "time": "6:00:00"},
     "luna":       {"gpu": "2g.20gb", "batch_size": 32},
     "signaljepa": {"gpu": "2g.20gb", "batch_size": 32, "lr": 1e-5, "lora_alpha": 4},
@@ -101,7 +101,7 @@ def job_name(row: dict) -> str:
     model     = sanitize(row["method_or_model"])
     condition = sanitize(row["condition"])
     gid       = group_id(row)
-    if atype in ("embedding", "fine_tune", "frozen_fine_tune"):
+    if atype in ("embedding", "fm_extract", "fine_tune", "frozen_fine_tune"):
         return f"combo_{combo_id}_{atype}_{model}_cond-{condition}_{gid}"
     return f"combo_{combo_id}_{atype}_{model}_{gid}"
 
@@ -228,6 +228,57 @@ signal:
 """
 
 
+def yaml_fm_extract(row: dict, analysis_id: str) -> str:
+    """Option B: extract + save BIDS embeddings, then run classical CV heads."""
+    conditions = CONDITION_MAP[row["condition"]]
+    cond_yaml  = "\n".join(f"  - {c}" for c in conditions) if conditions else ""
+    cond_block = f"  conditions:\n{cond_yaml}" if cond_yaml else ""
+    model      = row["method_or_model"]
+    return f"""\
+analysis_level: subject_level
+analyses:
+- cv:
+    n_splits: 5
+    strategy: group_kfold
+  enabled: true
+  id: {analysis_id}
+  metrics:
+  - accuracy
+  - roc_auc
+  - balanced_accuracy
+  - f1
+  mode: fm_extract
+  model_key: {model}
+  models:
+    logreg:
+      method: LogisticRegression
+      max_iter: 1000
+      class_weight: balanced
+    rf:
+      method: RandomForestClassifier
+      n_estimators: 300
+      class_weight: balanced
+    hgb:
+      method: HistGradientBoostingClassifier
+    dummy:
+      method: DummyClassifier
+      strategy: stratified
+    svm:
+      method: SVC
+      kernel: rbf
+      probability: true
+      class_weight: balanced
+paths:
+  data_root: {PREPROC_ROOT}
+signal:
+  ch_names:
+{_ch_names_yaml()}
+{cond_block}
+  epoch_desc: base
+  sfreq: 200.0
+"""
+
+
 def yaml_handcrafted(row: dict, analysis_id: str) -> str:
     method = row["method_or_model"]
     unit   = row["handcrafted_unit"]
@@ -343,17 +394,17 @@ def generate(row: dict, dry_run: bool = False) -> str | None:
     safe_model = sanitize(model)
     safe_cond  = sanitize(condition)
 
-    if atype in ("embedding", "fine_tune", "frozen_fine_tune") and model in SKIP_MODELS:
+    if atype in ("embedding", "fm_extract", "fine_tune", "frozen_fine_tune") and model in SKIP_MODELS:
         print(f"  [skip] combo {combo_id} — {model} incompatible with 19-channel data")
         return None
 
     reqs          = MODEL_REQS.get(model, {})
-    gpu           = reqs.get("gpu") if atype in ("embedding", "fine_tune", "frozen_fine_tune") else None
+    gpu           = reqs.get("gpu") if atype in ("embedding", "fm_extract", "fine_tune", "frozen_fine_tune") else None
     batch         = reqs.get("batch_size", 32)
     lr            = reqs.get("lr")
     lora_alpha    = reqs.get("lora_alpha", 16)
     extra_env     = reqs.get("extra_env", "")
-    time_override = reqs.get("time") if atype in ("embedding", "fine_tune", "frozen_fine_tune") else None
+    time_override = reqs.get("time") if atype in ("embedding", "fm_extract", "fine_tune", "frozen_fine_tune") else None
 
     # ── analysis id & output dir ──────────────────────────────────────────────
     if atype == "fine_tune":
@@ -368,6 +419,12 @@ def generate(row: dict, dry_run: bool = False) -> str | None:
         analysis_id = f"fm_embed_{safe_model}"
         output_dir  = str(RESULTS_ROOT / "embedding" / safe_model / f"cond-{safe_cond}" / gid)
         result_name = "results"
+    elif atype == "fm_extract":
+        analysis_id = f"fm_extract_{safe_model}"
+        # run_fm_extract treats output_dir as the embeddings ROOT; it appends
+        # <model_key>/sub-XXXX/... and writes embeddings_performance_summary.csv here.
+        output_dir  = str(RESULTS_ROOT / "embeddings")
+        result_name = f"results_{safe_model}_{safe_cond}"
     elif atype == "handcrafted":
         unit        = row["handcrafted_unit"]
         analysis_id = f"handcrafted_{safe_model}_{unit}"
@@ -390,6 +447,8 @@ def generate(row: dict, dry_run: bool = False) -> str | None:
         yaml_content = yaml_frozen_fine_tune(row, analysis_id, batch)
     elif atype == "embedding":
         yaml_content = yaml_embedding(row, analysis_id)
+    elif atype == "fm_extract":
+        yaml_content = yaml_fm_extract(row, analysis_id)
     elif atype == "handcrafted":
         yaml_content = yaml_handcrafted(row, analysis_id)
     else:
@@ -429,7 +488,7 @@ def generate(row: dict, dry_run: bool = False) -> str | None:
 def main():
     parser = argparse.ArgumentParser(description="Generate SLURM jobs from analysis_combinations.csv")
     parser.add_argument("--ids",     nargs="+", type=int, help="Only generate these combo IDs")
-    parser.add_argument("--type",    choices=["fine_tune", "embedding", "handcrafted", "dim_reduction"],
+    parser.add_argument("--type",    choices=["fine_tune", "embedding", "fm_extract", "handcrafted", "dim_reduction"],
                         help="Only generate this analysis type")
     parser.add_argument("--model",   help="Only generate jobs for this model")
     parser.add_argument("--dry-run", action="store_true", help="Print what would be generated without writing files")
