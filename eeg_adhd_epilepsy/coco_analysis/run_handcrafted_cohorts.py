@@ -161,9 +161,12 @@ def load_sensor_data(level, condition, cohort_df):
     feats = [c for c in feats if c in df.columns]
     lab = cohort_df.copy()
     lab["study_id"] = lab["study_id"].astype(str)
-    lab = lab[["study_id", "epilepsy"]].drop_duplicates("study_id")
-    df = df.merge(lab, left_on="study_id", right_on="study_id", how="inner")
-    y = df["epilepsy"].astype(int).values
+    # rename the label to avoid clashing with the feature CSV's own 'epilepsy'
+    # column (a plain merge would suffix both to epilepsy_x / epilepsy_y).
+    lab = (lab[["study_id", "epilepsy"]].drop_duplicates("study_id")
+           .rename(columns={"epilepsy": "_label"}))
+    df = df.merge(lab, on="study_id", how="inner")
+    y = df["_label"].astype(int).values
     groups = df["study_id"].values
     X = df[feats].apply(pd.to_numeric, errors="coerce").values.astype(np.float32)
     if np.isnan(X).any():
