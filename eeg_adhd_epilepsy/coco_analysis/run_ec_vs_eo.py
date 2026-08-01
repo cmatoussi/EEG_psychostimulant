@@ -25,6 +25,8 @@ from sklearn.metrics import (
     accuracy_score, balanced_accuracy_score, f1_score, roc_auc_score,
 )
 
+from coco_pipe.decoding._metrics import _balanced_accuracy_optimal_score
+
 sys.path.insert(0, str(Path(__file__).parent))
 import run_analysis as ra  # noqa: E402
 
@@ -85,7 +87,7 @@ def _score(yt, yp, p1):
     return {
         "accuracy": float(accuracy_score(yt, yp)),
         "balanced_accuracy": float(balanced_accuracy_score(yt, yp)),
-        "balanced_accuracy_optimal": ra._balanced_accuracy_optimal(yt, p1) if two else float("nan"),
+        "balanced_accuracy_optimal": _balanced_accuracy_optimal_score(yt, p1) if two else float("nan"),
         "f1": float(f1_score(yt, yp, average="weighted", zero_division=0)),
         "roc_auc": float(roc_auc_score(yt, p1)) if two else float("nan"),
     }

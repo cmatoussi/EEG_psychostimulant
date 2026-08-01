@@ -23,6 +23,7 @@ from coco_pipe.decoding.configs import (
     TrainerConfig,
 )
 from coco_pipe.decoding.experiment import Experiment
+from coco_pipe.decoding.posthoc import posthoc_metrics_from_result as augment_posthoc_metrics
 from coco_pipe.decoding._specs import SignalMetadata
 from coco_pipe.decoding.foundation_models import FoundationEmbeddingExtractor
 from coco_pipe.dim_reduction.core import DimReduction
@@ -564,85 +565,8 @@ def _build_classical_models(models_raw: dict) -> dict:
     return models
 
 
-# ---------------------------------------------------------------------------
-# Post-hoc scoring (computed once from the saved fold predictions)
-# ---------------------------------------------------------------------------
-# coco_pipe now supports both balanced_accuracy_optimal and subject_level_metrics
-# natively, but its subject aggregation is a per-run SWITCH — one level per CV run.
-# This post-hoc pass instead derives BOTH epoch- AND subject-level metrics from a
-# single CV run's stored predictions (per fold, then averaged), which is what the
-# sweeps and plots consume. The threshold search reuses coco_pipe's helper so it
-# has a single source of truth; subject aggregation matches coco_pipe's
-# (mean proba -> threshold) for our per-subject-constant labels.
-
-def _balanced_accuracy_optimal(y_true: np.ndarray, proba1: np.ndarray) -> float:
-    """Balanced accuracy at the Youden-optimal threshold — reuses coco_pipe's
-    implementation (identical threshold sweep) so there is one source of truth."""
-    from coco_pipe.decoding._metrics import _balanced_accuracy_optimal_score
-    if len(np.unique(y_true)) < 2:
-        return float("nan")
-    return _balanced_accuracy_optimal_score(y_true, proba1)
-
-
-def _score_predictions(y_true: np.ndarray, y_pred: np.ndarray, proba1: np.ndarray) -> dict:
-    from sklearn.metrics import (
-        accuracy_score, balanced_accuracy_score, f1_score, roc_auc_score,
-    )
-    two_class = len(np.unique(y_true)) > 1
-    return {
-        "accuracy": float(accuracy_score(y_true, y_pred)),
-        "balanced_accuracy": float(balanced_accuracy_score(y_true, y_pred)),
-        "f1": float(f1_score(y_true, y_pred, zero_division=0)),
-        "roc_auc": float(roc_auc_score(y_true, proba1)) if two_class else float("nan"),
-        "balanced_accuracy_optimal": _balanced_accuracy_optimal(y_true, proba1) if two_class else float("nan"),
-    }
-
-
-def _aggregate_subject(y_true: np.ndarray, proba1: np.ndarray, groups: np.ndarray):
-    """Mean probability per subject -> one prediction per subject (threshold 0.5)."""
-    uniq = np.unique(groups)
-    sy = np.array([int(round(float(y_true[groups == g].mean()))) for g in uniq])
-    sp = np.array([float(proba1[groups == g].mean()) for g in uniq])
-    return sy, (sp >= 0.5).astype(int), sp
-
-
-def augment_posthoc_metrics(json_path: Path, analysis_level: str = "epoch_level"):
-    """Write a ``*_posthoc_metrics.json`` sidecar with epoch- and subject-level
-    metrics (incl. balanced_accuracy_optimal), computed per fold then averaged."""
-    json_path = Path(json_path)
-    data = json.loads(json_path.read_text())
-    summary = {}
-    for model, node in data.get("results", {}).items():
-        per_level = {"epoch_level": [], "subject_level": []}
-        for fold in node.get("predictions", []):
-            yt = np.asarray(fold["y_true"])
-            yp = np.asarray(fold["y_pred"])
-            proba = np.asarray(fold["y_proba"])
-            p1 = proba[:, 1] if proba.ndim == 2 else proba
-            per_level["epoch_level"].append(_score_predictions(yt, yp, p1))
-            grp = fold.get("group")
-            if grp is not None:
-                grp = np.asarray(grp)
-                if grp.size == yt.size and len(np.unique(grp)) < yt.size:
-                    sy, spred, sp = _aggregate_subject(yt, p1, grp)
-                    per_level["subject_level"].append(_score_predictions(sy, spred, sp))
-        out = {}
-        for lvl, folds in per_level.items():
-            if not folds:
-                continue
-            out[lvl] = {
-                k: {
-                    "mean": float(np.nanmean([f[k] for f in folds])),
-                    "std": float(np.nanstd([f[k] for f in folds])),
-                }
-                for k in folds[0]
-            }
-        summary[model] = out
-    sidecar = json_path.with_name(json_path.stem + "_posthoc_metrics.json")
-    sidecar.write_text(
-        json.dumps({"analysis_level": analysis_level, "metrics": summary}, indent=2)
-    )
-    return summary, sidecar
+# Post-hoc scoring (both epoch- and subject-level metrics from one CV run's saved
+# predictions) now lives in coco_pipe; imported at the top as augment_posthoc_metrics.
 
 
 # ---------------------------------------------------------------------------

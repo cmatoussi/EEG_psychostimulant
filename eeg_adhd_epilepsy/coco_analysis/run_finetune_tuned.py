@@ -24,9 +24,8 @@ import pandas as pd
 
 sys.path.insert(0, "/home/mat/projects/coco-pipe")
 sys.path.insert(0, str(Path(__file__).parent))
-from run_analysis import (  # noqa: E402
-    _balanced_accuracy_optimal, load_eeg_epochs, normalize_label_df,
-)
+from coco_pipe.decoding._metrics import _balanced_accuracy_optimal_score  # noqa: E402
+from run_analysis import load_eeg_epochs, normalize_label_df  # noqa: E402
 from tune_lora import _prep_model_data  # noqa: E402  (model-specific preprocessing)
 
 N_SPLITS = 5
@@ -163,7 +162,7 @@ def main():
         proba1 = net.predict_proba(Xte)[:, 1]
         folds["accuracy"].append(float(accuracy_score(y[te], pred)))
         folds["balanced_accuracy"].append(float(balanced_accuracy_score(y[te], pred)))
-        folds["balanced_accuracy_optimal"].append(_balanced_accuracy_optimal(y[te], proba1))
+        folds["balanced_accuracy_optimal"].append(_balanced_accuracy_optimal_score(y[te], proba1))
         folds["roc_auc"].append(float(roc_auc_score(y[te], proba1)))
         print(f"  fold {k}: acc={folds['accuracy'][-1]:.3f} "
               f"bacc={folds['balanced_accuracy'][-1]:.3f} auc={folds['roc_auc'][-1]:.3f}", flush=True)
