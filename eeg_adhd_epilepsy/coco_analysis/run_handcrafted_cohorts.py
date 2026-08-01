@@ -83,17 +83,17 @@ def add_drug_flags(d):
     if "source_dataset" not in d.columns:
         src = pd.read_csv(CANONICAL_CSV, usecols=["study_id", "source_dataset"])
         src["study_id"] = src["study_id"].astype(str)
-        d["Study ID"] = d["Study ID"].astype(str)
-        d = d.merge(src.rename(columns={"study_id": "Study ID"}), on="Study ID", how="left")
+        d["study_id"] = d["study_id"].astype(str)
+        d = d.merge(src.rename(columns={"study_id": "study_id"}), on="study_id", how="left")
     return d
 
 
 def _ctrl(d):
-    return d.Epilepsy == 0
+    return d.epilepsy == 0
 
 
 def _epi(d):
-    return d.Epilepsy == 1
+    return d.epilepsy == 1
 
 
 def _adhd(d):
@@ -109,8 +109,8 @@ def _adhd(d):
 COHORT_GROUPS = {
     "all": {"all": ("all", lambda d: pd.Series(True, index=d.index))},
     "sex": {
-        "F":   ("female", lambda d: d.Sex == "F"),
-        "M":   ("male",   lambda d: d.Sex == "M"),
+        "F":   ("female", lambda d: d.sex == "F"),
+        "M":   ("male",   lambda d: d.sex == "M"),
         "ALL": ("all",    lambda d: pd.Series(True, index=d.index)),
     },
     "age": {
@@ -120,10 +120,10 @@ COHORT_GROUPS = {
         "13-18": ("age_13_18", lambda d: d.age_group == "13-18"),
     },
     "comorbidity": {
-        "none": ("none", lambda d: (d.TSA == 0) & (d.TDAH == 0)),
-        "asd":  ("asd",  lambda d: (d.TSA == 1) & (d.TDAH == 0)),
-        "adhd": ("adhd", lambda d: (d.TSA == 0) & (d.TDAH == 1)),
-        "both": ("both", lambda d: (d.TSA == 1) & (d.TDAH == 1)),
+        "none": ("none", lambda d: (d.autism == 0) & (d.adhd == 0)),
+        "asd":  ("asd",  lambda d: (d.autism == 1) & (d.adhd == 0)),
+        "adhd": ("adhd", lambda d: (d.autism == 0) & (d.adhd == 1)),
+        "both": ("both", lambda d: (d.autism == 1) & (d.adhd == 1)),
     },
     # controls (epilepsy=0) vs each epilepsy+ medication subset. Non-resistant
     # positives are kept within the adhd source (controls are all adhd); the
@@ -160,10 +160,10 @@ def load_sensor_data(level, condition, cohort_df):
     feats = json.load(open(f"{FEATDIR}/sensor_{level}_features_feature_columns.json"))
     feats = [c for c in feats if c in df.columns]
     lab = cohort_df.copy()
-    lab["Study ID"] = lab["Study ID"].astype(str)
-    lab = lab[["Study ID", "Epilepsy"]].drop_duplicates("Study ID")
-    df = df.merge(lab, left_on="study_id", right_on="Study ID", how="inner")
-    y = df["Epilepsy"].astype(int).values
+    lab["study_id"] = lab["study_id"].astype(str)
+    lab = lab[["study_id", "epilepsy"]].drop_duplicates("study_id")
+    df = df.merge(lab, left_on="study_id", right_on="study_id", how="inner")
+    y = df["epilepsy"].astype(int).values
     groups = df["study_id"].values
     X = df[feats].apply(pd.to_numeric, errors="coerce").values.astype(np.float32)
     if np.isnan(X).any():
@@ -386,10 +386,10 @@ def main():
         cohort_df = label_df[mask_fn(label_df)].copy()
         cout = out / subdir
         cout.mkdir(parents=True, exist_ok=True)
-        n_epi = int((cohort_df["Epilepsy"] == 1).sum())
-        n_ctrl = int((cohort_df["Epilepsy"] == 0).sum())
+        n_epi = int((cohort_df["epilepsy"] == 1).sum())
+        n_ctrl = int((cohort_df["epilepsy"] == 0).sum())
         print(f"=== {args.cohort_group}/{key} -> {subdir} "
-              f"({cohort_df['Study ID'].nunique()} subj: {n_epi} epi, {n_ctrl} ctrl), "
+              f"({cohort_df['study_id'].nunique()} subj: {n_epi} epi, {n_ctrl} ctrl), "
               f"{args.level}-level ===", flush=True)
         for cond in CONDITIONS:
             run_condition(cond, cohort_df, args.level, cout, label=subdir)

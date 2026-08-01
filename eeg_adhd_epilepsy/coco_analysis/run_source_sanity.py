@@ -41,7 +41,7 @@ HEADS = {"logreg": {"method": "LogisticRegression", "max_iter": 500,
 
 # scope -> mask on the normalized label_df
 SCOPES = {
-    "epilepsy_only": lambda d: d.Epilepsy == 1,
+    "epilepsy_only": lambda d: d.epilepsy == 1,
     "all_subjects":  lambda d: pd.Series(True, index=d.index),
 }
 
@@ -75,8 +75,8 @@ def main():
                          "patients_metadata_clean.csv (not the without_source copy).")
     # binary target: adhd = 0, drug_resistant = 1
     label_df["SourceBin"] = (label_df.source_dataset == "drug_resistant").astype(int)
-    src_lut = (label_df.drop_duplicates("Study ID")
-               .set_index(label_df["Study ID"].astype(str))["SourceBin"])
+    src_lut = (label_df.drop_duplicates("study_id")
+               .set_index(label_df["study_id"].astype(str))["SourceBin"])
 
     out = Path(args.out_csv)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -87,7 +87,7 @@ def main():
 
     for scope, mask_fn in SCOPES.items():
         scope_df = label_df[mask_fn(label_df)].copy()
-        print(f"=== scope {scope}: {scope_df['Study ID'].nunique()} subjects "
+        print(f"=== scope {scope}: {scope_df['study_id'].nunique()} subjects "
               f"({int((scope_df.SourceBin==0).sum())} adhd, "
               f"{int((scope_df.SourceBin==1).sum())} drug_resistant) ===", flush=True)
         for model in MODELS:

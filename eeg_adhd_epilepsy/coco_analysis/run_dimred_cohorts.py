@@ -85,14 +85,14 @@ def reject_outlier_rows(X, y, groups, feats, z_threshold, frac_threshold, out_di
 COHORT_GROUPS = {
     "all": {"all": ("all", lambda d: pd.Series(True, index=d.index))},
     "comorbidity": {
-        "none": ("none", lambda d: (d.TSA == 0) & (d.TDAH == 0)),
-        "asd":  ("asd",  lambda d: (d.TSA == 1) & (d.TDAH == 0)),
-        "adhd": ("adhd", lambda d: (d.TSA == 0) & (d.TDAH == 1)),
-        "both": ("both", lambda d: (d.TSA == 1) & (d.TDAH == 1)),
+        "none": ("none", lambda d: (d.autism == 0) & (d.adhd == 0)),
+        "asd":  ("asd",  lambda d: (d.autism == 1) & (d.adhd == 0)),
+        "adhd": ("adhd", lambda d: (d.autism == 0) & (d.adhd == 1)),
+        "both": ("both", lambda d: (d.autism == 1) & (d.adhd == 1)),
     },
     "sex": {
-        "F":   ("female", lambda d: d.Sex == "F"),
-        "M":   ("male",   lambda d: d.Sex == "M"),
+        "F":   ("female", lambda d: d.sex == "F"),
+        "M":   ("male",   lambda d: d.sex == "M"),
         "ALL": ("all",    lambda d: pd.Series(True, index=d.index)),
     },
     "age": {
@@ -106,9 +106,9 @@ COHORT_GROUPS = {
 
 def _cohort_metadata(groups, label_df):
     """Per-sample metadata (aligned to embedding rows) for report colouring."""
-    lut = label_df.drop_duplicates("Study ID").set_index(label_df["Study ID"].astype(str))
-    cols = {"Epilepsy": "Epilepsy", "Sex": "Sex", "age_group": "age_group",
-            "TSA": "TSA", "TDAH": "TDAH", "source_dataset": "source_dataset"}
+    lut = label_df.drop_duplicates("study_id").set_index(label_df["study_id"].astype(str))
+    cols = {"epilepsy": "epilepsy", "sex": "sex", "age_group": "age_group",
+            "autism": "autism", "adhd": "adhd", "source_dataset": "source_dataset"}
     meta = {}
     for out, col in cols.items():
         if col in lut.columns:
@@ -166,7 +166,7 @@ def reduce_and_report(X, y, groups, meta, out_dir, title, cond=None):
 def run_cohort(cohort_key, subdir, mask_fn, label_df, out_root, condition,
                reject=True, mad_z=MAD_Z, outlier_frac=OUTLIER_FRAC, clip=CLIP):
     cohort_df = label_df[mask_fn(label_df)].copy()
-    acfg = {"data_path": FEATURE_CSV, "target_col": "Epilepsy", "condition": condition}
+    acfg = {"data_path": FEATURE_CSV, "target_col": "epilepsy", "condition": condition}
     out_dir = Path(out_root) / subdir
     out_dir.mkdir(parents=True, exist_ok=True)
 

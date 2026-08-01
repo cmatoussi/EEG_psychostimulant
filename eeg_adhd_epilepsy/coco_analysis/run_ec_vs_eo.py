@@ -46,8 +46,8 @@ HEADS = {
 COHORT_GROUPS = {
     "sex": {
         "ALL": ("results_embedding_all.csv",    lambda d: pd.Series(True, index=d.index)),
-        "F":   ("results_embedding_female.csv", lambda d: d.Sex == "F"),
-        "M":   ("results_embedding_male.csv",   lambda d: d.Sex == "M"),
+        "F":   ("results_embedding_female.csv", lambda d: d.sex == "F"),
+        "M":   ("results_embedding_male.csv",   lambda d: d.sex == "M"),
     },
     "age": {
         "5-8":   ("results_embedding_age_5_8.csv",   lambda d: d.age_group == "5-8"),
@@ -55,9 +55,9 @@ COHORT_GROUPS = {
         "13-18": ("results_embedding_age_13_18.csv", lambda d: d.age_group == "13-18"),
     },
     "comorbidity": {
-        "no_comorbidity":    ("results_embedding_no_comorbidity.csv",    lambda d: (d.TSA == 0) & (d.TDAH == 0)),
-        "with_adhd":         ("results_embedding_with_adhd.csv",         lambda d: (d.TSA == 0) & (d.TDAH == 1)),
-        "with_adhd_and_asd": ("results_embedding_with_adhd_and_asd.csv", lambda d: (d.TSA == 1) & (d.TDAH == 1)),
+        "no_comorbidity":    ("results_embedding_no_comorbidity.csv",    lambda d: (d.autism == 0) & (d.adhd == 0)),
+        "with_adhd":         ("results_embedding_with_adhd.csv",         lambda d: (d.autism == 0) & (d.adhd == 1)),
+        "with_adhd_and_asd": ("results_embedding_with_adhd_and_asd.csv", lambda d: (d.autism == 1) & (d.adhd == 1)),
     },
 }
 
@@ -111,7 +111,7 @@ def _metrics_from_result(result_json: Path, head: str):
 
 
 def _load_condition(model, cond, cohort_df):
-    acfg = {"model_key": model, "target_col": "Epilepsy", "embedding_level": LOAD_LEVEL}
+    acfg = {"model_key": model, "target_col": "epilepsy", "embedding_level": LOAD_LEVEL}
     X, _, groups = ra.load_precomputed_embeddings(
         acfg, {"paths": {}}, cohort_df, {"conditions": [cond]}
     )
@@ -124,7 +124,7 @@ def run_one_cohort(cohort_key, csv_name, mask_fn, label_df, out_dir):
     out_csv = Path(out_dir) / csv_name
     Path(out_dir).mkdir(parents=True, exist_ok=True)
     rows = []
-    print(f"=== cohort {cohort_key}: {cohort_df['Study ID'].nunique()} subjects ===", flush=True)
+    print(f"=== cohort {cohort_key}: {cohort_df['study_id'].nunique()} subjects ===", flush=True)
 
     def _flush():
         pd.DataFrame(rows, columns=COLUMNS).to_csv(out_csv, index=False)

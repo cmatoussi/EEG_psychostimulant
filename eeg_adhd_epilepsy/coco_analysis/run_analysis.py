@@ -186,14 +186,17 @@ def _undersample_majority(X, y, groups, seed=42):
 
 # Map the shared patients_metadata_clean.csv (lowercase) schema onto the
 # canonical column names the loaders and cohort logic expect.
+# Canonical schema is the lowercase BIDS naming. These map any legacy-schema
+# columns to the canonical names, so old CSVs still load; lowercase CSVs pass
+# through untouched.
 _LABEL_COL_ALIASES = {
-    "study_id": "Study ID",
-    "epilepsy": "Epilepsy",
-    "autism": "TSA",             # ASD
-    "adhd": "TDAH",              # ADHD
-    "sex": "Sex",
-    "age": "Age",
-    "psychostimulant": "Psychostimulant (y/n)",
+    "Study ID": "study_id",
+    "Epilepsy": "epilepsy",
+    "TSA": "autism",             # ASD
+    "TDAH": "adhd",              # ADHD
+    "Sex": "sex",
+    "Age": "age",
+    "Psychostimulant (y/n)": "psychostimulant",
 }
 
 
@@ -212,8 +215,8 @@ def load_handcrafted_data(
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Load feature CSV and align it to the cohort subjects in label_df."""
     data_path = analysis_cfg["data_path"]
-    target_col = analysis_cfg.get("target_col", "Epilepsy")
-    subject_col = "Study ID"
+    target_col = analysis_cfg.get("target_col", "epilepsy")
+    subject_col = "study_id"
 
     feat_df = pd.read_csv(data_path)
     feat_df[subject_col] = feat_df[subject_col].astype(str)
@@ -231,7 +234,7 @@ def load_handcrafted_data(
     groups = feat_df[subject_col].values
 
     # Drop non-feature columns
-    drop_cols = {subject_col, target_col, "Sex", "Age", "TSA", "TDAH"}
+    drop_cols = {subject_col, target_col, "sex", "age", "autism", "adhd"}
     X_df = feat_df.drop(columns=[c for c in drop_cols if c in feat_df.columns])
 
     # Optional spatial / region slicing
@@ -249,13 +252,12 @@ def load_handcrafted_data(
 _DIMRED_META_COLS = {
     "epoch_count", "subject", "session", "run", "recording_id", "condition",
     "source_dataset", "study_id", "patient_id", "patient_group_id", "eeg_date",
-    "first_eeg", "age", "age_group", "sex",
-    # legacy schema
-    "Study ID", "Pt ID", "psychostimulant_description", "psychostimulant_category",
-    "Age", "Sex", "TDAH", "TSA", "Epilepsy",
+    "first_eeg", "age", "age_group", "sex", "adhd", "autism", "epilepsy",
+    "combined_diagnosis", "psychostimulant",
+    "psychostimulant_description", "psychostimulant_category",
 }
 # Candidate subject-id column names across schema versions.
-_DIMRED_SUBJECT_COLS = ["study_id", "Study ID", "subject"]
+_DIMRED_SUBJECT_COLS = ["study_id", "subject"]
 
 
 def _dimred_feature_columns(data_path: str, present_cols: list[str]) -> list[str] | None:
@@ -281,7 +283,7 @@ def load_dim_reduction_data(
     recording condition*, so ``condition`` filters to a single recording.
     """
     data_path = analysis_cfg["data_path"]
-    target_col = analysis_cfg.get("target_col", "Epilepsy")
+    target_col = analysis_cfg.get("target_col", "epilepsy")
     condition = analysis_cfg.get("condition")  # e.g. "EO_baseline"; None = all
 
     feat_df = pd.read_csv(data_path, low_memory=False)
@@ -302,12 +304,12 @@ def load_dim_reduction_data(
         if feat_df.empty:
             raise ValueError(f"No rows for condition={condition!r}. Available: {avail}")
 
-    # Attach labels from the cohort table (label_df uses 'Study ID').
+    # Attach labels from the cohort table (label_df uses 'study_id').
     label_df = label_df.copy()
-    label_df["Study ID"] = label_df["Study ID"].astype(str)
-    label_sub = label_df[["Study ID", target_col]].drop_duplicates(subset=["Study ID"])
+    label_df["study_id"] = label_df["study_id"].astype(str)
+    label_sub = label_df[["study_id", target_col]].drop_duplicates(subset=["study_id"])
     feat_df = feat_df.merge(
-        label_sub, left_on=subject_col, right_on="Study ID", how="inner",
+        label_sub, left_on=subject_col, right_on="study_id", how="inner",
         suffixes=("", "_lbl"),
     )
     if f"{target_col}_lbl" in feat_df.columns:
@@ -368,7 +370,7 @@ def load_precomputed_embeddings(
     no extraction is performed.
     """
     model_key = analysis_cfg["model_key"]
-    target_col = analysis_cfg.get("target_col", "Epilepsy")
+    target_col = analysis_cfg.get("target_col", "epilepsy")
     level = analysis_cfg.get("embedding_level", "epoch")  # epoch | recording | subject
     emb_root = Path(config.get("paths", {}).get("embeddings_root", _EMBEDDINGS_ROOT))
 
@@ -387,12 +389,12 @@ def load_precomputed_embeddings(
     if not emb_cols:
         raise ValueError(f"No 'embedding_*' columns in {emb_path}; got {list(df.columns)[:10]}")
 
-    # Attach labels: embeddings 'subject' <-> cohort 'Study ID'.
+    # Attach labels: embeddings 'subject' <-> cohort 'study_id'.
     df["subject"] = df["subject"].astype(str)
     label_df = label_df.copy()
-    label_df["Study ID"] = label_df["Study ID"].astype(str)
-    label_sub = label_df[["Study ID", target_col]].drop_duplicates(subset=["Study ID"])
-    df = df.merge(label_sub, left_on="subject", right_on="Study ID", how="inner")
+    label_df["study_id"] = label_df["study_id"].astype(str)
+    label_sub = label_df[["study_id", target_col]].drop_duplicates(subset=["study_id"])
+    df = df.merge(label_sub, left_on="subject", right_on="study_id", how="inner")
 
     y = df[target_col].astype(int).values
     groups = df["subject"].values
@@ -415,12 +417,12 @@ def load_eeg_epochs(
     epoch_desc = signal_cfg.get("epoch_desc", "base")
     ch_names = signal_cfg.get("ch_names")
     conditions = signal_cfg.get("conditions")
-    target_col = "Epilepsy"
+    target_col = "epilepsy"
 
     all_X, all_y, all_groups = [], [], []
 
     for _, row in label_df.iterrows():
-        raw_id = str(row["Study ID"]).strip()
+        raw_id = str(row["study_id"]).strip()
         try:
             subject_id = f"{int(raw_id):04d}"
         except ValueError:
@@ -495,10 +497,10 @@ def iter_subject_epochs(config: dict, label_df: pd.DataFrame):
     epoch_desc = signal_cfg.get("epoch_desc", "base")
     ch_names = signal_cfg.get("ch_names")
     conditions = signal_cfg.get("conditions")
-    target_col = "Epilepsy"
+    target_col = "epilepsy"
 
     for _, row in label_df.iterrows():
-        raw_id = str(row["Study ID"]).strip()
+        raw_id = str(row["study_id"]).strip()
         try:
             subject_id = f"{int(raw_id):04d}"
         except ValueError:
@@ -1089,7 +1091,7 @@ def run_dim_reduction(analysis_cfg, X, y, ids, output_dir, feature_names=None):
     selection_metric = (analysis_cfg.get("evaluation", {}) or {}).get(
         "selection_metric", "trustworthiness"
     )
-    target_name = analysis_cfg.get("target_col", "Epilepsy")
+    target_name = analysis_cfg.get("target_col", "epilepsy")
 
     output_root = Path(output_dir)
     output_root.mkdir(parents=True, exist_ok=True)

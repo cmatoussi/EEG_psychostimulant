@@ -47,7 +47,7 @@ def run_model_level(model, level_name, emb_level, label_df, out_root, condition)
     cond_short = condition.replace("_baseline", "")
     out_dir = Path(out_root) / level_name / cond_short / model
     out_dir.mkdir(parents=True, exist_ok=True)
-    acfg = {"model_key": model, "target_col": "Epilepsy", "embedding_level": emb_level}
+    acfg = {"model_key": model, "target_col": "epilepsy", "embedding_level": emb_level}
     try:
         X, y, groups = ra.load_precomputed_embeddings(
             acfg, {"paths": {}}, label_df, {"conditions": [condition]})

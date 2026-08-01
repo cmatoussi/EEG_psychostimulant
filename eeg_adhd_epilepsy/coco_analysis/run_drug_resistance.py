@@ -71,7 +71,7 @@ def run_set(set_name, src_filter, epi_df, out_root):
     run_root = out_dir / "runs"
     rows = []
     n_r = int((set_df.asm_resistant == 1).sum())
-    print(f"=== {set_name}: {set_df['Study ID'].nunique()} epilepsy+ subjects "
+    print(f"=== {set_name}: {set_df['study_id'].nunique()} epilepsy+ subjects "
           f"({n_r} resistant, {len(set_df) - n_r} responsive) ===", flush=True)
 
     def _flush():
@@ -147,7 +147,7 @@ def main():
         raise SystemExit("label CSV has no 'source_dataset' column; use patients_metadata_clean.csv.")
     label_df["asm_resistant"] = pd.to_numeric(
         label_df["asm_resistant"], errors="coerce").fillna(0).astype(int)
-    epi_df = label_df[label_df.Epilepsy == 1].copy()  # resistance only defined for epilepsy+
+    epi_df = label_df[label_df.epilepsy == 1].copy()  # resistance only defined for epilepsy+
 
     for set_name, src in SETS.items():
         run_set(set_name, src, epi_df, args.out_dir)

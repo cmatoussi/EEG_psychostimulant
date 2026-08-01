@@ -38,14 +38,14 @@ HEADS = {
 # cohort-group -> {cohort key: (csv name, mask fn on normalized label_df)}
 COHORT_GROUPS = {
     "comorbidity": {
-        "no_comorbidity":    ("results_embedding_no_comorbidity.csv",    lambda d: (d.TSA == 0) & (d.TDAH == 0)),
-        "with_asd":          ("results_embedding_with_asd.csv",          lambda d: (d.TSA == 1) & (d.TDAH == 0)),
-        "with_adhd":         ("results_embedding_with_adhd.csv",         lambda d: (d.TSA == 0) & (d.TDAH == 1)),
-        "with_adhd_and_asd": ("results_embedding_with_adhd_and_asd.csv", lambda d: (d.TSA == 1) & (d.TDAH == 1)),
+        "no_comorbidity":    ("results_embedding_no_comorbidity.csv",    lambda d: (d.autism == 0) & (d.adhd == 0)),
+        "with_asd":          ("results_embedding_with_asd.csv",          lambda d: (d.autism == 1) & (d.adhd == 0)),
+        "with_adhd":         ("results_embedding_with_adhd.csv",         lambda d: (d.autism == 0) & (d.adhd == 1)),
+        "with_adhd_and_asd": ("results_embedding_with_adhd_and_asd.csv", lambda d: (d.autism == 1) & (d.adhd == 1)),
     },
     "sex": {
-        "F":   ("results_embedding_female.csv", lambda d: d.Sex == "F"),
-        "M":   ("results_embedding_male.csv",   lambda d: d.Sex == "M"),
+        "F":   ("results_embedding_female.csv", lambda d: d.sex == "F"),
+        "M":   ("results_embedding_male.csv",   lambda d: d.sex == "M"),
         "ALL": ("results_embedding_all.csv",    lambda d: pd.Series(True, index=d.index)),
     },
     "age": {  # uses the pre-binned age_group column
@@ -58,7 +58,7 @@ COHORT_GROUPS = {
 
 COLUMNS = [
     "fm_model", "condition", "aggregation", "head", "status", "n_subjects", "n_windows",
-    "ADHD", "Epilepsy", "Autism",
+    "adhd", "epilepsy", "autism",
     "accuracy_mean", "accuracy_std",
     "balanced_accuracy_mean", "balanced_accuracy_std",
     "balanced_accuracy_optimal_mean", "balanced_accuracy_optimal_std",
@@ -96,7 +96,7 @@ def run_one_cohort(cohort_key, csv_name, mask_fn, label_df, out_dir,
     out_csv = Path(out_dir) / csv_name
     Path(out_dir).mkdir(parents=True, exist_ok=True)
     rows = []
-    print(f"=== cohort {cohort_key}: {cohort_df['Study ID'].nunique()} subjects ===", flush=True)
+    print(f"=== cohort {cohort_key}: {cohort_df['study_id'].nunique()} subjects ===", flush=True)
 
     def _flush():
         pd.DataFrame(rows, columns=COLUMNS).to_csv(out_csv, index=False)
@@ -109,7 +109,7 @@ def run_one_cohort(cohort_key, csv_name, mask_fn, label_df, out_dir,
                 emb_level = AGG[agg]["embedding_level"]
                 metric_level = AGG[agg]["metric_level"]
                 acfg = {
-                    "model_key": model, "target_col": "Epilepsy", "embedding_level": emb_level,
+                    "model_key": model, "target_col": "epilepsy", "embedding_level": emb_level,
                     "models": HEADS,
                     "cv": {"strategy": cv_strategy, "n_splits": N_SPLITS},
                     "metrics": ["accuracy", "roc_auc", "balanced_accuracy", "f1"],
@@ -122,18 +122,18 @@ def run_one_cohort(cohort_key, csv_name, mask_fn, label_df, out_dir,
                     print(f"  {model}/{cond_s}/{agg}: MISSING ({e})", flush=True)
                     for h in HEADS:
                         rows.append({**base, "head": h, "status": "missing_embeddings",
-                                     "n_subjects": 0, "n_windows": 0, "ADHD": 0, "Epilepsy": 0,
-                                     "Autism": 0, **_empty_metrics()})
+                                     "n_subjects": 0, "n_windows": 0, "adhd": 0, "epilepsy": 0,
+                                     "autism": 0, **_empty_metrics()})
                     _flush()
                     continue
 
                 present = set(groups.tolist())
-                sub = cohort_df[cohort_df["Study ID"].astype(str).isin(present)].drop_duplicates("Study ID")
+                sub = cohort_df[cohort_df["study_id"].astype(str).isin(present)].drop_duplicates("study_id")
                 counts = {
                     "n_subjects": len(present), "n_windows": int(X.shape[0]),
-                    "ADHD": int((sub.TDAH == 1).sum()),
-                    "Epilepsy": int((sub.Epilepsy == 1).sum()),
-                    "Autism": int((sub.TSA == 1).sum()),
+                    "adhd": int((sub.adhd == 1).sum()),
+                    "epilepsy": int((sub.epilepsy == 1).sum()),
+                    "autism": int((sub.autism == 1).sum()),
                 }
                 if len(np.unique(y)) < 2 or len(present) < N_SPLITS:
                     print(f"  {model}/{cond_s}/{agg}: SKIP (subjects={len(present)})", flush=True)
