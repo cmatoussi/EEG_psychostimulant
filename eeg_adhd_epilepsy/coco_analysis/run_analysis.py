@@ -565,24 +565,23 @@ def _build_classical_models(models_raw: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Post-hoc scoring (branch-independent; computed from saved fold predictions)
+# Post-hoc scoring (computed once from the saved fold predictions)
 # ---------------------------------------------------------------------------
-# These reproduce two epilepsy-branch features without touching coco_pipe:
-#   - balanced_accuracy_optimal: balanced accuracy at the threshold that maximises it
-#   - subject-level aggregation: mean probability per subject, then re-score
-# Both are pure re-scorings of the exact stored predictions, so results are
-# identical to computing them inside the CV loop (per fold, then averaged).
+# coco_pipe now supports both balanced_accuracy_optimal and subject_level_metrics
+# natively, but its subject aggregation is a per-run SWITCH — one level per CV run.
+# This post-hoc pass instead derives BOTH epoch- AND subject-level metrics from a
+# single CV run's stored predictions (per fold, then averaged), which is what the
+# sweeps and plots consume. The threshold search reuses coco_pipe's helper so it
+# has a single source of truth; subject aggregation matches coco_pipe's
+# (mean proba -> threshold) for our per-subject-constant labels.
 
 def _balanced_accuracy_optimal(y_true: np.ndarray, proba1: np.ndarray) -> float:
-    from sklearn.metrics import balanced_accuracy_score
+    """Balanced accuracy at the Youden-optimal threshold — reuses coco_pipe's
+    implementation (identical threshold sweep) so there is one source of truth."""
+    from coco_pipe.decoding._metrics import _balanced_accuracy_optimal_score
     if len(np.unique(y_true)) < 2:
         return float("nan")
-    best = 0.0
-    for t in np.unique(proba1):
-        ba = balanced_accuracy_score(y_true, (proba1 >= t).astype(int))
-        if ba > best:
-            best = ba
-    return float(best)
+    return _balanced_accuracy_optimal_score(y_true, proba1)
 
 
 def _score_predictions(y_true: np.ndarray, y_pred: np.ndarray, proba1: np.ndarray) -> dict:
