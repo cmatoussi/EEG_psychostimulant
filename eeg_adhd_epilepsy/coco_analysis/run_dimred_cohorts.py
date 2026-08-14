@@ -103,6 +103,10 @@ COHORT_GROUPS = {
     },
 }
 
+# small/redundant cohorts skipped under --cohort-group everything, matching
+# run_dimred_embeddings.py's _cohorts_for()
+SKIP = {("age", "0-4"), ("comorbidity", "asd"), ("sex", "ALL")}
+
 
 def _cohort_metadata(groups, label_df):
     """Per-sample metadata (aligned to embedding rows) for report colouring."""
@@ -206,7 +210,8 @@ def run_cohort(cohort_key, subdir, mask_fn, label_df, out_root, condition,
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--cohort-group", required=True, choices=list(COHORT_GROUPS))
+    ap.add_argument("--cohort-group", required=True,
+                    choices=list(COHORT_GROUPS) + ["everything"])
     ap.add_argument("--cohort", default=None)
     ap.add_argument("--source", default=None, help="filter to a source_dataset (e.g. adhd)")
     ap.add_argument("--label-csv", default=LABEL_CSV,
@@ -230,14 +235,24 @@ def main():
         label_df = label_df[label_df.source_dataset == args.source].copy()
         print(f"source filter '{args.source}': {len(label_df)} subjects", flush=True)
 
-    cohorts = COHORT_GROUPS[args.cohort_group]
-    keys = [args.cohort] if args.cohort else list(cohorts)
-    for key in keys:
-        subdir, mask_fn = cohorts[key]
-        run_cohort(key, subdir, mask_fn, label_df, args.out_dir, args.condition,
-                   reject=not args.no_reject, mad_z=args.mad_z,
-                   outlier_frac=args.outlier_frac,
-                   clip=(args.clip if args.clip and args.clip > 0 else None))
+    if args.cohort_group == "everything":
+        for gname, cohorts in COHORT_GROUPS.items():
+            for key, (subdir, mask_fn) in cohorts.items():
+                if (gname, key) in SKIP:
+                    continue
+                run_cohort(key, subdir, mask_fn, label_df, args.out_dir, args.condition,
+                           reject=not args.no_reject, mad_z=args.mad_z,
+                           outlier_frac=args.outlier_frac,
+                           clip=(args.clip if args.clip and args.clip > 0 else None))
+    else:
+        cohorts = COHORT_GROUPS[args.cohort_group]
+        keys = [args.cohort] if args.cohort else list(cohorts)
+        for key in keys:
+            subdir, mask_fn = cohorts[key]
+            run_cohort(key, subdir, mask_fn, label_df, args.out_dir, args.condition,
+                       reject=not args.no_reject, mad_z=args.mad_z,
+                       outlier_frac=args.outlier_frac,
+                       clip=(args.clip if args.clip and args.clip > 0 else None))
 
 
 if __name__ == "__main__":
