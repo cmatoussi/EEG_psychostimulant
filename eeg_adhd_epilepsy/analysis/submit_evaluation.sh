@@ -12,10 +12,11 @@
 source /home/mat/projects/EEG_psychostimulant/dim_red/bin/activate
 
 # Configuration
-MODEL=${MODEL:-"cbramod"}
-MODEL_SIZE=${MODEL_SIZE:-"base"}
-POOLING=${POOLING:-"no_pool"}
+MODEL=${MODEL:-"reve"}
+MODEL_SIZE=${MODEL_SIZE:-"large"}
+POOLING=${POOLING:-"pool"}
 TARGET_COL=${TARGET_COL:-"has_epilepsy"}
+REPRESENTATION=${REPRESENTATION:-"subject_flat"}
 CLASSIFIER=${CLASSIFIER:-"lr"}
 ALL_LAYERS=${ALL_LAYERS:-"no"}
 
@@ -26,6 +27,7 @@ if [ "$MODEL" = "reve" ]; then
     echo "  - Pooling: $POOLING"
 fi
 echo "  - All Layers: $ALL_LAYERS"
+echo "  - Representation: $REPRESENTATION"
 echo "  - Target: $TARGET_COL"
 echo "  - Classifier: $CLASSIFIER"
 
@@ -42,9 +44,15 @@ cmd=(python /home/mat/projects/EEG_psychostimulant/eeg_adhd_epilepsy/dl/reve/eva
     --model "$MODEL" \
     --embeddings_dir "$EMBEDDINGS_DIR" \
     --metadata /home/mat/scratch/EEG_Psychostimulants_PatientList_08-2025.csv \
-    --target_col "$TARGET_COL" \
     --classifier "$CLASSIFIER" \
-    --stage "$STAGE")
+    --stage "$STAGE" \
+    --representation "$REPRESENTATION")
+
+if [ "$TARGET_COL" = "EO_EC" ]; then
+    cmd+=(--eoec)
+else
+    cmd+=(--target_col "$TARGET_COL")
+fi
 
 if [ "$MODEL" = "reve" ]; then
     cmd+=(--model_size "$MODEL_SIZE")

@@ -1,14 +1,7 @@
 """EC-vs-EO decoding from pre-extracted FM embeddings + classical heads.
 
 Same machinery as run_embedding_cohorts.py, but the TARGET is the recording
-condition (EO=0, EC=1) instead of Epilepsy. For each (model, cohort) we stack a
-subject's averaged EO and EC embeddings and predict the condition. Only the
-'averaged_epochs' aggregation is used (one averaged vector per subject per
-condition; metrics at that row level). CV is StratifiedGroupKFold grouped by
-subject, so a subject's EO and EC rows never split across folds (no subject
-leakage). f1 is WEIGHTED (average='weighted'), computed here from fold
-predictions (the shared posthoc uses binary f1).
-
+condition (EO=0, EC=1) instead of Epilepsy.
 Usage:
     python run_ec_vs_eo.py --cohort-group sex --out-dir <dir>
     python run_ec_vs_eo.py --cohort-group age --cohort 9-12 --out-dir <dir>

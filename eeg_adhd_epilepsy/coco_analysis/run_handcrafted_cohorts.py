@@ -32,13 +32,14 @@ from sklearn.ensemble import RandomForestClassifier  # noqa: E402
 from sklearn.feature_selection import SequentialFeatureSelector  # noqa: E402
 from sklearn.inspection import permutation_importance  # noqa: E402
 from sklearn.linear_model import LogisticRegression  # noqa: E402
-from sklearn.metrics import roc_auc_score, balanced_accuracy_score  # noqa: E402
+from sklearn.metrics import roc_auc_score, balanced_accuracy_score, f1_score  # noqa: E402
 from sklearn.model_selection import StratifiedGroupKFold  # noqa: E402
 from sklearn.pipeline import make_pipeline  # noqa: E402
 from sklearn.preprocessing import StandardScaler  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).parent))
 import run_analysis as ra  # noqa: E402
+import pooled_metrics  # noqa: E402
 
 FEATDIR = ("/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/BIDS/derivatives/"
            "signal_features/descriptors/combined")
@@ -47,6 +48,10 @@ CONDITIONS = ["EO_baseline", "EC_baseline"]
 N_SPLITS = 5
 SFS_N = 20
 N_JOBS = 4  # bounded parallelism (unbounded -1 broke the process pool on shared nodes)
+# nested SFS refits the wrapper 5x (once per outer fold); at epoch level (30-50k rows)
+# that is intractable, so the SFS step alone runs on a subject-grouped subsample of
+# at most this many rows. RF / per-sensor / full-model still use ALL rows.
+SFS_MAX_ROWS = 8000
 MODERN = {"T3": "T7", "T4": "T8", "T5": "P7", "T6": "P8"}
 
 MODELS = {
@@ -60,7 +65,7 @@ MODELS = {
 }
 
 # Cohorts to always skip (too small / undecodable): tiny age bin and ASD comorbidity.
-SKIP_COHORTS = {("age", "0-4"), ("comorbidity", "asd")}
+SKIP_COHORTS = {("age", "0-4"), ("comorbidity", "asd"), ("sex", "ALL")}
 
 # Per-drug anti-seizure-medication flag columns (used to derive monotherapy).
 ASM_COLS = ["LEV", "LTG", "LCS", "CLB", "CBZ", "VPA", "ETH", "TPM", "RUF",
@@ -68,6 +73,12 @@ ASM_COLS = ["LEV", "LTG", "LCS", "CLB", "CBZ", "VPA", "ETH", "TPM", "RUF",
 # Canonical metadata (has source_dataset) — merged in only to source-filter the
 # drug cohorts; source is NEVER a feature in the sensor decoding, so this is safe.
 CANONICAL_CSV = "/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/csv/patients_metadata_clean.csv"
+
+# Binary label column to decode (set from --target-col in main); "epilepsy" by
+# default. For asm_resistant the positive class is asm_resistant==1, control==0.
+_TARGET_COL = "epilepsy"
+# Directory for the HTML reports; None -> alongside the result CSVs (out_dir).
+_REPORTS_DIR = None
 
 
 def add_drug_flags(d):
@@ -161,10 +172,10 @@ def load_sensor_data(level, condition, cohort_df):
     feats = [c for c in feats if c in df.columns]
     lab = cohort_df.copy()
     lab["study_id"] = lab["study_id"].astype(str)
-    # rename the label to avoid clashing with the feature CSV's own 'epilepsy'
-    # column (a plain merge would suffix both to epilepsy_x / epilepsy_y).
-    lab = (lab[["study_id", "epilepsy"]].drop_duplicates("study_id")
-           .rename(columns={"epilepsy": "_label"}))
+    # rename the label to avoid clashing with the feature CSV's own target
+    # column (a plain merge would suffix both to <col>_x / <col>_y).
+    lab = (lab[["study_id", _TARGET_COL]].drop_duplicates("study_id")
+           .rename(columns={_TARGET_COL: "_label"}))
     df = df.merge(lab, on="study_id", how="inner")
     y = df["_label"].astype(int).values
     groups = df["study_id"].values
@@ -178,19 +189,26 @@ def load_sensor_data(level, condition, cohort_df):
 
 
 def cv_auc(clf_fn, X, y, g):
+    """Collect every fold's held-out predictions, then score them POOLED (shared
+    helper: concat + score once, stratified-bootstrap std) instead of averaging
+    per-fold. No single-class-fold dropping — degenerate folds still contribute
+    their predictions to the pool."""
     sgkf = StratifiedGroupKFold(n_splits=N_SPLITS, shuffle=True, random_state=42)
-    aucs, baccs = [], []
+    fa = []
     for tr, te in sgkf.split(X, y, g):
-        if len(np.unique(y[te])) < 2:
-            continue
         clf = clf_fn(); clf.fit(X[tr], y[tr])
-        p = clf.predict_proba(X[te])[:, 1]
-        aucs.append(roc_auc_score(y[te], p))
-        baccs.append(balanced_accuracy_score(y[te], (p >= 0.5).astype(int)))
-    return {"roc_auc_mean": float(np.mean(aucs)) if aucs else np.nan,
-            "roc_auc_std": float(np.std(aucs)) if aucs else np.nan,
-            "balanced_accuracy_mean": float(np.mean(baccs)) if baccs else np.nan,
-            "n_folds": len(aucs)}
+        fa.append((y[te], clf.predict_proba(X[te])[:, 1]))
+    r = pooled_metrics.pooled(fa, calibrated=False)
+    nan = float("nan")
+    if r is None:
+        return {"roc_auc_mean": nan, "roc_auc_std": nan, "balanced_accuracy_mean": nan,
+                "balanced_accuracy_std": nan, "weighted_f1_mean": nan, "weighted_f1_std": nan,
+                "n_folds": 0}
+    return {"roc_auc_mean": r["roc_auc"]["mean"], "roc_auc_std": r["roc_auc"]["std"],
+            "balanced_accuracy_mean": r["balanced_accuracy"]["mean"],
+            "balanced_accuracy_std": r["balanced_accuracy"]["std"],
+            "weighted_f1_mean": r["weighted_f1"]["mean"], "weighted_f1_std": r["weighted_f1"]["std"],
+            "n_folds": r["n_folds"]}
 
 
 def _fig_b64(fig):
@@ -316,30 +334,93 @@ def run_condition(condition, cohort_df, level, out_dir, label="all"):
                      "condition": cshort, **res})
     images["topomap"] = topomap_png(sensor_auc, sensor_bacc, sensors)
 
-    # 3) SFS  (filter->wrapper: ANOVA-F top-200, then forward SFS on those)
+    # 3) SFS  (filter->wrapper: ANOVA-F top-200, then forward SFS on those).
+    #    NESTED: the whole selection pipeline is refit inside each outer CV fold
+    #    (via cv_auc's clf_fn), so the prefilter+SFS never see the test fold ->
+    #    honest score. The old in-sample variant (select on all data, then CV on
+    #    the same folds) is also reported as `sfs_insample` to show the inflation.
     try:
         from sklearn.feature_selection import SelectKBest, f_classif
-        Xs = StandardScaler().fit_transform(X)
-        kb = SelectKBest(f_classif, k=min(200, X.shape[1])).fit(Xs, y)
-        cand = np.where(kb.get_support())[0]   # SFS candidate features (top-200 sensor feats)
-        sfs = SequentialFeatureSelector(
-            LogisticRegression(max_iter=1000, class_weight="balanced"),
-            n_features_to_select=min(SFS_N, len(cand) - 1), direction="forward",
-            scoring="roc_auc", cv=3, n_jobs=N_JOBS)
-        sfs.fit(Xs[:, cand], y)
-        sel_idx = cand[sfs.get_support()]
-        sel = [feats[i] for i in sel_idx]
-        res = cv_auc(MODELS["logreg_l2"], X[:, sel_idx], y, g)
+        from sklearn.pipeline import Pipeline
+        kbest = min(200, X.shape[1])
+        nsel = min(SFS_N, kbest - 1)
+
+        # subject-grouped subsample for the (expensive, 5x-refit) SFS step only
+        Xf, yf, gf = X, y, g
+        if X.shape[0] > SFS_MAX_ROWS:
+            rng = np.random.RandomState(42)
+            uniq = rng.permutation(np.unique(g))
+            keep, tot = [], 0
+            for s in uniq:                       # add whole subjects until the cap
+                idx = np.where(g == s)[0]
+                keep.append(idx); tot += len(idx)
+                if tot >= SFS_MAX_ROWS:
+                    break
+            sel_rows = np.concatenate(keep)
+            Xf, yf, gf = X[sel_rows], y[sel_rows], g[sel_rows]
+            print(f"    sfs: subsampled {Xf.shape[0]}/{X.shape[0]} rows "
+                  f"({len(np.unique(gf))} subj) for selection", flush=True)
+
+        def _sfs_pipe():
+            return Pipeline([
+                ("scale", StandardScaler()),
+                ("prefilter", SelectKBest(f_classif, k=kbest)),
+                ("sfs", SequentialFeatureSelector(
+                    LogisticRegression(max_iter=1000, class_weight="balanced"),
+                    n_features_to_select=nsel, direction="forward",
+                    scoring="roc_auc", cv=3, n_jobs=N_JOBS)),
+                ("clf", LogisticRegression(max_iter=1000, class_weight="balanced")),
+            ])
+
+        res = cv_auc(_sfs_pipe, Xf, yf, gf)       # <- honest nested-CV score (subsampled)
         rows.append({"analysis": "sfs", "model": "logreg_l2", "condition": cshort,
-                     "n_selected": len(sel), "prefilter_k": len(cand), **res})
+                     "n_selected": nsel, "prefilter_k": kbest, "unit": Xf.shape[0], **res})
+
+        # descriptive only (NOT scored): which features SFS keeps when fit on the
+        # (subsampled) data, for the report / interpretation.
+        full = _sfs_pipe().fit(Xf, yf)
+        cand = np.where(full.named_steps["prefilter"].get_support())[0]
+        sel = [feats[i] for i in cand[full.named_steps["sfs"].get_support()]]
         json.dump(sel, open(out_dir / f"sfs_selected_{cshort}.json", "w"))
-        print(f"    sfs selected {len(sel)}: {sel[:6]}...", flush=True)
+        print(f"    sfs nested bacc={res['balanced_accuracy_mean']:.3f}; picks {sel[:5]}...", flush=True)
+
+        # subject level only: tuned-L1 embedded selection (sweep C via inner CV),
+        # nested, NO subsample. L1 chooses the feature count adaptively -> a better
+        # selection model than a hard-coded 20 when features >> samples. Rows=subjects
+        # at subject level, so the inner C-tuning CV needs no grouping. (epoch keeps
+        # the forward-SFS above.)
+        if level == "subject":
+            from sklearn.feature_selection import SelectFromModel
+            from sklearn.linear_model import LogisticRegressionCV
+
+            def _l1_pipe():
+                return Pipeline([
+                    ("scale", StandardScaler()),
+                    ("select", SelectFromModel(
+                        LogisticRegressionCV(penalty="l1", solver="liblinear",
+                            Cs=np.logspace(-3, 2, 12), cv=3, scoring="roc_auc",
+                            class_weight="balanced", max_iter=2000),
+                        threshold=1e-8)),               # keep every non-zero L1 coef
+                    ("clf", LogisticRegression(max_iter=1000, class_weight="balanced")),
+                ])
+
+            res_l1 = cv_auc(_l1_pipe, X, y, g)          # honest nested; inner CV tunes C
+            full_l1 = _l1_pipe().fit(X, y)
+            sel_l1 = [feats[i] for i in np.where(full_l1.named_steps["select"].get_support())[0]]
+            rows.append({"analysis": "l1_select", "model": "logreg_l1->l2", "condition": cshort,
+                         "n_selected": len(sel_l1), "prefilter_k": X.shape[1],
+                         "unit": X.shape[0], **res_l1})
+            json.dump(sel_l1, open(out_dir / f"l1_selected_{cshort}.json", "w"))
+            print(f"    l1_select nested bacc={res_l1['balanced_accuracy_mean']:.3f}; "
+                  f"kept {len(sel_l1)} feats {sel_l1[:5]}...", flush=True)
     except Exception as e:  # noqa: BLE001
         print(f"    sfs error: {e}", flush=True)
 
     df = pd.DataFrame(rows)
     df.to_csv(out_dir / f"summary_{cshort}.csv", index=False)
-    rpt = out_dir / f"report_{label}_{cshort}.html"
+    rpt_dir = _REPORTS_DIR if _REPORTS_DIR is not None else out_dir
+    rpt_dir.mkdir(parents=True, exist_ok=True)
+    rpt = rpt_dir / f"report_{label}_{cshort}.html"
     _write_report(rpt, cshort, level, df, images, label)
     print(f"  {cshort}: report -> {rpt}", flush=True)
 
@@ -370,9 +451,29 @@ def main():
     ap.add_argument("--cohort-group", default="all", choices=list(COHORT_GROUPS))
     ap.add_argument("--cohort", default=None,
                     help="single cohort key within the group; omit for all in the group.")
+    ap.add_argument("--target-col", default="epilepsy",
+                    help="binary label column to decode (e.g. epilepsy, asm_resistant). "
+                         "positive class == 1, control == 0.")
+    ap.add_argument("--reports-dir", default=None,
+                    help="write HTML reports here instead of alongside the result CSVs.")
+    ap.add_argument("--condition", default=None, choices=["EO_baseline", "EC_baseline"],
+                    help="run only this condition (default: both). Use with the matching "
+                         "per-condition label CSV (labels_earliest_EO/EC).")
+    ap.add_argument("--restrict-col", default=None,
+                    help="keep only subjects where this column==1 before cohorting "
+                         "(e.g. epilepsy for asm_resistant: resistant-vs-non-resistant WITHIN epilepsy)")
     args = ap.parse_args()
+    conds = [args.condition] if args.condition else CONDITIONS
+
+    global _TARGET_COL, _REPORTS_DIR
+    _TARGET_COL = args.target_col
+    _REPORTS_DIR = Path(args.reports_dir) if args.reports_dir else None
 
     label_df = ra.normalize_label_df(pd.read_csv(args.label_csv))
+    if args.restrict_col:                # e.g. asm_resistant restricted to epilepsy==1
+        keep = pd.to_numeric(label_df[args.restrict_col], errors="coerce").fillna(0) == 1
+        label_df = label_df[keep].copy()
+        print(f"restricted to {args.restrict_col}==1: {label_df['study_id'].nunique()} subjects", flush=True)
     if args.cohort_group == "drug":
         label_df = add_drug_flags(label_df)
     out = Path(args.out_dir); out.mkdir(parents=True, exist_ok=True)
@@ -389,12 +490,12 @@ def main():
         cohort_df = label_df[mask_fn(label_df)].copy()
         cout = out / subdir
         cout.mkdir(parents=True, exist_ok=True)
-        n_epi = int((cohort_df["epilepsy"] == 1).sum())
-        n_ctrl = int((cohort_df["epilepsy"] == 0).sum())
+        n_epi = int((cohort_df[_TARGET_COL] == 1).sum())
+        n_ctrl = int((cohort_df[_TARGET_COL] == 0).sum())
         print(f"=== {args.cohort_group}/{key} -> {subdir} "
-              f"({cohort_df['study_id'].nunique()} subj: {n_epi} epi, {n_ctrl} ctrl), "
+              f"({cohort_df['study_id'].nunique()} subj: {n_epi} {_TARGET_COL}+, {n_ctrl} ctrl), "
               f"{args.level}-level ===", flush=True)
-        for cond in CONDITIONS:
+        for cond in conds:
             run_condition(cond, cohort_df, args.level, cout, label=subdir)
 
 

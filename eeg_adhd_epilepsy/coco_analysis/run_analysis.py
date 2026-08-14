@@ -277,11 +277,6 @@ def load_dim_reduction_data(
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, list[str]]:
     """Load the feature CSV for dim reduction: filter to one condition, keep only
     feature columns. Returns (X, y, groups, feature_names).
-
-    Feature columns come from the ``*_feature_columns.json`` sidecar when present
-    (robust to schema changes); otherwise from a numeric-dtype selection minus a
-    metadata blocklist. The subject feature CSVs hold one row per subject *per
-    recording condition*, so ``condition`` filters to a single recording.
     """
     data_path = analysis_cfg["data_path"]
     target_col = analysis_cfg.get("target_col", "epilepsy")
@@ -363,12 +358,6 @@ def load_precomputed_embeddings(
     analysis_cfg: dict, config: dict, label_df: pd.DataFrame, signal_cfg: dict
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Load pre-extracted FM embeddings for the chosen model + condition.
-
-    File layout: ``{embeddings_root}/{model}_{condition}_{level}_embeddings.csv``
-    with ``level`` in {epoch, recording, subject}. Columns are meta
-    (subject/session/run/condition/recording_id/model_key/window_index) plus
-    ``embedding_0000..N``. Returns (X, y, groups) ready for a classical head;
-    no extraction is performed.
     """
     model_key = analysis_cfg["model_key"]
     target_col = analysis_cfg.get("target_col", "epilepsy")
@@ -698,12 +687,6 @@ def run_fm_extract(
     overwrite=False,
 ):
     """Option B: per-subject frozen-FM embedding extraction → BIDS save → CV heads.
-
-    For every subject in ``label_df`` extract one embedding per window plus a pooled
-    recording vector, save them as a BIDS derivative under
-    ``<embeddings_root>/<model_key>/sub-XXXX/eeg/...``, then run the configured
-    classical heads (logreg/rf/hgb/dummy/svm) on the window-level embeddings and
-    append per-head metrics to ``embeddings_performance_summary.csv``.
     """
     model_key = analysis_cfg["model_key"]
     sfreq = float(signal_cfg.get("sfreq", 200.0))
@@ -950,6 +933,60 @@ def run_fm_lora(analysis_cfg, X, y, groups, output_dir, signal_cfg, result_name=
     return result
 
 
+def run_fm_partial(analysis_cfg, X, y, groups, output_dir, signal_cfg, result_name="results"):
+    """Mode 2b: PARTIAL-layer fine-tuning (no LoRA) — freeze the backbone, unfreeze
+    the last K transformer blocks + the classification head. The channel adapter
+    (e.g. BIOT's TCP-bipolar montage) is applied by the backend's fit/predict, so
+    this fixes the BIOT-EO case the LoRA driver missed. Reuses the same trainer
+    knobs as fm_lora (Schedule-Free available via trainer.optimizer)."""
+    model_key = analysis_cfg["model_key"]
+    sfreq = float(signal_cfg.get("sfreq", 200.0))
+    ch_names = signal_cfg.get("ch_names")
+    trainer_raw = analysis_cfg.get("trainer", {})
+    cv_raw = analysis_cfg.get("cv", {})
+    metrics = analysis_cfg.get("metrics", ["accuracy", "roc_auc", "balanced_accuracy", "balanced_accuracy_optimal", "f1"])
+
+    backend_kwargs = {"unfreeze_last_k": int(analysis_cfg.get("unfreeze_last_k", 2))}
+    if model_key in {"labram", "bendr"}:
+        backend_kwargs["interpolate_channels"] = True
+    pooling = analysis_cfg.get("pooling", "attention" if model_key == "reve" else "mean")
+
+    models = {
+        model_key: NeuralFineTuneConfig(
+            model_key=model_key,
+            train_mode="partial",
+            sfreq=sfreq,
+            ch_names=ch_names,
+            pooling=pooling,
+            trainer=TrainerConfig(
+                max_epochs=trainer_raw.get("max_epochs", 15),
+                batch_size=trainer_raw.get("batch_size", 32),
+                early_stopping_patience=trainer_raw.get("early_stopping_patience"),
+                lr=trainer_raw.get("lr", 5e-4),
+                weight_decay=trainer_raw.get("weight_decay", 0.01),
+                accumulate_grad_batches=trainer_raw.get("accumulate_grad_batches", 1),
+                lr_warmup_epochs=trainer_raw.get("lr_warmup_epochs", 0),
+                training_strategy=trainer_raw.get("training_strategy", "ft_only"),
+            ),
+            class_weight=analysis_cfg.get("class_weight", "balanced"),
+            backend_kwargs=backend_kwargs,
+        )
+    }
+    exp = Experiment(
+        ExperimentConfig(
+            task="classification",
+            models=models,
+            cv=_build_cv(cv_raw),
+            metrics=metrics,
+            output_dir=output_dir,
+            tag=f"fm_partial_{model_key}",
+        )
+    )
+    result = exp.run(X, y, groups=groups)
+    result.save(Path(output_dir) / f"{result_name}.json")
+    return result
+
+
 def run_handcrafted(analysis_cfg, X, y, groups, output_dir, result_name="results"):
     """Mode 3: Classical ML on handcrafted features."""
     models_raw = analysis_cfg.get("models", {})
@@ -988,20 +1025,6 @@ def run_handcrafted(analysis_cfg, X, y, groups, output_dir, result_name="results
 
 def run_dim_reduction(analysis_cfg, X, y, ids, output_dir, feature_names=None):
     """Mode 4: Dimensionality reduction via coco_pipe.dim_reduction's pipeline.
-
-    Uses coco_pipe's container-native ``run_fit`` / ``run_eval`` (the updated
-    dim_reduction pipeline):
-      - ``run_fit``  fits each reducer, saves the embedding + fit artifact, and
-        scores the structure-preservation metrics (trustworthiness/continuity/
-        lcmc/mrre/shepard) at the library's default neighborhood.
-      - ``run_eval`` computes the supervised separation
-        (``separation_logreg_balanced_accuracy``) of the label within the
-        embedding, grouped by subject.
-    Writes coco_pipe run inventories (fit_runs.csv / eval_runs.csv) plus a
-    friendly ``dim_reduction_summary.csv``.
-
-    Note: the pipeline builds each reducer from (method, n_components) only;
-    extra reducer hyperparameters (e.g. UMAP n_neighbors) use library defaults.
     """
     from coco_pipe.io import DataContainer
     from coco_pipe.dim_reduction import (
@@ -1321,6 +1344,21 @@ def main():
             X, y, groups = _undersample_majority(X, y, groups)
             logger.info(f"After undersampling: {len(y)} samples, classes={np.unique(y, return_counts=True)}")
         run_fm_lora(analysis_cfg, X, y, groups, output_dir, signal_cfg, result_name=result_name)
+
+    elif mode == "fm_partial":
+        # Partial-layer fine-tuning (no LoRA): same data prep as fm_lora.
+        X, y, groups = load_eeg_epochs(config, label_df)
+        model_key = analysis_cfg.get("model_key", "")
+        if model_key == "biot":
+            signal_cfg = {**signal_cfg, "ch_names": _to_modern_nomenclature(signal_cfg.get("ch_names", []))}
+        if model_key == "labram" and X.shape[-1] < 3000:
+            X, y, groups = _concat_and_slice_epochs(X, y, groups, window=3000)
+        if model_key == "signaljepa" and X.shape[-1] > 400:
+            X, y, groups = _slice_epochs(X, y, groups, window=400)
+        if _balanced_sample:
+            X, y, groups = _undersample_majority(X, y, groups)
+            logger.info(f"After undersampling: {len(y)} samples, classes={np.unique(y, return_counts=True)}")
+        run_fm_partial(analysis_cfg, X, y, groups, output_dir, signal_cfg, result_name=result_name)
 
     elif mode == "dim_reduction":
         X, y, groups, _feat_names = load_dim_reduction_data(analysis_cfg, label_df)

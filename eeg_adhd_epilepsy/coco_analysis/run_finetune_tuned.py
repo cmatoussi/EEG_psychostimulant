@@ -37,7 +37,7 @@ _HEAD = ("final_layer", "classifier", "head")
 
 
 def tuned_config(model):
-    f = f"/home/mat/scratch/results/fine_tune/raytune/optuna/{model}/{model}_optuna_trials.csv"
+    f = f"/home/mat/scratch/results/fine_tune/ray_tuned/raytune/optuna/{model}/{model}_optuna_trials.csv"
     df = pd.read_csv(f).rename(columns={
         "config/r": "r", "config/alpha": "alpha", "config/dropout": "dropout", "config/lr": "lr"})
     b = df.loc[df.roc_auc.idxmax()]
@@ -110,6 +110,7 @@ def _fit(backend, X_tr, y_tr, cfg, strategy):
 
 
 def main():
+    global BATCH
     from sklearn.model_selection import StratifiedGroupKFold
     from sklearn.metrics import (accuracy_score, balanced_accuracy_score, roc_auc_score)
     from coco_pipe.decoding.foundation_models.estimators import prepare_backend
@@ -121,7 +122,10 @@ def main():
     ap.add_argument("--level", required=True, choices=["epoch", "subject"])
     ap.add_argument("--out-dir", required=True)
     ap.add_argument("--label-csv", default=LABEL_CSV)
+    ap.add_argument("--batch", type=int, default=BATCH,
+                    help="batch size (lower for LaBraM's 3000-sample windows to avoid OOM)")
     args = ap.parse_args()
+    BATCH = args.batch
 
     cfg = tuned_config(args.model)
     cshort = args.condition.replace("_baseline", "")
@@ -146,8 +150,9 @@ def main():
     if args.model in {"labram", "bendr"}:
         bkw["interpolate_channels"] = True
 
-    METRIC_NAMES = ["accuracy", "balanced_accuracy", "balanced_accuracy_optimal", "roc_auc"]
+    METRIC_NAMES = ["accuracy", "balanced_accuracy", "roc_auc"]   # balanced_accuracy is main; oracle removed
     folds = {m: [] for m in METRIC_NAMES}
+    fold_preds = []   # (y_te, proba1, groups_te) per fold, for the cohort breakdown
     sgkf = StratifiedGroupKFold(n_splits=N_SPLITS, shuffle=True, random_state=42)
     for k, (tr, te) in enumerate(sgkf.split(X, y, groups)):
         if len(np.unique(y[te])) < 2:
@@ -156,28 +161,37 @@ def main():
                                    device="auto", train_mode="lora", sfreq=sfreq,
                                    ch_names=ch_names, backend_kwargs=bkw)
         backend = prepared.backend
-        net = _fit(backend, prepared.adapt(X[tr]), y[tr], cfg, args.strategy)
-        Xte = prepared.adapt(X[te])
+        # prepared.adapt() resamples/interpolates but does NOT apply the fixed-montage
+        # channel construction (e.g. BIOT's 19->16 bipolar derivation) -- that lives in
+        # backend.fit()/predict_proba() which this driver bypasses. Apply it here so the
+        # model sees its native channel count (fixes BIOT IndexError; no-op otherwise).
+        _native = getattr(backend, "_construct_channels", lambda z: z)
+        net = _fit(backend, _native(prepared.adapt(X[tr])), y[tr], cfg, args.strategy)
+        Xte = _native(prepared.adapt(X[te]))
         pred = net.predict(Xte)
         proba1 = net.predict_proba(Xte)[:, 1]
         folds["accuracy"].append(float(accuracy_score(y[te], pred)))
         folds["balanced_accuracy"].append(float(balanced_accuracy_score(y[te], pred)))
-        folds["balanced_accuracy_optimal"].append(_balanced_accuracy_optimal_score(y[te], proba1))
         folds["roc_auc"].append(float(roc_auc_score(y[te], proba1)))
+        fold_preds.append((y[te], proba1, groups[te]))
         print(f"  fold {k}: acc={folds['accuracy'][-1]:.3f} "
               f"bacc={folds['balanced_accuracy'][-1]:.3f} auc={folds['roc_auc'][-1]:.3f}", flush=True)
 
     metrics = {m: {"mean": float(np.mean(v)) if v else float("nan"),
                    "std": float(np.std(v)) if v else float("nan"), "folds": v}
                for m, v in folds.items()}
-    out = Path(args.out_dir); out.mkdir(parents=True, exist_ok=True)
-    payload = {"model": args.model, "condition": cshort, "strategy": args.strategy,
-               "level": args.level, "config": cfg, "optimizer": "schedule_free_adamw",
-               "results": {args.model: {"metrics": metrics}}}
-    p = out / f"results_{args.model}_{cshort}.json"
-    p.write_text(json.dumps(payload, indent=2))
-    print(f"--> wrote {p}  (bacc={metrics['balanced_accuracy']['mean']:.3f} "
-          f"auc={metrics['roc_auc']['mean']:.3f})", flush=True)
+    # per-cohort breakdown (all/sex/age/comorbidity) from the held-out predictions
+    import cohort_ft_metrics
+    cohort_ft_metrics.save_preds(args.out_dir, args.level, args.strategy, args.model, cshort, fold_preds)
+    cohort_metrics = cohort_ft_metrics.compute(fold_preds, args.label_csv)
+    for cname, cm in cohort_metrics.items():
+        hb = cm.get("balanced_accuracy_calibrated", {}).get("mean")
+        print(f"    cohort {cname}: honest_bal_acc={hb} (n={cm.get('n')})", flush=True)
+    written = cohort_ft_metrics.write_split(args.out_dir, args.level, args.strategy,
+                                            args.model, cshort, metrics, cohort_metrics)
+    print(f"--> wrote {len(written)} group files under {args.out_dir}/{args.level}/{args.strategy}/ "
+          f"(bacc={metrics['balanced_accuracy']['mean']:.3f} auc={metrics['roc_auc']['mean']:.3f})",
+          flush=True)
 
 
 if __name__ == "__main__":

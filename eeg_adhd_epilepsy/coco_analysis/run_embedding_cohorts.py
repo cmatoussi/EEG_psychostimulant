@@ -90,16 +90,27 @@ def _empty_metrics():
 
 def run_one_cohort(cohort_key, csv_name, mask_fn, label_df, out_dir,
                    cv_strategy="stratified_group_kfold",
-                   aggregations=("averaged_predictions",)):
+                   aggregations=("averaged_predictions",), epoch_out_dir=None,
+                   target_col="epilepsy"):
     cohort_df = label_df[mask_fn(label_df)].copy()
     run_root = Path(out_dir) / "runs" / cohort_key
     out_csv = Path(out_dir) / csv_name
     Path(out_dir).mkdir(parents=True, exist_ok=True)
     rows = []
+    # Optional epoch-level table: the SAME runs already carry an `epoch_level`
+    # posthoc block (score each epoch, no per-subject pooling). We surface it only
+    # for averaged_predictions (which fits on epochs); averaged_epochs pre-averages
+    # so its "epoch_level" is really subject-level and is skipped.
+    erows = [] if epoch_out_dir else None
+    eout_csv = Path(epoch_out_dir) / csv_name if epoch_out_dir else None
+    if epoch_out_dir:
+        Path(epoch_out_dir).mkdir(parents=True, exist_ok=True)
     print(f"=== cohort {cohort_key}: {cohort_df['study_id'].nunique()} subjects ===", flush=True)
 
     def _flush():
         pd.DataFrame(rows, columns=COLUMNS).to_csv(out_csv, index=False)
+        if erows is not None:
+            pd.DataFrame(erows, columns=COLUMNS).to_csv(eout_csv, index=False)
 
     for model in MODELS:
         for cond in CONDITIONS:
@@ -109,7 +120,7 @@ def run_one_cohort(cohort_key, csv_name, mask_fn, label_df, out_dir,
                 emb_level = AGG[agg]["embedding_level"]
                 metric_level = AGG[agg]["metric_level"]
                 acfg = {
-                    "model_key": model, "target_col": "epilepsy", "embedding_level": emb_level,
+                    "model_key": model, "target_col": target_col, "embedding_level": emb_level,
                     "models": HEADS,
                     "cv": {"strategy": cv_strategy, "n_splits": N_SPLITS},
                     "metrics": ["accuracy", "roc_auc", "balanced_accuracy", "f1"],
@@ -167,6 +178,18 @@ def run_one_cohort(cohort_key, csv_name, mask_fn, label_df, out_dir,
                         mcols[f"{m}_std"] = round(std, 4) if std == std else np.nan
                     status = "success" if mcols["roc_auc_mean"] == mcols["roc_auc_mean"] else "degenerate"
                     rows.append({**base, "head": h, "status": status, **counts, **mcols})
+                    # epoch-level row (per-epoch scoring) from the same run's posthoc
+                    if erows is not None and agg == "averaged_predictions":
+                        elvl = posthoc.get(h, {}).get("epoch_level", {})
+                        emcols = {}
+                        for m in _METRICS:
+                            em = elvl.get(m, {}).get("mean", np.nan) if elvl else np.nan
+                            es = elvl.get(m, {}).get("std", np.nan) if elvl else np.nan
+                            emcols[f"{m}_mean"] = round(em, 4) if em == em else np.nan
+                            emcols[f"{m}_std"] = round(es, 4) if es == es else np.nan
+                        estatus = "success" if emcols["roc_auc_mean"] == emcols["roc_auc_mean"] else "degenerate"
+                        erows.append({**base, "aggregation": "per_epoch", "head": h,
+                                      "status": estatus, **counts, **emcols})
                     print(f"  {model}/{cond_s}/{agg}/{h}: roc_auc={mcols['roc_auc_mean']} "
                           f"bal_acc_opt={mcols['balanced_accuracy_optimal_mean']} "
                           f"(subj={counts['n_subjects']}, win={counts['n_windows']})", flush=True)
@@ -190,6 +213,13 @@ def main():
                          "the study/source confound where epilepsy is entangled with provenance.")
     ap.add_argument("--label-csv", default=LABEL_CSV,
                     help="metadata CSV to use (default: patients_metadata_clean.csv).")
+    ap.add_argument("--epoch-out-dir", default=None,
+                    help="if set, also write an epoch-level (per-epoch, no subject pooling) "
+                         "table here, from the same runs' epoch_level posthoc block.")
+    ap.add_argument("--skip", nargs="*", default=["age_0_4", "with_asd"],
+                    help="cohort keys to skip (small/undecodable). Default omits age_0_4 and with_asd.")
+    ap.add_argument("--target-col", default="epilepsy",
+                    help="binary label column to decode (e.g. epilepsy, asm_resistant).")
     ap.add_argument("--aggregation", default="both",
                     choices=["averaged_predictions", "averaged_epochs", "both"],
                     help="subject-level aggregation: averaged_predictions (score epochs, "
@@ -212,9 +242,13 @@ def main():
     for key in keys:
         if key not in cohorts:
             raise SystemExit(f"Unknown cohort {key!r}; options: {list(cohorts)}")
+        if key in (args.skip or []):
+            print(f"skip cohort {key!r} (in --skip)", flush=True)
+            continue
         csv_name, mask_fn = cohorts[key]
         run_one_cohort(key, csv_name, mask_fn, label_df, args.out_dir,
-                       cv_strategy=args.cv_strategy, aggregations=aggregations)
+                       cv_strategy=args.cv_strategy, aggregations=aggregations,
+                       epoch_out_dir=args.epoch_out_dir, target_col=args.target_col)
 
 
 if __name__ == "__main__":

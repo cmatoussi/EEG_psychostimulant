@@ -16,7 +16,7 @@ from coco_pipe.io.structures import DataContainer
 logger = logging.getLogger(__name__)
 
 _EMBED_PATTERN = re.compile(
-    r"^(sub-[^_]+)_desc-([^_]+)_embed_(reve|cbramod)(?:_[^.]*)?\.npy$"
+    r"^(sub-[^_]+)_desc-([^_]+)_embed_(reve|cbramod)(?:_((?!all_layers).*?))?(_all_layers)?\.npy$"
 )
 
 
@@ -24,7 +24,17 @@ def _normalize_subject_id(value: object) -> str:
     token = str(value).strip()
     if token.startswith("sub-"):
         token = token[4:]
-    return f"{int(token):04d}"
+    elif token.startswith("S"):
+        # Handle motor subjects like S001
+        token = token[1:]
+    elif token.startswith("sub"):
+        # Handle motor subjects like sub0001
+        token = token[3:]
+    
+    try:
+        return f"{int(token):04d}"
+    except ValueError:
+        return token
 
 
 def _discover_embedding_files(
@@ -32,6 +42,9 @@ def _discover_embedding_files(
     model: str,
     desc: str,
     subjects: Optional[Sequence[str]],
+    model_size: Optional[str] = None,
+    pooling: Optional[str] = None,
+    all_layers: bool = False,
 ) -> list[Path]:
     subject_filter = (
         {_normalize_subject_id(subject) for subject in subjects}
@@ -42,28 +55,99 @@ def _discover_embedding_files(
     for fpath in sorted(embeddings_root.rglob("*.npy")):
         match = _EMBED_PATTERN.match(fpath.name)
         if match is None:
-            continue
-        subject_tag, desc_tag, model_tag = match.groups()
-        if model_tag != model or desc_tag != desc:
-            continue
-        subject_id = _normalize_subject_id(subject_tag)
+            # OPTIONAL FALLBACK: Motor Sanity Check naming convention.
+            # Expects: [subject]_[model_size]_[pooling].npy  (REVE)
+            # Or:      [subject]_cbramod_[layers].npy       (CBraMod)
+            # Subject format for motor data is typically 'S001'.
+            parts = fpath.stem.split("_")
+            if len(parts) < 2:
+                continue
+            
+            subject_tag = parts[0]
+            # Match S001, S002, etc.
+            if not (subject_tag.startswith("S") and subject_tag[1:].isdigit()):
+                continue
+                
+            subject_id = _normalize_subject_id(subject_tag)
+            
+            if "cbramod" in parts:
+                model_tag = "cbramod"
+                is_all_layers = "alllayers" in parts
+            else:
+                model_tag = "reve"
+                is_all_layers = False # REVE doesn't have all_layers in this context yet
+                
+            if model_tag != model:
+                continue
+                
+            if all_layers != is_all_layers:
+                continue
+                
+            if model == "reve":
+                if model_size and model_size not in parts:
+                    continue
+                if pooling == "with" and ("with_pooling" not in parts and "_pool" not in parts and "with" not in parts):
+                    continue
+                if pooling == "without" and ("without_pooling" not in parts and "_no_pool" not in parts and "no_pooling" not in parts and "without" not in parts):
+                    continue
+        else:
+            subject_tag, desc_tag, model_tag, size_tag, all_layers_tag = match.groups()
+            if model_tag != model or desc_tag != desc:
+                continue
+                
+            # Check all_layers suffix
+            is_all_layers = all_layers_tag == "_all_layers"
+            if all_layers != is_all_layers:
+                continue
+
+            # Optional filters for REVE
+            if model == "reve":
+                if model_size and f"_{model_size}" not in fpath.name:
+                    continue
+                if pooling == "with" and "_no_pool.npy" in fpath.name:
+                    continue
+                if pooling == "with" and "_pool.npy" not in fpath.name:
+                    continue
+                if pooling == "without" and "_no_pool.npy" not in fpath.name:
+                    continue
+
+            subject_id = _normalize_subject_id(subject_tag)
+
         if subject_filter is not None and subject_id not in subject_filter:
             continue
         matches.append(fpath)
     if not matches:
+        filter_msg = f" (size={model_size}, pooling={pooling})" if model == "reve" else ""
         raise FileNotFoundError(
-            f"No {model} embeddings found in {embeddings_root} for desc='{desc}'."
+            f"No {model} embeddings found in {embeddings_root} for desc='{desc}'{filter_msg}."
         )
     return matches
 
 
 def _load_embedding_pair(fpath: Path) -> tuple[np.ndarray, dict]:
-    meta_path = fpath.with_name(fpath.name.replace("_embed_", "_metadata_")).with_suffix(".json")
-    arr = np.load(fpath)
+    if "_embed_" in fpath.name:
+        meta_path = fpath.with_name(fpath.name.replace("_embed_", "_metadata_")).with_suffix(".json")
+    else:
+        # Fallback for motor naming: same base name, just .json
+        meta_path = fpath.with_suffix(".json")
+    # Use memmap to avoid loading the entire array if we only need a slice
+    arr = np.load(fpath, mmap_mode='r')
+
     meta: dict = {}
     if meta_path.exists():
         with open(meta_path, "r", encoding="utf-8") as handle:
             meta = json.load(handle)
+    return arr, meta
+
+def _load_local_pair_wrapper(fpath: Path, layer_idx: Optional[int] = None) -> tuple[np.ndarray, dict]:
+    arr, meta = _load_embedding_pair(fpath)
+    if layer_idx is not None and arr.ndim >= 2:
+        # The CBraMod all_layers shape is (Segments, Layers, Features). 
+        # We need to slice the 2nd dimension (layer_idx).
+        arr = np.array(arr[:, layer_idx, ...])
+    else:
+        # Load entire array into RAM (backwards compatibility)
+        arr = np.array(arr)
     return arr, meta
 
 
@@ -151,6 +235,10 @@ def load_temp_dl_data(
     reve_segment_duration: float = 10.0,
     cbramod_sampling_rate: float = 200.0,
     drop_unassigned: bool = True,
+    model_size: Optional[str] = None,
+    pooling: Optional[str] = None,
+    all_layers: bool = False,
+    layer_idx: Optional[int] = None,
 ) -> DataContainer:
     """
     Load current REVE/CBraMod outputs and align each row to a condition using segments.csv.
@@ -166,7 +254,10 @@ def load_temp_dl_data(
     if model not in {"reve", "cbramod"}:
         raise ValueError("model must be one of {'reve', 'cbramod'}")
 
-    files = _discover_embedding_files(Path(embeddings_root), model, desc, subjects)
+    files = _discover_embedding_files(
+        Path(embeddings_root), model, desc, subjects, 
+        model_size=model_size, pooling=pooling, all_layers=all_layers
+    )
     metadata_lookup = _metadata_lookup(metadata_df, subject_col)
     allowed_conditions = set(conditions) if conditions is not None else None
 
@@ -176,14 +267,17 @@ def load_temp_dl_data(
 
     for fpath in files:
         match = _EMBED_PATTERN.match(fpath.name)
-        if match is None:
-            continue
-        subject_tag, _, _ = match.groups()
+        if match is not None:
+            subject_tag = match.group(1)
+        else:
+            parts = fpath.stem.split("_")
+            subject_tag = parts[0]
+            
         subject_id = _normalize_subject_id(subject_tag)
-        arr, meta = _load_embedding_pair(fpath)
+        arr, meta = _load_local_pair_wrapper(fpath, layer_idx=layer_idx)
 
-        if arr.ndim not in {2, 3}:
-            raise ValueError(f"Unsupported embedding shape {arr.shape} in {fpath}")
+        if arr.ndim < 2:
+            raise ValueError(f"Unsupported embedding shape {arr.shape} (ndim < 2) in {fpath}")
 
         current_component_sizes = arr.shape[1:]
         if component_sizes is None:
@@ -201,14 +295,30 @@ def load_temp_dl_data(
             reve_segment_duration=reve_segment_duration,
             cbramod_sampling_rate=cbramod_sampling_rate,
         )
-        segments_df = pd.read_csv(_resolve_segments_csv(Path(segments_root), subject_id, desc))
-        windows["condition"] = _assign_conditions(
-            windows=windows,
-            segments_df=segments_df,
-            min_overlap_fraction=min_overlap_fraction,
-        )
+        # Priority 1: Centralized labels file in the subject directory (mainly for CBraMod)
+        if model == "cbramod":
+            consolidated_label_file = fpath.parent / f"sub-{subject_id}_condition_labels.json"
+            if consolidated_label_file.exists():
+                with open(consolidated_label_file, "r") as f:
+                    cons_meta = json.load(f)
+                    if "event_labels" in cons_meta and len(cons_meta["event_labels"]) == len(windows):
+                        windows["condition"] = cons_meta["event_labels"]
+                    else:
+                        logger.warning(f"Consolidated labels in {consolidated_label_file.name} length mismatch or missing.")
+        
+        if "condition" not in windows:
+            # Priority 2: Direct event_labels from the individual metadata file
+            if "event_labels" in meta and len(meta["event_labels"]) == len(windows):
+                windows["condition"] = meta["event_labels"]
+            else:
+                raise ValueError(f"No event_labels found in metadata or centralized file for {fpath.name}. Cannot assign conditions without segments.csv fallback.")
+        
         windows[subject_col] = subject_id
         windows["dl_model"] = model
+        if model_size:
+            windows["dl_model_size"] = model_size
+        if pooling:
+            windows["dl_pooling"] = pooling
         windows["desc"] = desc
         windows["sample_id"] = [
             f"{subject_id}_{model}_{idx}" for idx in windows["segment_index"].astype(int)
@@ -247,13 +357,24 @@ def load_temp_dl_data(
             "obs": ids,
             "feature": np.arange(X.shape[1]),
         }
-    else:
+    elif X.ndim == 3:
         dims = ("obs", "component", "feature")
         coords = {
             "obs": ids,
             "component": np.arange(X.shape[1]),
             "feature": np.arange(X.shape[2]),
         }
+    else:
+        # Handle 4D+
+        dims_list = ["obs"]
+        coords = {"obs": ids}
+        for i in range(1, X.ndim - 1):
+            dname = f"dim_{i}"
+            dims_list.append(dname)
+            coords[dname] = np.arange(X.shape[i])
+        dims_list.append("feature")
+        coords["feature"] = np.arange(X.shape[-1])
+        dims = tuple(dims_list)
 
     for col in rows.columns:
         if col != "sample_id":
@@ -274,6 +395,8 @@ def load_temp_dl_data(
         meta={
             "source": "temp_dl_loader",
             "model": model,
+            "model_size": model_size,
+            "pooling": pooling,
             "desc": desc,
         },
     )

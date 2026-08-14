@@ -43,11 +43,12 @@ def _subsample(X, y, groups, cap, seed=42):
     return X[idx], y[idx], groups[idx]
 
 
-def run_model_level(model, level_name, emb_level, label_df, out_root, condition):
+def run_model_level(model, level_name, emb_level, label_df, out_root, condition,
+                    target_col="epilepsy"):
     cond_short = condition.replace("_baseline", "")
     out_dir = Path(out_root) / level_name / cond_short / model
     out_dir.mkdir(parents=True, exist_ok=True)
-    acfg = {"model_key": model, "target_col": "epilepsy", "embedding_level": emb_level}
+    acfg = {"model_key": model, "target_col": target_col, "embedding_level": emb_level}
     try:
         X, y, groups = ra.load_precomputed_embeddings(
             acfg, {"paths": {}}, label_df, {"conditions": [condition]})
@@ -84,13 +85,16 @@ def main():
     ap.add_argument("--label-csv", default=LABEL_CSV)
     ap.add_argument("--levels", default="both",
                     choices=["epoch", "averaged_epoch", "both"])
+    ap.add_argument("--target-col", default="epilepsy",
+                    help="label column used as y for the coloured/supervised reports "
+                         "(e.g. epilepsy, asm_resistant).")
     args = ap.parse_args()
 
     label_df = ra.normalize_label_df(pd.read_csv(args.label_csv))
     levels = list(LEVELS) if args.levels == "both" else [args.levels]
     for level_name in levels:
         run_model_level(args.model, level_name, LEVELS[level_name],
-                        label_df, args.out_dir, args.condition)
+                        label_df, args.out_dir, args.condition, target_col=args.target_col)
 
 
 if __name__ == "__main__":
