@@ -19,6 +19,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent))
 import run_analysis as ra  # noqa: E402
+import cohort_balance  # noqa: E402
 
 LABEL_CSV = "/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/csv/patients_metadata_clean.csv"
 LEVEL     = "epoch_level"
@@ -91,8 +92,16 @@ def _empty_metrics():
 def run_one_cohort(cohort_key, csv_name, mask_fn, label_df, out_dir,
                    cv_strategy="stratified_group_kfold",
                    aggregations=("averaged_predictions",), epoch_out_dir=None,
-                   target_col="epilepsy"):
+                   target_col="epilepsy", cohort_group=None, balanced=False):
     cohort_df = label_df[mask_fn(label_df)].copy()
+    if balanced:
+        cohort_df, n_bal, drop_reason = cohort_balance.build_balanced(
+            cohort_df, target_col, cohort_group)
+        if drop_reason:
+            print(f"=== cohort {cohort_key}: BALANCED SKIP ({drop_reason}) ===", flush=True)
+            return
+        print(f"=== cohort {cohort_key}: balanced to {n_bal} subjects "
+              f"(sex+age matched, target={target_col}) ===", flush=True)
     run_root = Path(out_dir) / "runs" / cohort_key
     out_csv = Path(out_dir) / csv_name
     Path(out_dir).mkdir(parents=True, exist_ok=True)
@@ -225,6 +234,10 @@ def main():
                     help="subject-level aggregation: averaged_predictions (score epochs, "
                          "average probabilities), averaged_epochs (average the embeddings, "
                          "predict once), or both for a side-by-side comparison.")
+    ap.add_argument("--balanced", action="store_true",
+                    help="uniform sex x age (x comorbidity, where free) matched "
+                         "case/control cohort instead of the natural baseline population; "
+                         "cohorts that can't reach 30 matched subjects are skipped.")
     args = ap.parse_args()
     aggregations = list(AGG) if args.aggregation == "both" else [args.aggregation]
 
@@ -237,6 +250,9 @@ def main():
         n0 = len(label_df)
         label_df = label_df[label_df.source_dataset == args.source].copy()
         print(f"source filter '{args.source}': {n0} -> {len(label_df)} subjects", flush=True)
+    if args.target_col == "asm_resistant":
+        label_df = label_df[label_df.epilepsy == 1].copy()
+        print(f"asm_resistant target: restricted to epilepsy==1 -> {len(label_df)} subjects", flush=True)
     cohorts = COHORT_GROUPS[args.cohort_group]
     keys = [args.cohort] if args.cohort else list(cohorts)
     for key in keys:
@@ -248,7 +264,8 @@ def main():
         csv_name, mask_fn = cohorts[key]
         run_one_cohort(key, csv_name, mask_fn, label_df, args.out_dir,
                        cv_strategy=args.cv_strategy, aggregations=aggregations,
-                       epoch_out_dir=args.epoch_out_dir, target_col=args.target_col)
+                       epoch_out_dir=args.epoch_out_dir, target_col=args.target_col,
+                       cohort_group=args.cohort_group, balanced=args.balanced)
 
 
 if __name__ == "__main__":

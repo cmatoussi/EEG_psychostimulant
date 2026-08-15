@@ -23,6 +23,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent))
 import run_analysis as ra  # noqa: E402
+import cohort_balance  # noqa: E402
 from coco_pipe.dim_reduction import DimReduction  # noqa: E402
 from coco_pipe.io.quality import compute_row_outlier_scores  # noqa: E402
 from sklearn.preprocessing import RobustScaler  # noqa: E402
@@ -168,11 +169,23 @@ def reduce_and_report(X, y, groups, meta, out_dir, title, cond=None):
 
 
 def run_cohort(cohort_key, subdir, mask_fn, label_df, out_root, condition,
-               reject=True, mad_z=MAD_Z, outlier_frac=OUTLIER_FRAC, clip=CLIP):
+               reject=True, mad_z=MAD_Z, outlier_frac=OUTLIER_FRAC, clip=CLIP,
+               target_col="epilepsy", cohort_group=None, balanced=False):
     cohort_df = label_df[mask_fn(label_df)].copy()
-    acfg = {"data_path": FEATURE_CSV, "target_col": "epilepsy", "condition": condition}
     out_dir = Path(out_root) / subdir
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    if balanced:
+        cohort_df, n_bal, drop_reason = cohort_balance.build_balanced(
+            cohort_df, target_col, cohort_group)
+        if drop_reason:
+            print(f"[{cohort_key}] BALANCED SKIP: {drop_reason}", flush=True)
+            (out_dir / "SKIPPED.txt").write_text(f"balanced cohort dropped: {drop_reason}\n")
+            return
+        print(f"[{cohort_key}] balanced to {n_bal} subjects "
+              f"(sex+age matched, target={target_col})", flush=True)
+
+    acfg = {"data_path": FEATURE_CSV, "target_col": target_col, "condition": condition}
 
     try:
         X, y, groups, feats = ra.load_dim_reduction_data(acfg, cohort_df)
@@ -228,12 +241,26 @@ def main():
                     help="robust-scale features and clip to +/- this many IQRs before "
                          "reduction (0 disables; needed so PCA/Isomap aren't dominated "
                          "by a few extreme feature values).")
+    ap.add_argument("--target-col", default="epilepsy",
+                    help="binary label column to decode (e.g. epilepsy, asm_resistant). "
+                         "asm_resistant is auto-restricted to epilepsy==1 subjects first.")
+    ap.add_argument("--balanced", action="store_true",
+                    help="uniform sex x age (x comorbidity, where free) matched "
+                         "case/control cohort instead of the natural baseline population; "
+                         "cohorts that can't reach 30 matched subjects are skipped.")
     args = ap.parse_args()
 
     label_df = ra.normalize_label_df(pd.read_csv(args.label_csv))
     if args.source:
         label_df = label_df[label_df.source_dataset == args.source].copy()
         print(f"source filter '{args.source}': {len(label_df)} subjects", flush=True)
+    if args.target_col == "asm_resistant":
+        label_df = label_df[label_df.epilepsy == 1].copy()
+        print(f"asm_resistant target: restricted to epilepsy==1 -> {len(label_df)} subjects", flush=True)
+
+    kw = dict(reject=not args.no_reject, mad_z=args.mad_z, outlier_frac=args.outlier_frac,
+              clip=(args.clip if args.clip and args.clip > 0 else None),
+              target_col=args.target_col, balanced=args.balanced)
 
     if args.cohort_group == "everything":
         for gname, cohorts in COHORT_GROUPS.items():
@@ -241,18 +268,14 @@ def main():
                 if (gname, key) in SKIP:
                     continue
                 run_cohort(key, subdir, mask_fn, label_df, args.out_dir, args.condition,
-                           reject=not args.no_reject, mad_z=args.mad_z,
-                           outlier_frac=args.outlier_frac,
-                           clip=(args.clip if args.clip and args.clip > 0 else None))
+                           cohort_group=gname, **kw)
     else:
         cohorts = COHORT_GROUPS[args.cohort_group]
         keys = [args.cohort] if args.cohort else list(cohorts)
         for key in keys:
             subdir, mask_fn = cohorts[key]
             run_cohort(key, subdir, mask_fn, label_df, args.out_dir, args.condition,
-                       reject=not args.no_reject, mad_z=args.mad_z,
-                       outlier_frac=args.outlier_frac,
-                       clip=(args.clip if args.clip and args.clip > 0 else None))
+                       cohort_group=args.cohort_group, **kw)
 
 
 if __name__ == "__main__":

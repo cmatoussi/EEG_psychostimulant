@@ -40,6 +40,7 @@ from sklearn.preprocessing import StandardScaler  # noqa: E402
 sys.path.insert(0, str(Path(__file__).parent))
 import run_analysis as ra  # noqa: E402
 import pooled_metrics  # noqa: E402
+import cohort_balance  # noqa: E402
 
 FEATDIR = ("/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/BIDS/derivatives/"
            "signal_features/descriptors/combined")
@@ -462,6 +463,10 @@ def main():
     ap.add_argument("--restrict-col", default=None,
                     help="keep only subjects where this column==1 before cohorting "
                          "(e.g. epilepsy for asm_resistant: resistant-vs-non-resistant WITHIN epilepsy)")
+    ap.add_argument("--balanced", action="store_true",
+                    help="uniform sex x age (x comorbidity, where free) matched "
+                         "case/control cohort instead of the natural baseline population; "
+                         "cohorts that can't reach 30 matched subjects are skipped.")
     args = ap.parse_args()
     conds = [args.condition] if args.condition else CONDITIONS
 
@@ -488,6 +493,12 @@ def main():
             continue
         subdir, mask_fn = cohorts[key]
         cohort_df = label_df[mask_fn(label_df)].copy()
+        if args.balanced:
+            cohort_df, n_bal, drop_reason = cohort_balance.build_balanced(
+                cohort_df, _TARGET_COL, args.cohort_group)
+            if drop_reason:
+                print(f"=== {args.cohort_group}/{key}: BALANCED SKIP ({drop_reason}) ===", flush=True)
+                continue
         cout = out / subdir
         cout.mkdir(parents=True, exist_ok=True)
         n_epi = int((cohort_df[_TARGET_COL] == 1).sum())
