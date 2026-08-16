@@ -85,12 +85,14 @@ def main():
         rows.append({"source": name, "sep": sep, "is_hc": name == "handcrafted"})
     rank_df = pd.DataFrame(rows).dropna(subset=["sep"]).sort_values("sep", ascending=True)
 
-    fig, ax = plt.subplots(figsize=(7, 0.55 * len(rank_df) + 1.2))
+    fig, ax = plt.subplots(figsize=(7.8, 0.55 * len(rank_df) + 1.2))
     colors = [ORANGE if hc else BLUE for hc in rank_df.is_hc]
     ax.barh(rank_df.source, rank_df.sep, color=colors, height=0.6)
+    xmax = float(rank_df.sep.max())
     for y, (v, hc) in enumerate(zip(rank_df.sep, rank_df.is_hc)):
-        ax.text(v + 0.005, y, f"{v:.3f}", va="center", fontsize=9)
-    ax.axvline(0.5, color="#999", linestyle="--", linewidth=1, label="chance (0.5)")
+        ax.text(v + 0.006, y, f"{v:.3f}", va="center", fontsize=9)
+    ax.axvline(0.5, color="#999", linestyle="--", linewidth=1)
+    ax.set_xlim(0, xmax * 1.18)  # headroom so value labels never crowd the legend
     ax.set_xlabel("Separation (2-component PCA, logreg balanced accuracy)")
     ax.set_title(f"Embeddings vs handcrafted — {args.target} / {args.variant} / "
                  f"{args.cohort} / {args.condition}")
@@ -98,7 +100,7 @@ def main():
     ax.legend(handles=[Patch(color=BLUE, label="FM embeddings"),
                        Patch(color=ORANGE, label="Handcrafted features"),
                        plt.Line2D([0], [0], color="#999", linestyle="--", label="chance (0.5)")],
-              loc="lower right", frameon=False)
+              loc="center left", bbox_to_anchor=(1.01, 0.5), frameon=False)
     ax.spines[["top", "right"]].set_visible(False)
     bar_png = _fig_b64(fig)
 
@@ -121,8 +123,7 @@ def main():
             sep = sources[name][0]
             sep_row = sep[(sep.reducer == ("PCA" if idx == "pca" else "UMAP")) & (sep.n_components == 2)]
             sep_v = float(sep_row["separation_logreg_balanced_accuracy"].iloc[0]) if len(sep_row) else float("nan")
-            tag = " (handcrafted)" if name == "handcrafted" else ""
-            ax.set_title(f"{name}{tag}\nsep={sep_v:.3f}", fontsize=10)
+            ax.set_title(f"{name}\nsep={sep_v:.3f}", fontsize=10)
             ax.set_xticks([]); ax.set_yticks([])
             ax.spines[["top", "right", "left", "bottom"]].set_visible(False)
         for j in range(len(names), len(axes)):
