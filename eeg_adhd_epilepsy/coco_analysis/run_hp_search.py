@@ -104,7 +104,7 @@ def search_rf(X, y, g):
             n_estimators=n_est, max_depth=depth, class_weight="balanced",
             random_state=SEED, n_jobs=4), X, y, g)
 
-    best_n, best_s_n, hist_n = refine_1d(lambda v: score_n(v), 50, 800,
+    best_n, best_s_n, hist_n = refine_1d(lambda v: score_n(v), 50, 2000,
                                          log_space=False, is_int=True)
     best_d, best_s_d, hist_d = refine_1d(lambda v: score_n(best_n, v), 3, 30,
                                          log_space=False, is_int=True)
