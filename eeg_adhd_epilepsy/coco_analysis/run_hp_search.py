@@ -23,8 +23,9 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
 from sklearn.model_selection import StratifiedGroupKFold
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -40,6 +41,10 @@ FEATDIR = ("/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/BIDS/derivat
            "signal_features/descriptors/combined")
 
 
+# objective metric the coarse-to-fine search maximizes; set from --metric in main().
+METRIC = "balanced_accuracy"
+
+
 def cv_score(clf_fn, X, y, g):
     sgkf = StratifiedGroupKFold(n_splits=N_SPLITS, shuffle=True, random_state=SEED)
     fold_arrays = []
@@ -51,8 +56,9 @@ def cv_score(clf_fn, X, y, g):
         fold_arrays.append((y[te], clf.predict_proba(X[te])[:, 1]))
     if not fold_arrays:
         return float("nan")
-    r = pooled_metrics.pooled(fold_arrays, calibrated=False)
-    return r["roc_auc"]["mean"] if r else float("nan")
+    # calibrated=True so balanced_accuracy_calibrated is available if requested
+    r = pooled_metrics.pooled(fold_arrays, calibrated=True)
+    return r[METRIC]["mean"] if r else float("nan")
 
 
 def refine_1d(score_fn, lo, hi, log_space, n_rounds=3, points=(7, 5, 5), is_int=False):
@@ -72,7 +78,7 @@ def refine_1d(score_fn, lo, hi, log_space, n_rounds=3, points=(7, 5, 5), is_int=
             grid = sorted(set(round(float(v), 6) for v in grid))
         for v in grid:
             s = score_fn(v)
-            history.append({"round": rnd + 1, "value": v, "roc_auc": s})
+            history.append({"round": rnd + 1, "value": v, "score": s})
             if s > best_s:
                 best_s, best_v = s, v
         # narrow window around the best point found so far
@@ -95,7 +101,7 @@ def search_lr(X, y, g):
                          LogisticRegression(C=c, max_iter=1000, class_weight="balanced")),
                          X, y, g)
     best_c, best_s, hist = refine_1d(score, 1e-3, 1e3, log_space=True)
-    return {"head": "logreg", "best_params": {"C": best_c}, "best_roc_auc": best_s, "history": hist}
+    return {"head": "logreg", "best_params": {"C": best_c}, "best_score": best_s, "history": hist}
 
 
 def search_rf(X, y, g):
@@ -113,14 +119,58 @@ def search_rf(X, y, g):
     for h in hist_d:
         h["axis"] = "max_depth"
     return {"head": "rf", "best_params": {"n_estimators": best_n, "max_depth": best_d},
-            "best_roc_auc": best_s_d, "history": hist_n + hist_d}
+            "best_score": best_s_d, "history": hist_n + hist_d}
 
 
-def load_embeddings_subject(model, condition, target_col, label_df):
-    acfg = {"model_key": model, "target_col": target_col, "embedding_level": "subject"}
+def search_svm(X, y, g):
+    def score(c, gamma=None):
+        return cv_score(lambda: make_pipeline(StandardScaler(), SVC(
+            kernel="rbf", C=c, gamma=(gamma if gamma is not None else "scale"),
+            probability=True, class_weight="balanced")), X, y, g)
+
+    best_c, _, hist_c = refine_1d(lambda v: score(v), 1e-2, 1e2, log_space=True)
+    best_g, best_s, hist_g = refine_1d(lambda v: score(best_c, v), 1e-4, 1e0, log_space=True)
+    for h in hist_c:
+        h["axis"] = "C"
+    for h in hist_g:
+        h["axis"] = "gamma"
+    return {"head": "svm", "best_params": {"C": best_c, "gamma": best_g},
+            "best_score": best_s, "history": hist_c + hist_g}
+
+
+def search_histgb(X, y, g):
+    def score(lr, depth=None):
+        return cv_score(lambda: make_pipeline(StandardScaler(), HistGradientBoostingClassifier(
+            learning_rate=lr, max_depth=depth, class_weight="balanced",
+            random_state=SEED)), X, y, g)
+
+    best_lr, _, hist_lr = refine_1d(lambda v: score(v), 1e-2, 0.5, log_space=True)
+    best_d, best_s, hist_d = refine_1d(lambda v: score(best_lr, v), 2, 15,
+                                       log_space=False, is_int=True)
+    for h in hist_lr:
+        h["axis"] = "learning_rate"
+    for h in hist_d:
+        h["axis"] = "max_depth"
+    return {"head": "histgb", "best_params": {"learning_rate": best_lr, "max_depth": best_d},
+            "best_score": best_s, "history": hist_lr + hist_d}
+
+
+EPOCH_CAP = 12000  # subsample cap at epoch level (SVM w/ probability is O(n^2)-ish)
+
+
+def load_embeddings(model, condition, target_col, label_df, level="subject"):
+    acfg = {"model_key": model, "target_col": target_col, "embedding_level": level}
     X, y, groups = ra.load_precomputed_embeddings(
         acfg, {"paths": {}}, label_df, {"conditions": [condition]})
     return X, y, groups
+
+
+def _subsample(X, y, g, cap, seed=42):
+    if X.shape[0] <= cap:
+        return X, y, g
+    rng = np.random.default_rng(seed)
+    idx = np.sort(rng.choice(X.shape[0], size=cap, replace=False))
+    return X[idx], y[idx], g[idx]
 
 
 def load_handcrafted_subject(condition, target_col, label_df):
@@ -153,9 +203,20 @@ def main():
     ap.add_argument("--target-col", default="epilepsy")
     ap.add_argument("--label-csv", default=LABEL_CSV)
     ap.add_argument("--out-dir", required=True)
+    ap.add_argument("--level", default="subject", choices=["subject", "epoch"],
+                    help="embedding level to tune on (epoch = per-window, subsampled)")
+    ap.add_argument("--heads", nargs="+", default=["logreg", "rf", "svm", "histgb"],
+                    choices=["logreg", "rf", "svm", "histgb"],
+                    help="which heads to tune (drop svm to avoid the slow probability=True search)")
+    ap.add_argument("--metric", default="balanced_accuracy",
+                    choices=["balanced_accuracy", "balanced_accuracy_calibrated", "roc_auc",
+                             "accuracy", "weighted_f1"],
+                    help="objective the coarse-to-fine search maximizes (default balanced_accuracy)")
     args = ap.parse_args()
     if args.source == "embeddings" and not args.model:
         raise SystemExit("--model required for --source embeddings")
+    global METRIC
+    METRIC = args.metric
 
     label_df = ra.normalize_label_df(pd.read_csv(args.label_csv))
     if args.target_col == "asm_resistant":
@@ -163,11 +224,18 @@ def main():
         print(f"asm_resistant: restricted to epilepsy==1 -> {len(label_df)} subjects", flush=True)
 
     if args.source == "embeddings":
-        X, y, groups = load_embeddings_subject(args.model, args.condition, args.target_col, label_df)
+        X, y, groups = load_embeddings(args.model, args.condition, args.target_col,
+                                       label_df, level=args.level)
         tag = args.model
     else:
         X, y, groups = load_handcrafted_subject(args.condition, args.target_col, label_df)
         tag = "handcrafted"
+
+    if args.level == "epoch":
+        n0 = X.shape[0]
+        X, y, groups = _subsample(X, y, groups, EPOCH_CAP)
+        if X.shape[0] < n0:
+            print(f"[{tag}] epoch subsampled {n0} -> {X.shape[0]}", flush=True)
 
     print(f"[{tag}] loaded {X.shape} y={np.bincount(y).tolist()} n_subjects={len(np.unique(groups))}", flush=True)
     if X.shape[0] < 20 or len(np.unique(y)) < 2:
@@ -179,17 +247,19 @@ def main():
     cshort = args.condition.replace("_baseline", "")
 
     results = {}
-    for head_name, search_fn in [("logreg", search_lr), ("rf", search_rf)]:
+    _SEARCH = {"logreg": search_lr, "rf": search_rf, "svm": search_svm, "histgb": search_histgb}
+    for head_name in args.heads:
+        search_fn = _SEARCH[head_name]
         print(f"[{tag}/{cshort}] searching {head_name}...", flush=True)
         res = search_fn(X, y, groups)
         results[head_name] = res
-        print(f"  {head_name}: best={res['best_params']} roc_auc={res['best_roc_auc']:.4f}", flush=True)
+        print(f"  {head_name}: best={res['best_params']} {METRIC}={res['best_score']:.4f}", flush=True)
 
     row = {"source": args.source, "model": tag, "condition": cshort, "target_col": args.target_col,
-           "n_subjects": int(len(np.unique(groups))), "n_features": int(X.shape[1])}
+           "metric": METRIC, "n_subjects": int(len(np.unique(groups))), "n_features": int(X.shape[1])}
     for head_name, res in results.items():
         row[f"{head_name}_best_params"] = json.dumps(res["best_params"])
-        row[f"{head_name}_roc_auc"] = round(res["best_roc_auc"], 4)
+        row[f"{head_name}_{METRIC}"] = round(res["best_score"], 4)
 
     summary_path = out / f"hp_search_{tag}_{cshort}.csv"
     pd.DataFrame([row]).to_csv(summary_path, index=False)

@@ -116,10 +116,20 @@ def run_one_cohort(cohort_key, csv_name, mask_fn, label_df, out_dir,
         Path(epoch_out_dir).mkdir(parents=True, exist_ok=True)
     print(f"=== cohort {cohort_key}: {cohort_df['study_id'].nunique()} subjects ===", flush=True)
 
+    def _merge_write(new_rows, path):
+        """Preserve existing rows for models NOT in this run (so a --models subset
+        fills in the missing ones without wiping already-computed models)."""
+        new = pd.DataFrame(new_rows, columns=COLUMNS)
+        if path.exists():
+            old = pd.read_csv(path)
+            old = old[~old["fm_model"].isin(set(MODELS))]        # drop the models we recomputed
+            new = pd.concat([old, new], ignore_index=True)[COLUMNS]
+        new.to_csv(path, index=False)
+
     def _flush():
-        pd.DataFrame(rows, columns=COLUMNS).to_csv(out_csv, index=False)
+        _merge_write(rows, out_csv)
         if erows is not None:
-            pd.DataFrame(erows, columns=COLUMNS).to_csv(eout_csv, index=False)
+            _merge_write(erows, eout_csv)
 
     for model in MODELS:
         for cond in CONDITIONS:
@@ -238,8 +248,19 @@ def main():
                     help="uniform sex x age (x comorbidity, where free) matched "
                          "case/control cohort instead of the natural baseline population; "
                          "cohorts that can't reach 30 matched subjects are skipped.")
+    ap.add_argument("--models", nargs="+", default=None,
+                    help="subset of FM models to run (default: all).")
+    ap.add_argument("--heads", nargs="+", default=None,
+                    help="subset of classifier heads (e.g. drop the slow svm).")
     args = ap.parse_args()
     aggregations = list(AGG) if args.aggregation == "both" else [args.aggregation]
+
+    global MODELS, HEADS
+    if args.models:
+        MODELS = [m for m in MODELS if m in set(args.models)]
+    if args.heads:
+        HEADS = {h: HEADS[h] for h in HEADS if h in set(args.heads)}
+    print(f"models={MODELS} heads={list(HEADS)}", flush=True)
 
     label_df = ra.normalize_label_df(pd.read_csv(args.label_csv))
     if "source_dataset" not in label_df.columns:

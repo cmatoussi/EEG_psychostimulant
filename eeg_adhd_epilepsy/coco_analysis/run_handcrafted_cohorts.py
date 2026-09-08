@@ -65,6 +65,16 @@ MODELS = {
     "dummy": lambda: DummyClassifier(strategy="stratified", random_state=42),
 }
 
+NESTED = False   # set by --nested-head: tune the head inside each CV fold
+# 1-D search axes per head (param, lo, hi, log_space, is_int)
+TUNE = {
+    "logreg_l2": [("logisticregression__C", 1e-2, 1e2, True, False)],
+    "logreg_l1": [("logisticregression__C", 1e-2, 1e2, True, False)],
+    "rf": [("n_estimators", 50, 300, False, True), ("max_depth", 3, 20, False, True)],
+    "dummy": None,
+}
+_SEL_TUNE = [("clf__C", 1e-2, 1e2, True, False)]   # final head after SFS / L1
+
 # Cohorts to always skip (too small / undecodable): tiny age bin and ASD comorbidity.
 SKIP_COHORTS = {("age", "0-4"), ("comorbidity", "asd"), ("sex", "ALL")}
 
@@ -189,15 +199,81 @@ def load_sensor_data(level, condition, cohort_df):
     return X, y, groups, feats, sensors
 
 
-def cv_auc(clf_fn, X, y, g):
-    """Collect every fold's held-out predictions, then score them POOLED (shared
-    helper: concat + score once, stratified-bootstrap std) instead of averaging
-    per-fold. No single-class-fold dropping — degenerate folds still contribute
-    their predictions to the pool."""
+from run_hp_search import refine_1d  # noqa: E402  coarse-to-fine 1-D zoom (nested head)
+_GRID_PTS = (5, 3)          # 2-round zoom (kept short; refit inside every fold)
+
+
+def _inner_bal(clf_fn, params, X, y, g, folds=3):
+    """Inner grouped-CV pooled balanced accuracy for one hyperparameter setting."""
+    from sklearn.base import clone
+    skf = StratifiedGroupKFold(n_splits=folds, shuffle=True, random_state=42)
+    fa = []
+    for tr, te in skf.split(X, y, g):
+        if len(np.unique(y[te])) < 2:
+            continue
+        c = clone(clf_fn()).set_params(**params).fit(X[tr], y[tr])
+        fa.append((y[te], c.predict_proba(X[te])[:, 1]))
+    r = pooled_metrics.pooled(fa, calibrated=False)
+    return r["balanced_accuracy"]["mean"] if r else -1.0
+
+
+def _tune_params(clf_fn, X, y, g, tune):
+    """Coarse-to-fine search on a training fold; sequential 1-D axes -> param dict."""
+    params = {}
+    for name, lo, hi, log, is_int in tune:
+        best, _, _ = refine_1d(
+            lambda v: _inner_bal(clf_fn, {**params, name: (int(round(v)) if is_int else v)}, X, y, g),
+            lo, hi, log_space=log, is_int=is_int, points=_GRID_PTS)
+        params[name] = int(round(best)) if is_int else best
+    return params
+
+
+def _pack(fa):
+    r = pooled_metrics.pooled(fa, calibrated=False)
+    nan = float("nan")
+    if r is None:
+        return {"roc_auc_mean": nan, "roc_auc_std": nan, "balanced_accuracy_mean": nan,
+                "balanced_accuracy_std": nan, "weighted_f1_mean": nan, "weighted_f1_std": nan, "n_folds": 0}
+    return {"roc_auc_mean": r["roc_auc"]["mean"], "roc_auc_std": r["roc_auc"]["std"],
+            "balanced_accuracy_mean": r["balanced_accuracy"]["mean"],
+            "balanced_accuracy_std": r["balanced_accuracy"]["std"],
+            "weighted_f1_mean": r["weighted_f1"]["mean"], "weighted_f1_std": r["weighted_f1"]["std"],
+            "n_folds": r["n_folds"]}
+
+
+def cv_select_tuned(pipe_fn, X, y, g, tune):
+    """SFS/L1: run the selection pipeline (all steps but the final 'clf') ONCE per
+    outer fold, then nested-tune the head on the selected features. Avoids re-running
+    the expensive selector for every hyperparameter candidate."""
+    from sklearn.base import clone
+    head_fn = lambda: LogisticRegression(max_iter=1000, class_weight="balanced")
+    tune_h = [(n.replace("clf__", ""), lo, hi, log, i) for n, lo, hi, log, i in tune]
     sgkf = StratifiedGroupKFold(n_splits=N_SPLITS, shuffle=True, random_state=42)
     fa = []
     for tr, te in sgkf.split(X, y, g):
-        clf = clf_fn(); clf.fit(X[tr], y[tr])
+        sel = pipe_fn()[:-1]                       # scale + selector, drop final clf
+        sel.fit(X[tr], y[tr])
+        Xtr, Xte = sel.transform(X[tr]), sel.transform(X[te])
+        params = _tune_params(head_fn, Xtr, y[tr], g[tr], tune_h)
+        clf = clone(head_fn()).set_params(**params).fit(Xtr, y[tr])
+        fa.append((y[te], clf.predict_proba(Xte)[:, 1]))
+    return _pack(fa)
+
+
+def cv_auc(clf_fn, X, y, g, tune=None):
+    """Collect every fold's held-out predictions, then score them POOLED (shared
+    helper: concat + score once, stratified-bootstrap std) instead of averaging
+    per-fold. If `tune` is given, the head's hyperparameters are searched INSIDE each
+    outer training fold (leak-free nested optimisation)."""
+    from sklearn.base import clone
+    sgkf = StratifiedGroupKFold(n_splits=N_SPLITS, shuffle=True, random_state=42)
+    fa = []
+    for tr, te in sgkf.split(X, y, g):
+        if tune:
+            params = _tune_params(clf_fn, X[tr], y[tr], g[tr], tune)
+            clf = clone(clf_fn()).set_params(**params).fit(X[tr], y[tr])
+        else:
+            clf = clf_fn(); clf.fit(X[tr], y[tr])
         fa.append((y[te], clf.predict_proba(X[te])[:, 1]))
     r = pooled_metrics.pooled(fa, calibrated=False)
     nan = float("nan")
@@ -318,7 +394,8 @@ def run_condition(condition, cohort_df, level, out_dir, label="all"):
     rows, images = [], {}
     # 1) ALL
     for mname, mfn in MODELS.items():
-        rows.append({"analysis": "all", "model": mname, "condition": cshort, **cv_auc(mfn, X, y, g)})
+        tune = TUNE.get(mname) if NESTED else None
+        rows.append({"analysis": "all", "model": mname, "condition": cshort, **cv_auc(mfn, X, y, g, tune=tune)})
     imp = _feature_importance(X, y, feats)
     imp.to_csv(out_dir / f"feature_importance_{cshort}.csv", index=False)
     images["feature_importance"] = _importance_png(imp)
@@ -328,7 +405,8 @@ def run_condition(condition, cohort_df, level, out_dir, label="all"):
     sensor_auc, sensor_bacc = {}, {}
     for s in sensors:
         cols = [i for i, c in enumerate(feats) if _sensor_of(c) == s]
-        res = cv_auc(MODELS["logreg_l2"], X[:, cols], y, g)
+        res = cv_auc(MODELS["logreg_l2"], X[:, cols], y, g,
+                     tune=TUNE["logreg_l2"] if NESTED else None)
         sensor_auc[s] = res["roc_auc_mean"]
         sensor_bacc[s] = res["balanced_accuracy_mean"]
         rows.append({"analysis": "sensor", "model": "logreg_l2", "unit": s,
@@ -373,7 +451,8 @@ def run_condition(condition, cohort_df, level, out_dir, label="all"):
                 ("clf", LogisticRegression(max_iter=1000, class_weight="balanced")),
             ])
 
-        res = cv_auc(_sfs_pipe, Xf, yf, gf)       # <- honest nested-CV score (subsampled)
+        res = (cv_select_tuned(_sfs_pipe, Xf, yf, gf, _SEL_TUNE) if NESTED
+               else cv_auc(_sfs_pipe, Xf, yf, gf))    # <- honest nested-CV score (subsampled)
         rows.append({"analysis": "sfs", "model": "logreg_l2", "condition": cshort,
                      "n_selected": nsel, "prefilter_k": kbest, "unit": Xf.shape[0], **res})
 
@@ -405,7 +484,8 @@ def run_condition(condition, cohort_df, level, out_dir, label="all"):
                     ("clf", LogisticRegression(max_iter=1000, class_weight="balanced")),
                 ])
 
-            res_l1 = cv_auc(_l1_pipe, X, y, g)          # honest nested; inner CV tunes C
+            res_l1 = (cv_select_tuned(_l1_pipe, X, y, g, _SEL_TUNE) if NESTED
+                      else cv_auc(_l1_pipe, X, y, g))    # honest nested; inner CV tunes C
             full_l1 = _l1_pipe().fit(X, y)
             sel_l1 = [feats[i] for i in np.where(full_l1.named_steps["select"].get_support())[0]]
             rows.append({"analysis": "l1_select", "model": "logreg_l1->l2", "condition": cshort,
@@ -467,7 +547,12 @@ def main():
                     help="uniform sex x age (x comorbidity, where free) matched "
                          "case/control cohort instead of the natural baseline population; "
                          "cohorts that can't reach 30 matched subjects are skipped.")
+    ap.add_argument("--nested-head", action="store_true",
+                    help="tune the classification head (logreg C / RF depth) INSIDE each CV "
+                         "fold for the all/sensor/SFS/L1 analyses (leak-free nested optimisation).")
     args = ap.parse_args()
+    global NESTED
+    NESTED = args.nested_head
     conds = [args.condition] if args.condition else CONDITIONS
 
     global _TARGET_COL, _REPORTS_DIR

@@ -38,6 +38,7 @@ from sklearn.metrics import roc_auc_score, balanced_accuracy_score, f1_score, ac
 
 import run_analysis as ra
 import pooled_metrics
+import cohort_balance
 from run_embedding_cohorts import COHORT_GROUPS
 
 EMB_FM = ("/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/BIDS/derivatives/"
@@ -73,6 +74,20 @@ def _base(head):
 
 def _clf_key(pipe):  # the classifier step name in the pipeline
     return pipe.steps[-1][0]
+
+
+# optimized-head mode: {head: {param: value}} loaded from an hp_search summary CSV.
+_TUNED: dict[str, dict] = {}
+
+
+def _head(head):
+    """Base pipeline for `head`, with hp_search-tuned params applied if available."""
+    p = _base(head)
+    tp = _TUNED.get(head)
+    if tp:
+        clf = _clf_key(p)
+        p = p.set_params(**{f"{clf}__{k}": v for k, v in tp.items()})
+    return p
 
 
 # space entries: (kind, *args). kind in {float, int} ; float has optional log flag.
@@ -133,6 +148,46 @@ class OptunaSearchCV:
 
     def predict_proba(self, X):
         return self.best_estimator_.predict_proba(X)
+
+
+from run_hp_search import refine_1d  # noqa: E402  reuse the 1-D zoom search
+
+_GRID_PTS = (5, 3, 3)   # lighter than the standalone search; runs once per outer fold
+
+
+def _inner_cv_bal(base, params, X, y, g, folds, seed=42):
+    """Inner grouped-CV pooled balanced accuracy for one hyperparameter setting."""
+    skf = StratifiedGroupKFold(n_splits=folds, shuffle=True, random_state=seed)
+    fa = []
+    for tr, te in skf.split(X, y, g):
+        if len(np.unique(y[te])) < 2:
+            continue
+        est = clone(base).set_params(**params).fit(X[tr], y[tr])
+        fa.append((y[te], est.predict_proba(X[te])[:, 1]))
+    r = pooled_metrics.pooled(fa, calibrated=False)
+    return r["balanced_accuracy"]["mean"] if r else -1.0
+
+
+def grid_search_head(head, X, y, g, folds):
+    """Coarse-to-fine search on the outer-train fold; returns tuned param dict."""
+    base = _base(head); clf = _clf_key(base)
+    if head == "logreg":
+        c, _, _ = refine_1d(lambda v: _inner_cv_bal(base, {f"{clf}__C": v}, X, y, g, folds),
+                            1e-3, 1e3, log_space=True, points=_GRID_PTS)
+        return {f"{clf}__C": c}
+    if head == "rf":
+        n, _, _ = refine_1d(lambda v: _inner_cv_bal(base, {f"{clf}__n_estimators": int(v)}, X, y, g, folds),
+                            50, 600, log_space=False, is_int=True, points=_GRID_PTS)
+        d, _, _ = refine_1d(lambda v: _inner_cv_bal(base, {f"{clf}__n_estimators": int(n), f"{clf}__max_depth": int(v)}, X, y, g, folds),
+                            3, 30, log_space=False, is_int=True, points=_GRID_PTS)
+        return {f"{clf}__n_estimators": int(n), f"{clf}__max_depth": int(d)}
+    if head == "histgb":
+        lr, _, _ = refine_1d(lambda v: _inner_cv_bal(base, {f"{clf}__learning_rate": v}, X, y, g, folds),
+                             1e-2, 0.5, log_space=True, points=_GRID_PTS)
+        d, _, _ = refine_1d(lambda v: _inner_cv_bal(base, {f"{clf}__learning_rate": lr, f"{clf}__max_depth": int(v)}, X, y, g, folds),
+                            2, 15, log_space=False, is_int=True, points=_GRID_PTS)
+        return {f"{clf}__learning_rate": lr, f"{clf}__max_depth": int(d)}
+    return {}   # dummy
 
 
 # handcrafted sensor-feature matrices (separate feature sets per level)
@@ -200,7 +255,7 @@ def _best_thr(y, p):
     return float(_GRID[np.argmax([balanced_accuracy_score(y, (p >= t).astype(int)) for t in _GRID])])
 
 
-def nested_eval(head, X, y, g, n_trials, inner_folds, pool_subject, tune=True):
+def nested_eval(head, X, y, g, n_trials, inner_folds, pool_subject, tune=True, search="grid"):
     """Outer 5-fold StratifiedGroupKFold. Returns (fold_arrays, fold_configs).
     tune=True  -> nested Optuna (inner TPE search per fold, refit-best).
     tune=False -> fixed default head fit directly on outer-train (fast baseline,
@@ -210,13 +265,18 @@ def nested_eval(head, X, y, g, n_trials, inner_folds, pool_subject, tune=True):
     for k, (tr, te) in enumerate(outer.split(X, y, g)):
         if len(np.unique(y[te])) < 2:
             continue
-        if tune:
+        if tune and search == "grid":
+            params = grid_search_head(head, X[tr], y[tr], g[tr], inner_folds)
+            est = clone(_base(head)).set_params(**params).fit(X[tr], y[tr])
+            cfgs.append({"outer_fold": k, "best_params": params, "trials": []})
+        elif tune:
             est = OptunaSearchCV(_base(head), SPACES[head], n_trials, inner_folds).fit(X[tr], y[tr], g[tr])
             cfgs.append({"outer_fold": k, "best_params": est.best_params_,
                          "best_inner_roc": est.best_value_, "trials": est.trials_})
         else:
-            est = clone(_base(head)).fit(X[tr], y[tr])
-            cfgs.append({"outer_fold": k, "best_params": "fixed_default", "trials": []})
+            est = clone(_head(head)).fit(X[tr], y[tr])
+            cfgs.append({"outer_fold": k, "best_params": (_TUNED.get(head) or "fixed_default"),
+                         "trials": []})
         p = np.nan_to_num(est.predict_proba(X[te])[:, 1], nan=0.5)
         yt, pt = (y[te], p)
         if pool_subject:
@@ -254,8 +314,22 @@ def main():
     ap.add_argument("--heads", nargs="+", default=["dummy", "logreg", "histgb", "rf", "svm"])
     ap.add_argument("--n-trials", type=int, default=40)
     ap.add_argument("--inner-folds", type=int, default=3)
+    ap.add_argument("--search", default="grid", choices=["grid", "optuna"],
+                    help="nested inner search: 'grid' = coarse-to-fine (matches run_hp_search), "
+                         "'optuna' = TPE. Both run inside each outer fold (leak-free).")
+    ap.add_argument("--subject-aggs", nargs="+", default=None,
+                    choices=["averaged_epochs", "averaged_predictions"],
+                    help="limit subject-level aggregations (default both). Use averaged_epochs "
+                         "alone to keep nested search tractable.")
+    ap.add_argument("--balanced", action="store_true",
+                    help="uniform sex x age (x comorbidity) matched case/control cohort per group "
+                         "(via cohort_balance.build_balanced) before the nested CV.")
     ap.add_argument("--fixed", action="store_true",
                     help="skip nested Optuna; fit default heads directly (fast baseline)")
+    ap.add_argument("--tuned-params-dir", default=None,
+                    help="dir of hp_search summaries; load per-head best params from "
+                         "hp_search_{model}_{condition}.csv and fit those tuned heads "
+                         "(implies fixed mode; output tag = 'optimized')")
     ap.add_argument("--target-col", default="epilepsy",
                     help="label column to predict (epilepsy | asm_resistant | ...)")
     ap.add_argument("--restrict-col", default=None,
@@ -266,7 +340,20 @@ def main():
     label_df = ra.normalize_label_df(pd.read_csv(args.label_csv))
     label_df["study_id"] = label_df["study_id"].astype(str)
     cond = f"{args.condition}_baseline"
-    tag = "fixed" if args.fixed else "nested"   # output filename reflects the mode, not the script name
+    # optimized-head mode: load hp_search best params for this model+condition into _TUNED.
+    if args.tuned_params_dir:
+        f = Path(args.tuned_params_dir) / f"hp_search_{args.model}_{args.condition}.csv"
+        if f.exists():
+            row = pd.read_csv(f).iloc[0]
+            for head in args.heads:
+                col = f"{head}_best_params"
+                if col in row and pd.notna(row[col]):
+                    _TUNED[head] = json.loads(row[col])
+            print(f"loaded tuned params from {f.name}: {_TUNED}", flush=True)
+        else:
+            print(f"WARNING: no tuned params at {f}; falling back to default heads", flush=True)
+    fixed_mode = args.fixed or bool(args.tuned_params_dir)
+    tag = "optimized" if args.tuned_params_dir else ("fixed" if args.fixed else "nested")
     Xep, yep, gep = _load_embeddings(args.model, cond, label_df, args.level, target=args.target_col)
     print(f"{args.model}/{args.condition}/{args.level}: loaded {Xep.shape} "
           f"classes={np.bincount(yep).tolist()} subj={len(np.unique(gep))}", flush=True)
@@ -282,7 +369,8 @@ def main():
     # avg_epochs/ + avg_predictions/ folders. handcrafted subject features are ALREADY
     # per-subject descriptors, so a single aggregation (no agg subfolder). epoch = per_epoch.
     if args.level == "subject":
-        aggs = ["averaged_epochs"] if args.model == "handcrafted" else ["averaged_epochs", "averaged_predictions"]
+        aggs = args.subject_aggs or (["averaged_epochs"] if args.model == "handcrafted"
+                                     else ["averaged_epochs", "averaged_predictions"])
     else:
         aggs = ["per_epoch"]
     multi_agg = len(aggs) > 1
@@ -309,7 +397,7 @@ def main():
             d = (out / aggdir / gname / args.condition) if aggdir else (out / gname / args.condition)
             d.mkdir(parents=True, exist_ok=True)
             sub.to_csv(d / f"results_{tag}_{args.model}.csv", index=False)
-        if trials and not args.fixed:   # Optuna history only makes sense for a real search
+        if trials and not fixed_mode:   # Optuna history only makes sense for a real search
             (out / f"trials_{tag}_{args.model}_{args.condition}.json").write_text(
                 json.dumps({"model": args.model, "condition": args.condition,
                             "n_trials": args.n_trials, "inner_folds": args.inner_folds,
@@ -319,7 +407,12 @@ def main():
         gname = ckey.split(":", 1)[0]
         ids = {"fm_model": args.model, "condition": args.condition,
                "cohort_group": gname, "cohort": subdir}
-        keep = set(label_df[mask_fn(label_df)]["study_id"])
+        cohort_df = label_df[mask_fn(label_df)]
+        if args.balanced:   # uniform sex x age (x comorbidity) matched case/control
+            cohort_df, n_bal, drop = cohort_balance.build_balanced(cohort_df, args.target_col, gname)
+            if drop:
+                print(f"  cohort {ckey}: BALANCED SKIP ({drop})", flush=True); continue
+        keep = set(cohort_df["study_id"])
         m = np.isin(gep, list(keep))
         Xc, yc, gc = Xep[m], yep[m], gep[m]
         if len(np.unique(yc)) < 2 or len(np.unique(gc)) < N_OUTER:
@@ -337,7 +430,7 @@ def main():
             for head in args.heads:
                 try:
                     fa, cfgs = nested_eval(head, Xa, ya, ga, args.n_trials, args.inner_folds,
-                                           pool, tune=not args.fixed)
+                                           pool, tune=not fixed_mode, search=args.search)
                 except Exception as e:  # noqa: BLE001 -- one head must never kill the sweep
                     print(f"  {ckey}/{agg}/{head}: ERROR {repr(e)[:120]}", flush=True)
                     rows.append({**ids, "aggregation": agg, "head": head, "status": "error", **counts,
