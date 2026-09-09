@@ -30,3 +30,7 @@ results*/
 .old
 analysis_*/
 /derivatives
+eeg_adhd_epilepsy/analysis/logs/
+
+# analysis results (not code)
+eeg_adhd_epilepsy/coco_analysis/permute_testing.csv

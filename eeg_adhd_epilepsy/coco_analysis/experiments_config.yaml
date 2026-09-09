@@ -1,0 +1,195 @@
+balanced_accuracy_optimal: true   # set false to drop Youden-J threshold metric from all analyses
+balanced_sample: false            # set true to undersample majority class before CV (epochs only)
+analysis_level: epoch_level       # "epoch_level" | "subject_level" — subject_level aggregates epoch predictions per patient before scoring
+
+paths:
+  data_root: "/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/BIDS/derivatives/preproc/"  # BIDS preproc derivatives; .fif under sub-XXXX/ses-01/eeg/
+  label_csv: "/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/csv/patients_metadata_clean.csv"  # patient metadata: sex, age, comorbidity (autism/adhd), epilepsy, meds
+  output_dir: "/home/mat/scratch/results"          # Base directory for all outputs
+  embeddings_root: "/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/BIDS/derivatives/signal_features/eeg_foundation_embeddings/combined"  # pre-extracted FM embeddings
+
+# Range of subjects to exclude from analysis (e.g. [[1, 10], [200, 230]]). Set to null by default.
+exclude_subjects: null
+
+# Cohort stratification (unchanged from today)
+groups:
+  sex: ["F", "M", "ALL"]
+  age: ["0-4", "5-8", "9-12", "13-18", "ALL"]
+  comorbidities: ["none", "ASD", "ADHD", "ASD & ADHD"]
+  medication: ["ASM", "no med", "psychostimulant", "ASM & psychostimulant"]
+
+# Signal metadata (used by all FM-based modes)
+signal:
+  sfreq: 200.0
+  ch_names: ["Fp1", "Fp2", "F7", "F3", "Fz", "F4", "F8", "T3", "C3", "Cz", "C4", "T4", "T5", "P3", "Pz", "P4", "T6", "O1", "O2"]  # 19 standard 10-20 channels
+  epoch_desc: "base"          # options: [desc-base_epo.fif, desc-base_eeg.fif, desc-correctDss_eeg.fif, desc-denoiseWienerDss_eeg.fif]
+  conditions: ["EO_baseline", "EC_baseline"]  # each condition is run as a separate job; options: [EO_baseline, EC_baseline, HV_EC, HV_EO, PostHV_EC, PostHV_EO, PHOTO_EC, PHOTO_EO]
+
+# --------------------------------------------------------------------------
+# Analysis blocks — set enabled: true/false to control which run
+# --------------------------------------------------------------------------
+analyses:
+  - id: "cbramod_embed"
+    enabled: false
+    mode: "fm_embed"          # frozen FM → classical head
+    model_key: "cbramod"      # options: [cbramod, reve, biot, labram, luna, signaljepa, bendr]
+    models:                   # multiple heads run in one sweep
+      logreg:
+        method: "LogisticRegression"
+        max_iter: 500
+        class_weight: "balanced"
+      rf:
+        method: "RandomForestClassifier"
+        n_estimators: 200
+        class_weight: "balanced"
+    metrics: ["accuracy", "roc_auc", "balanced_accuracy", "balanced_accuracy_optimal", "f1"]
+    cv:
+      strategy: "group_kfold"
+      n_splits: 5
+    slurm:
+      gres: "gpu:1"
+      mem: "64G"
+      time: "04:00:00"
+
+  - id: "embed_head_precomputed"
+    enabled: false
+    mode: "fm_embed_precomputed"   # load pre-extracted embeddings → classical head (no extraction, CPU-only)
+    model_key: "cbramod"           # picks {model}_{cond}_{level}_embeddings.csv; options: cbramod, reve, biot, labram, luna, signaljepa, bendr, eegpt
+    embedding_level: "epoch"       # "epoch" | "recording" | "subject"
+    target_col: "Epilepsy"
+    models:                        # heads attached to the embeddings
+      logreg:
+        method: "LogisticRegression"
+        max_iter: 500
+        class_weight: "balanced"
+      rf:
+        method: "RandomForestClassifier"
+        n_estimators: 200
+        class_weight: "balanced"
+    metrics: ["accuracy", "roc_auc", "balanced_accuracy", "balanced_accuracy_optimal", "f1"]
+    cv:
+      strategy: "group_kfold"
+      n_splits: 5
+    slurm:
+      cpus-per-task: "8"           # CPU-only — no GPU needed
+      mem: "32G"
+      time: "02:00:00"
+
+  - id: "cbramod_lora"
+    enabled: false
+    mode: "fm_lora"           # LoRA fine-tuning (end-to-end)
+    model_key: "cbramod"      # options: [cbramod, reve, biot, labram, luna, signaljepa, bendr]
+    class_weight: "balanced"  # "balanced" | null
+    use_focal_loss: false     # true → FocalLoss(γ=2) instead of CrossEntropy; compatible with class_weight
+    # focal_gamma: 2.0       # focusing parameter γ; higher = more penalty on easy examples
+    lora:
+      r: 8
+      alpha: 16
+      dropout: 0.05
+      target_modules: "all-linear"
+    trainer:
+      max_epochs: 15
+      batch_size: 64
+      early_stopping_patience: 5
+      lr: 1e-4
+      weight_decay: 0.01
+      lr_warmup_epochs: 2
+      # Two-stage: linear probe then LoRA fine-tune.
+      # Set training_strategy: ft_only to skip phase 1 and go straight to LoRA.
+      training_strategy: lp_ft  # "ft_only" | "lp_ft"
+      lp_epochs: 5              # head-only warmup epochs (phase 1)
+      # lp_lr: 1e-3             # phase-1 lr; defaults to trainer.lr if omitted
+    metrics: ["accuracy", "roc_auc", "balanced_accuracy", "balanced_accuracy_optimal", "f1"]
+    cv:
+      strategy: "group_kfold"
+      n_splits: 5
+    slurm:
+      gres: "gpu:1"
+      mem: "64G"
+      time: "24:00:00"
+
+  - id: "dim_reduction_analysis"
+    enabled: false
+    mode: "dim_reduction"     # Use coco_pipe/dim_reduction module
+    data_path: "/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/BIDS/derivatives/signal_features/descriptors/combined/pooled_subject_features.csv"
+    target_col: "Epilepsy"
+    condition: "EO_baseline"  # one row per subject per condition — filter to one
+    models:
+      # comp-2 = for the 2D scatter figure (epilepsy vs non-epilepsy)
+      pca:
+        method: "PCA"
+        n_components: 2
+      umap:
+        method: "UMAP"
+        n_components: 2
+        n_neighbors: 15
+      isomap:
+        method: "Isomap"
+        n_components: 2
+        n_neighbors: 15
+      # comp-10 = for the metrics, esp. separation (class structure may live above 2D)
+      pca_10:
+        method: "PCA"
+        n_components: 10
+      umap_10:
+        method: "UMAP"
+        n_components: 10
+        n_neighbors: 15
+      isomap_10:
+        method: "Isomap"
+        n_components: 10
+        n_neighbors: 15
+    evaluation:
+      # trustworthiness/continuity/lcmc = geometry faithfulness (unsupervised);
+      # separation_logreg_balanced_accuracy = is Epilepsy separable in the map (uses labels+groups)
+      metrics: ["trustworthiness", "continuity", "lcmc", "separation_logreg_balanced_accuracy"]
+      k_range: [5, 10, 20]
+      selection_metric: "trustworthiness"
+      
+  - id: "handcrafted_ml"
+    enabled: false
+    mode: "handcrafted"       # pre-computed features CSV → classical decoding
+    # 1. Select the aggregation level (subject vs epoch, pooled vs per-sensor)
+    # Options:
+    #   - "/home/mat/scratch/signal_features/descriptors/combined/pooled_subject_features.csv"
+    #   - "/home/mat/scratch/signal_features/descriptors/combined/sensor_subject_features.csv"
+    #   - "/home/mat/scratch/signal_features/descriptors/combined/pooled_epoch_features.csv"
+    #   - "/home/mat/scratch/signal_features/descriptors/combined/sensor_epoch_features.csv"
+    data_path: "/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/BIDS/derivatives/signal_features/descriptors/combined/pooled_subject_features.csv"
+    target_col: "Epilepsy"
+    feature_names: "all"      # or list specific descriptors
+    spatial_units: "all"      # or list specific sensors: ["Fp1", "Fz", "Cz"]
+    analysis_unit: "all"      # Slice the dataset into multiple experiments automatically:
+                              # "all"     → all sensors all features (1 multivariate run)
+                              # "sensor"  → 1 sensor all features (19 separate runs)
+                              # "feature" → 1 feature all sensors/regions (N separate runs)
+                              # "region"  → 1 region all features (9 runs: front_left, posterior_right, etc.)
+    representation: "subject" # "subject" → Pool features/embeddings to make 1 prediction per patient
+    balance:
+      strategy: "undersample"
+      covariates: ["Age", "Sex"]
+    feature_selection:
+      enabled: true
+      method: "sfs"           # Sequential Forward Selection (recursive feature addition)
+      direction: "forward"
+      n_features: 20          # Stop after picking the top 20 features
+      cv:                     # Inner CV loop to pick features safely without leaking test data
+        strategy: "group_kfold"
+        n_splits: 3
+    models:
+      logreg:
+        method: "LogisticRegression"
+        max_iter: 500
+        class_weight: "balanced"
+      rf:
+        method: "RandomForestClassifier"
+        n_estimators: 200
+        class_weight: "balanced"
+    metrics: ["accuracy", "roc_auc", "balanced_accuracy", "balanced_accuracy_optimal", "f1"]
+    cv:
+      strategy: "group_kfold"
+      n_splits: 5
+    slurm:
+      cpus-per-task: "16"
+      mem: "32G"
+      time: "08:00:00"

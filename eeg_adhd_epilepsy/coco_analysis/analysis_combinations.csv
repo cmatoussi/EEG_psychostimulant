@@ -1,0 +1,434 @@
+id,sex,age,comorbidities,medication,condition,analysis_type,method_or_model,handcrafted_unit,level,balance
+0,ALL,ALL,ALL,ALL,N/A,dim_reduction,PCA,N/A,subject,balanced
+1,ALL,ALL,ALL,ALL,N/A,dim_reduction,UMAP,N/A,subject,balanced
+2,ALL,ALL,ALL,ALL,N/A,dim_reduction,t-SNE,N/A,subject,balanced
+3,ALL,ALL,ALL,ALL,N/A,handcrafted,LogisticRegression,feature,subject,balanced
+4,ALL,ALL,ALL,ALL,N/A,handcrafted,RandomForestClassifier,feature,subject,balanced
+5,ALL,ALL,ALL,ALL,N/A,handcrafted,LogisticRegression,sensor,subject,balanced
+6,ALL,ALL,ALL,ALL,N/A,handcrafted,RandomForestClassifier,sensor,subject,balanced
+7,ALL,ALL,ALL,ALL,N/A,handcrafted,LogisticRegression,region,subject,balanced
+8,ALL,ALL,ALL,ALL,N/A,handcrafted,RandomForestClassifier,region,subject,balanced
+9,ALL,ALL,ALL,ALL,EO,embedding,cbramod,N/A,subject,balanced
+10,ALL,ALL,ALL,ALL,EC,embedding,cbramod,N/A,subject,balanced
+11,ALL,ALL,ALL,ALL,EO,embedding,reve,N/A,subject,balanced
+12,ALL,ALL,ALL,ALL,EC,embedding,reve,N/A,subject,balanced
+13,ALL,ALL,ALL,ALL,EO,embedding,biot,N/A,subject,balanced
+14,ALL,ALL,ALL,ALL,EC,embedding,biot,N/A,subject,balanced
+15,ALL,ALL,ALL,ALL,EO,embedding,labram,N/A,subject,balanced
+16,ALL,ALL,ALL,ALL,EC,embedding,labram,N/A,subject,balanced
+17,ALL,ALL,ALL,ALL,EO,embedding,luna,N/A,subject,balanced
+18,ALL,ALL,ALL,ALL,EC,embedding,luna,N/A,subject,balanced
+19,ALL,ALL,ALL,ALL,EO,embedding,signaljepa,N/A,subject,balanced
+20,ALL,ALL,ALL,ALL,EC,embedding,signaljepa,N/A,subject,balanced
+21,ALL,ALL,ALL,ALL,EO,embedding,bendr,N/A,subject,balanced
+22,ALL,ALL,ALL,ALL,EC,embedding,bendr,N/A,subject,balanced
+23,ALL,ALL,ALL,ALL,EO,fine_tune,cbramod,N/A,subject,balanced
+24,ALL,ALL,ALL,ALL,EC,fine_tune,cbramod,N/A,subject,balanced
+25,ALL,ALL,ALL,ALL,EO,fine_tune,reve,N/A,subject,balanced
+26,ALL,ALL,ALL,ALL,EC,fine_tune,reve,N/A,subject,balanced
+27,ALL,ALL,ALL,ALL,EO,fine_tune,biot,N/A,subject,balanced
+28,ALL,ALL,ALL,ALL,EC,fine_tune,biot,N/A,subject,balanced
+29,ALL,ALL,ALL,ALL,EO,fine_tune,labram,N/A,subject,balanced
+30,ALL,ALL,ALL,ALL,EC,fine_tune,labram,N/A,subject,balanced
+31,ALL,ALL,ALL,ALL,EO,fine_tune,luna,N/A,subject,balanced
+32,ALL,ALL,ALL,ALL,EC,fine_tune,luna,N/A,subject,balanced
+33,ALL,ALL,ALL,ALL,EO,fine_tune,signaljepa,N/A,subject,balanced
+34,ALL,ALL,ALL,ALL,EC,fine_tune,signaljepa,N/A,subject,balanced
+35,ALL,ALL,ALL,ALL,EO,fine_tune,bendr,N/A,subject,balanced
+36,ALL,ALL,ALL,ALL,EC,fine_tune,bendr,N/A,subject,balanced
+37,F,ALL,ALL,ALL,N/A,dim_reduction,PCA,N/A,subject,balanced
+38,F,ALL,ALL,ALL,N/A,dim_reduction,UMAP,N/A,subject,balanced
+39,F,ALL,ALL,ALL,N/A,dim_reduction,t-SNE,N/A,subject,balanced
+40,F,ALL,ALL,ALL,N/A,handcrafted,LogisticRegression,feature,subject,balanced
+41,F,ALL,ALL,ALL,N/A,handcrafted,RandomForestClassifier,feature,subject,balanced
+42,F,ALL,ALL,ALL,N/A,handcrafted,LogisticRegression,sensor,subject,balanced
+43,F,ALL,ALL,ALL,N/A,handcrafted,RandomForestClassifier,sensor,subject,balanced
+44,F,ALL,ALL,ALL,N/A,handcrafted,LogisticRegression,region,subject,balanced
+45,F,ALL,ALL,ALL,N/A,handcrafted,RandomForestClassifier,region,subject,balanced
+46,F,ALL,ALL,ALL,EO,embedding,cbramod,N/A,subject,balanced
+47,F,ALL,ALL,ALL,EC,embedding,cbramod,N/A,subject,balanced
+48,F,ALL,ALL,ALL,EO,embedding,reve,N/A,subject,balanced
+49,F,ALL,ALL,ALL,EC,embedding,reve,N/A,subject,balanced
+50,F,ALL,ALL,ALL,EO,embedding,biot,N/A,subject,balanced
+51,F,ALL,ALL,ALL,EC,embedding,biot,N/A,subject,balanced
+52,F,ALL,ALL,ALL,EO,embedding,labram,N/A,subject,balanced
+53,F,ALL,ALL,ALL,EC,embedding,labram,N/A,subject,balanced
+54,F,ALL,ALL,ALL,EO,embedding,luna,N/A,subject,balanced
+55,F,ALL,ALL,ALL,EC,embedding,luna,N/A,subject,balanced
+56,F,ALL,ALL,ALL,EO,embedding,signaljepa,N/A,subject,balanced
+57,F,ALL,ALL,ALL,EC,embedding,signaljepa,N/A,subject,balanced
+58,F,ALL,ALL,ALL,EO,embedding,bendr,N/A,subject,balanced
+59,F,ALL,ALL,ALL,EC,embedding,bendr,N/A,subject,balanced
+60,F,ALL,ALL,ALL,EO,fine_tune,cbramod,N/A,subject,balanced
+61,F,ALL,ALL,ALL,EC,fine_tune,cbramod,N/A,subject,balanced
+62,F,ALL,ALL,ALL,EO,fine_tune,reve,N/A,subject,balanced
+63,F,ALL,ALL,ALL,EC,fine_tune,reve,N/A,subject,balanced
+64,F,ALL,ALL,ALL,EO,fine_tune,biot,N/A,subject,balanced
+65,F,ALL,ALL,ALL,EC,fine_tune,biot,N/A,subject,balanced
+66,F,ALL,ALL,ALL,EO,fine_tune,labram,N/A,subject,balanced
+67,F,ALL,ALL,ALL,EC,fine_tune,labram,N/A,subject,balanced
+68,F,ALL,ALL,ALL,EO,fine_tune,luna,N/A,subject,balanced
+69,F,ALL,ALL,ALL,EC,fine_tune,luna,N/A,subject,balanced
+70,F,ALL,ALL,ALL,EO,fine_tune,signaljepa,N/A,subject,balanced
+71,F,ALL,ALL,ALL,EC,fine_tune,signaljepa,N/A,subject,balanced
+72,F,ALL,ALL,ALL,EO,fine_tune,bendr,N/A,subject,balanced
+73,F,ALL,ALL,ALL,EC,fine_tune,bendr,N/A,subject,balanced
+74,M,ALL,ALL,ALL,N/A,dim_reduction,PCA,N/A,subject,balanced
+75,M,ALL,ALL,ALL,N/A,dim_reduction,UMAP,N/A,subject,balanced
+76,M,ALL,ALL,ALL,N/A,dim_reduction,t-SNE,N/A,subject,balanced
+77,M,ALL,ALL,ALL,N/A,handcrafted,LogisticRegression,feature,subject,balanced
+78,M,ALL,ALL,ALL,N/A,handcrafted,RandomForestClassifier,feature,subject,balanced
+79,M,ALL,ALL,ALL,N/A,handcrafted,LogisticRegression,sensor,subject,balanced
+80,M,ALL,ALL,ALL,N/A,handcrafted,RandomForestClassifier,sensor,subject,balanced
+81,M,ALL,ALL,ALL,N/A,handcrafted,LogisticRegression,region,subject,balanced
+82,M,ALL,ALL,ALL,N/A,handcrafted,RandomForestClassifier,region,subject,balanced
+83,M,ALL,ALL,ALL,EO,embedding,cbramod,N/A,subject,balanced
+84,M,ALL,ALL,ALL,EC,embedding,cbramod,N/A,subject,balanced
+85,M,ALL,ALL,ALL,EO,embedding,reve,N/A,subject,balanced
+86,M,ALL,ALL,ALL,EC,embedding,reve,N/A,subject,balanced
+87,M,ALL,ALL,ALL,EO,embedding,biot,N/A,subject,balanced
+88,M,ALL,ALL,ALL,EC,embedding,biot,N/A,subject,balanced
+89,M,ALL,ALL,ALL,EO,embedding,labram,N/A,subject,balanced
+90,M,ALL,ALL,ALL,EC,embedding,labram,N/A,subject,balanced
+91,M,ALL,ALL,ALL,EO,embedding,luna,N/A,subject,balanced
+92,M,ALL,ALL,ALL,EC,embedding,luna,N/A,subject,balanced
+93,M,ALL,ALL,ALL,EO,embedding,signaljepa,N/A,subject,balanced
+94,M,ALL,ALL,ALL,EC,embedding,signaljepa,N/A,subject,balanced
+95,M,ALL,ALL,ALL,EO,embedding,bendr,N/A,subject,balanced
+96,M,ALL,ALL,ALL,EC,embedding,bendr,N/A,subject,balanced
+97,M,ALL,ALL,ALL,EO,fine_tune,cbramod,N/A,subject,balanced
+98,M,ALL,ALL,ALL,EC,fine_tune,cbramod,N/A,subject,balanced
+99,M,ALL,ALL,ALL,EO,fine_tune,reve,N/A,subject,balanced
+100,M,ALL,ALL,ALL,EC,fine_tune,reve,N/A,subject,balanced
+101,M,ALL,ALL,ALL,EO,fine_tune,biot,N/A,subject,balanced
+102,M,ALL,ALL,ALL,EC,fine_tune,biot,N/A,subject,balanced
+103,M,ALL,ALL,ALL,EO,fine_tune,labram,N/A,subject,balanced
+104,M,ALL,ALL,ALL,EC,fine_tune,labram,N/A,subject,balanced
+105,M,ALL,ALL,ALL,EO,fine_tune,luna,N/A,subject,balanced
+106,M,ALL,ALL,ALL,EC,fine_tune,luna,N/A,subject,balanced
+107,M,ALL,ALL,ALL,EO,fine_tune,signaljepa,N/A,subject,balanced
+108,M,ALL,ALL,ALL,EC,fine_tune,signaljepa,N/A,subject,balanced
+109,M,ALL,ALL,ALL,EO,fine_tune,bendr,N/A,subject,balanced
+110,M,ALL,ALL,ALL,EC,fine_tune,bendr,N/A,subject,balanced
+111,ALL,0-4,ALL,ALL,N/A,dim_reduction,PCA,N/A,subject,balanced
+112,ALL,0-4,ALL,ALL,N/A,dim_reduction,UMAP,N/A,subject,balanced
+113,ALL,0-4,ALL,ALL,N/A,dim_reduction,t-SNE,N/A,subject,balanced
+114,ALL,0-4,ALL,ALL,N/A,handcrafted,LogisticRegression,feature,subject,balanced
+115,ALL,0-4,ALL,ALL,N/A,handcrafted,RandomForestClassifier,feature,subject,balanced
+116,ALL,0-4,ALL,ALL,N/A,handcrafted,LogisticRegression,sensor,subject,balanced
+117,ALL,0-4,ALL,ALL,N/A,handcrafted,RandomForestClassifier,sensor,subject,balanced
+118,ALL,0-4,ALL,ALL,N/A,handcrafted,LogisticRegression,region,subject,balanced
+119,ALL,0-4,ALL,ALL,N/A,handcrafted,RandomForestClassifier,region,subject,balanced
+120,ALL,0-4,ALL,ALL,EO,embedding,cbramod,N/A,subject,balanced
+121,ALL,0-4,ALL,ALL,EC,embedding,cbramod,N/A,subject,balanced
+122,ALL,0-4,ALL,ALL,EO,embedding,reve,N/A,subject,balanced
+123,ALL,0-4,ALL,ALL,EC,embedding,reve,N/A,subject,balanced
+124,ALL,0-4,ALL,ALL,EO,embedding,biot,N/A,subject,balanced
+125,ALL,0-4,ALL,ALL,EC,embedding,biot,N/A,subject,balanced
+126,ALL,0-4,ALL,ALL,EO,embedding,labram,N/A,subject,balanced
+127,ALL,0-4,ALL,ALL,EC,embedding,labram,N/A,subject,balanced
+128,ALL,0-4,ALL,ALL,EO,embedding,luna,N/A,subject,balanced
+129,ALL,0-4,ALL,ALL,EC,embedding,luna,N/A,subject,balanced
+130,ALL,0-4,ALL,ALL,EO,embedding,signaljepa,N/A,subject,balanced
+131,ALL,0-4,ALL,ALL,EC,embedding,signaljepa,N/A,subject,balanced
+132,ALL,0-4,ALL,ALL,EO,embedding,bendr,N/A,subject,balanced
+133,ALL,0-4,ALL,ALL,EC,embedding,bendr,N/A,subject,balanced
+134,ALL,0-4,ALL,ALL,EO,fine_tune,cbramod,N/A,subject,balanced
+135,ALL,0-4,ALL,ALL,EC,fine_tune,cbramod,N/A,subject,balanced
+136,ALL,0-4,ALL,ALL,EO,fine_tune,reve,N/A,subject,balanced
+137,ALL,0-4,ALL,ALL,EC,fine_tune,reve,N/A,subject,balanced
+138,ALL,0-4,ALL,ALL,EO,fine_tune,biot,N/A,subject,balanced
+139,ALL,0-4,ALL,ALL,EC,fine_tune,biot,N/A,subject,balanced
+140,ALL,0-4,ALL,ALL,EO,fine_tune,labram,N/A,subject,balanced
+141,ALL,0-4,ALL,ALL,EC,fine_tune,labram,N/A,subject,balanced
+142,ALL,0-4,ALL,ALL,EO,fine_tune,luna,N/A,subject,balanced
+143,ALL,0-4,ALL,ALL,EC,fine_tune,luna,N/A,subject,balanced
+144,ALL,0-4,ALL,ALL,EO,fine_tune,signaljepa,N/A,subject,balanced
+145,ALL,0-4,ALL,ALL,EC,fine_tune,signaljepa,N/A,subject,balanced
+146,ALL,0-4,ALL,ALL,EO,fine_tune,bendr,N/A,subject,balanced
+147,ALL,0-4,ALL,ALL,EC,fine_tune,bendr,N/A,subject,balanced
+148,ALL,5-8,ALL,ALL,N/A,dim_reduction,PCA,N/A,subject,balanced
+149,ALL,5-8,ALL,ALL,N/A,dim_reduction,UMAP,N/A,subject,balanced
+150,ALL,5-8,ALL,ALL,N/A,dim_reduction,t-SNE,N/A,subject,balanced
+151,ALL,5-8,ALL,ALL,N/A,handcrafted,LogisticRegression,feature,subject,balanced
+152,ALL,5-8,ALL,ALL,N/A,handcrafted,RandomForestClassifier,feature,subject,balanced
+153,ALL,5-8,ALL,ALL,N/A,handcrafted,LogisticRegression,sensor,subject,balanced
+154,ALL,5-8,ALL,ALL,N/A,handcrafted,RandomForestClassifier,sensor,subject,balanced
+155,ALL,5-8,ALL,ALL,N/A,handcrafted,LogisticRegression,region,subject,balanced
+156,ALL,5-8,ALL,ALL,N/A,handcrafted,RandomForestClassifier,region,subject,balanced
+157,ALL,5-8,ALL,ALL,EO,embedding,cbramod,N/A,subject,balanced
+158,ALL,5-8,ALL,ALL,EC,embedding,cbramod,N/A,subject,balanced
+159,ALL,5-8,ALL,ALL,EO,embedding,reve,N/A,subject,balanced
+160,ALL,5-8,ALL,ALL,EC,embedding,reve,N/A,subject,balanced
+161,ALL,5-8,ALL,ALL,EO,embedding,biot,N/A,subject,balanced
+162,ALL,5-8,ALL,ALL,EC,embedding,biot,N/A,subject,balanced
+163,ALL,5-8,ALL,ALL,EO,embedding,labram,N/A,subject,balanced
+164,ALL,5-8,ALL,ALL,EC,embedding,labram,N/A,subject,balanced
+165,ALL,5-8,ALL,ALL,EO,embedding,luna,N/A,subject,balanced
+166,ALL,5-8,ALL,ALL,EC,embedding,luna,N/A,subject,balanced
+167,ALL,5-8,ALL,ALL,EO,embedding,signaljepa,N/A,subject,balanced
+168,ALL,5-8,ALL,ALL,EC,embedding,signaljepa,N/A,subject,balanced
+169,ALL,5-8,ALL,ALL,EO,embedding,bendr,N/A,subject,balanced
+170,ALL,5-8,ALL,ALL,EC,embedding,bendr,N/A,subject,balanced
+171,ALL,5-8,ALL,ALL,EO,fine_tune,cbramod,N/A,subject,balanced
+172,ALL,5-8,ALL,ALL,EC,fine_tune,cbramod,N/A,subject,balanced
+173,ALL,5-8,ALL,ALL,EO,fine_tune,reve,N/A,subject,balanced
+174,ALL,5-8,ALL,ALL,EC,fine_tune,reve,N/A,subject,balanced
+175,ALL,5-8,ALL,ALL,EO,fine_tune,biot,N/A,subject,balanced
+176,ALL,5-8,ALL,ALL,EC,fine_tune,biot,N/A,subject,balanced
+177,ALL,5-8,ALL,ALL,EO,fine_tune,labram,N/A,subject,balanced
+178,ALL,5-8,ALL,ALL,EC,fine_tune,labram,N/A,subject,balanced
+179,ALL,5-8,ALL,ALL,EO,fine_tune,luna,N/A,subject,balanced
+180,ALL,5-8,ALL,ALL,EC,fine_tune,luna,N/A,subject,balanced
+181,ALL,5-8,ALL,ALL,EO,fine_tune,signaljepa,N/A,subject,balanced
+182,ALL,5-8,ALL,ALL,EC,fine_tune,signaljepa,N/A,subject,balanced
+183,ALL,5-8,ALL,ALL,EO,fine_tune,bendr,N/A,subject,balanced
+184,ALL,5-8,ALL,ALL,EC,fine_tune,bendr,N/A,subject,balanced
+185,ALL,9-12,ALL,ALL,N/A,dim_reduction,PCA,N/A,subject,balanced
+186,ALL,9-12,ALL,ALL,N/A,dim_reduction,UMAP,N/A,subject,balanced
+187,ALL,9-12,ALL,ALL,N/A,dim_reduction,t-SNE,N/A,subject,balanced
+188,ALL,9-12,ALL,ALL,N/A,handcrafted,LogisticRegression,feature,subject,balanced
+189,ALL,9-12,ALL,ALL,N/A,handcrafted,RandomForestClassifier,feature,subject,balanced
+190,ALL,9-12,ALL,ALL,N/A,handcrafted,LogisticRegression,sensor,subject,balanced
+191,ALL,9-12,ALL,ALL,N/A,handcrafted,RandomForestClassifier,sensor,subject,balanced
+192,ALL,9-12,ALL,ALL,N/A,handcrafted,LogisticRegression,region,subject,balanced
+193,ALL,9-12,ALL,ALL,N/A,handcrafted,RandomForestClassifier,region,subject,balanced
+194,ALL,9-12,ALL,ALL,EO,embedding,cbramod,N/A,subject,balanced
+195,ALL,9-12,ALL,ALL,EC,embedding,cbramod,N/A,subject,balanced
+196,ALL,9-12,ALL,ALL,EO,embedding,reve,N/A,subject,balanced
+197,ALL,9-12,ALL,ALL,EC,embedding,reve,N/A,subject,balanced
+198,ALL,9-12,ALL,ALL,EO,embedding,biot,N/A,subject,balanced
+199,ALL,9-12,ALL,ALL,EC,embedding,biot,N/A,subject,balanced
+200,ALL,9-12,ALL,ALL,EO,embedding,labram,N/A,subject,balanced
+201,ALL,9-12,ALL,ALL,EC,embedding,labram,N/A,subject,balanced
+202,ALL,9-12,ALL,ALL,EO,embedding,luna,N/A,subject,balanced
+203,ALL,9-12,ALL,ALL,EC,embedding,luna,N/A,subject,balanced
+204,ALL,9-12,ALL,ALL,EO,embedding,signaljepa,N/A,subject,balanced
+205,ALL,9-12,ALL,ALL,EC,embedding,signaljepa,N/A,subject,balanced
+206,ALL,9-12,ALL,ALL,EO,embedding,bendr,N/A,subject,balanced
+207,ALL,9-12,ALL,ALL,EC,embedding,bendr,N/A,subject,balanced
+208,ALL,9-12,ALL,ALL,EO,fine_tune,cbramod,N/A,subject,balanced
+209,ALL,9-12,ALL,ALL,EC,fine_tune,cbramod,N/A,subject,balanced
+210,ALL,9-12,ALL,ALL,EO,fine_tune,reve,N/A,subject,balanced
+211,ALL,9-12,ALL,ALL,EC,fine_tune,reve,N/A,subject,balanced
+212,ALL,9-12,ALL,ALL,EO,fine_tune,biot,N/A,subject,balanced
+213,ALL,9-12,ALL,ALL,EC,fine_tune,biot,N/A,subject,balanced
+214,ALL,9-12,ALL,ALL,EO,fine_tune,labram,N/A,subject,balanced
+215,ALL,9-12,ALL,ALL,EC,fine_tune,labram,N/A,subject,balanced
+216,ALL,9-12,ALL,ALL,EO,fine_tune,luna,N/A,subject,balanced
+217,ALL,9-12,ALL,ALL,EC,fine_tune,luna,N/A,subject,balanced
+218,ALL,9-12,ALL,ALL,EO,fine_tune,signaljepa,N/A,subject,balanced
+219,ALL,9-12,ALL,ALL,EC,fine_tune,signaljepa,N/A,subject,balanced
+220,ALL,9-12,ALL,ALL,EO,fine_tune,bendr,N/A,subject,balanced
+221,ALL,9-12,ALL,ALL,EC,fine_tune,bendr,N/A,subject,balanced
+222,ALL,13-18,ALL,ALL,N/A,dim_reduction,PCA,N/A,subject,balanced
+223,ALL,13-18,ALL,ALL,N/A,dim_reduction,UMAP,N/A,subject,balanced
+224,ALL,13-18,ALL,ALL,N/A,dim_reduction,t-SNE,N/A,subject,balanced
+225,ALL,13-18,ALL,ALL,N/A,handcrafted,LogisticRegression,feature,subject,balanced
+226,ALL,13-18,ALL,ALL,N/A,handcrafted,RandomForestClassifier,feature,subject,balanced
+227,ALL,13-18,ALL,ALL,N/A,handcrafted,LogisticRegression,sensor,subject,balanced
+228,ALL,13-18,ALL,ALL,N/A,handcrafted,RandomForestClassifier,sensor,subject,balanced
+229,ALL,13-18,ALL,ALL,N/A,handcrafted,LogisticRegression,region,subject,balanced
+230,ALL,13-18,ALL,ALL,N/A,handcrafted,RandomForestClassifier,region,subject,balanced
+231,ALL,13-18,ALL,ALL,EO,embedding,cbramod,N/A,subject,balanced
+232,ALL,13-18,ALL,ALL,EC,embedding,cbramod,N/A,subject,balanced
+233,ALL,13-18,ALL,ALL,EO,embedding,reve,N/A,subject,balanced
+234,ALL,13-18,ALL,ALL,EC,embedding,reve,N/A,subject,balanced
+235,ALL,13-18,ALL,ALL,EO,embedding,biot,N/A,subject,balanced
+236,ALL,13-18,ALL,ALL,EC,embedding,biot,N/A,subject,balanced
+237,ALL,13-18,ALL,ALL,EO,embedding,labram,N/A,subject,balanced
+238,ALL,13-18,ALL,ALL,EC,embedding,labram,N/A,subject,balanced
+239,ALL,13-18,ALL,ALL,EO,embedding,luna,N/A,subject,balanced
+240,ALL,13-18,ALL,ALL,EC,embedding,luna,N/A,subject,balanced
+241,ALL,13-18,ALL,ALL,EO,embedding,signaljepa,N/A,subject,balanced
+242,ALL,13-18,ALL,ALL,EC,embedding,signaljepa,N/A,subject,balanced
+243,ALL,13-18,ALL,ALL,EO,embedding,bendr,N/A,subject,balanced
+244,ALL,13-18,ALL,ALL,EC,embedding,bendr,N/A,subject,balanced
+245,ALL,13-18,ALL,ALL,EO,fine_tune,cbramod,N/A,subject,balanced
+246,ALL,13-18,ALL,ALL,EC,fine_tune,cbramod,N/A,subject,balanced
+247,ALL,13-18,ALL,ALL,EO,fine_tune,reve,N/A,subject,balanced
+248,ALL,13-18,ALL,ALL,EC,fine_tune,reve,N/A,subject,balanced
+249,ALL,13-18,ALL,ALL,EO,fine_tune,biot,N/A,subject,balanced
+250,ALL,13-18,ALL,ALL,EC,fine_tune,biot,N/A,subject,balanced
+251,ALL,13-18,ALL,ALL,EO,fine_tune,labram,N/A,subject,balanced
+252,ALL,13-18,ALL,ALL,EC,fine_tune,labram,N/A,subject,balanced
+253,ALL,13-18,ALL,ALL,EO,fine_tune,luna,N/A,subject,balanced
+254,ALL,13-18,ALL,ALL,EC,fine_tune,luna,N/A,subject,balanced
+255,ALL,13-18,ALL,ALL,EO,fine_tune,signaljepa,N/A,subject,balanced
+256,ALL,13-18,ALL,ALL,EC,fine_tune,signaljepa,N/A,subject,balanced
+257,ALL,13-18,ALL,ALL,EO,fine_tune,bendr,N/A,subject,balanced
+258,ALL,13-18,ALL,ALL,EC,fine_tune,bendr,N/A,subject,balanced
+259,ALL,ALL,none,ALL,N/A,dim_reduction,PCA,N/A,subject,balanced
+260,ALL,ALL,none,ALL,N/A,dim_reduction,UMAP,N/A,subject,balanced
+261,ALL,ALL,none,ALL,N/A,dim_reduction,t-SNE,N/A,subject,balanced
+262,ALL,ALL,none,ALL,N/A,handcrafted,LogisticRegression,feature,subject,balanced
+263,ALL,ALL,none,ALL,N/A,handcrafted,RandomForestClassifier,feature,subject,balanced
+264,ALL,ALL,none,ALL,N/A,handcrafted,LogisticRegression,sensor,subject,balanced
+265,ALL,ALL,none,ALL,N/A,handcrafted,RandomForestClassifier,sensor,subject,balanced
+266,ALL,ALL,none,ALL,N/A,handcrafted,LogisticRegression,region,subject,balanced
+267,ALL,ALL,none,ALL,N/A,handcrafted,RandomForestClassifier,region,subject,balanced
+268,ALL,ALL,none,ALL,EO,embedding,cbramod,N/A,subject,balanced
+269,ALL,ALL,none,ALL,EC,embedding,cbramod,N/A,subject,balanced
+270,ALL,ALL,none,ALL,EO,embedding,reve,N/A,subject,balanced
+271,ALL,ALL,none,ALL,EC,embedding,reve,N/A,subject,balanced
+272,ALL,ALL,none,ALL,EO,embedding,biot,N/A,subject,balanced
+273,ALL,ALL,none,ALL,EC,embedding,biot,N/A,subject,balanced
+274,ALL,ALL,none,ALL,EO,embedding,labram,N/A,subject,balanced
+275,ALL,ALL,none,ALL,EC,embedding,labram,N/A,subject,balanced
+276,ALL,ALL,none,ALL,EO,embedding,luna,N/A,subject,balanced
+277,ALL,ALL,none,ALL,EC,embedding,luna,N/A,subject,balanced
+278,ALL,ALL,none,ALL,EO,embedding,signaljepa,N/A,subject,balanced
+279,ALL,ALL,none,ALL,EC,embedding,signaljepa,N/A,subject,balanced
+280,ALL,ALL,none,ALL,EO,embedding,bendr,N/A,subject,balanced
+281,ALL,ALL,none,ALL,EC,embedding,bendr,N/A,subject,balanced
+282,ALL,ALL,none,ALL,EO,fine_tune,cbramod,N/A,subject,balanced
+283,ALL,ALL,none,ALL,EC,fine_tune,cbramod,N/A,subject,balanced
+284,ALL,ALL,none,ALL,EO,fine_tune,reve,N/A,subject,balanced
+285,ALL,ALL,none,ALL,EC,fine_tune,reve,N/A,subject,balanced
+286,ALL,ALL,none,ALL,EO,fine_tune,biot,N/A,subject,balanced
+287,ALL,ALL,none,ALL,EC,fine_tune,biot,N/A,subject,balanced
+288,ALL,ALL,none,ALL,EO,fine_tune,labram,N/A,subject,balanced
+289,ALL,ALL,none,ALL,EC,fine_tune,labram,N/A,subject,balanced
+290,ALL,ALL,none,ALL,EO,fine_tune,luna,N/A,subject,balanced
+291,ALL,ALL,none,ALL,EC,fine_tune,luna,N/A,subject,balanced
+292,ALL,ALL,none,ALL,EO,fine_tune,signaljepa,N/A,subject,balanced
+293,ALL,ALL,none,ALL,EC,fine_tune,signaljepa,N/A,subject,balanced
+294,ALL,ALL,none,ALL,EO,fine_tune,bendr,N/A,subject,balanced
+295,ALL,ALL,none,ALL,EC,fine_tune,bendr,N/A,subject,balanced
+296,ALL,ALL,ASD,ALL,N/A,dim_reduction,PCA,N/A,subject,balanced
+297,ALL,ALL,ASD,ALL,N/A,dim_reduction,UMAP,N/A,subject,balanced
+298,ALL,ALL,ASD,ALL,N/A,dim_reduction,t-SNE,N/A,subject,balanced
+299,ALL,ALL,ASD,ALL,N/A,handcrafted,LogisticRegression,feature,subject,balanced
+300,ALL,ALL,ASD,ALL,N/A,handcrafted,RandomForestClassifier,feature,subject,balanced
+301,ALL,ALL,ASD,ALL,N/A,handcrafted,LogisticRegression,sensor,subject,balanced
+302,ALL,ALL,ASD,ALL,N/A,handcrafted,RandomForestClassifier,sensor,subject,balanced
+303,ALL,ALL,ASD,ALL,N/A,handcrafted,LogisticRegression,region,subject,balanced
+304,ALL,ALL,ASD,ALL,N/A,handcrafted,RandomForestClassifier,region,subject,balanced
+305,ALL,ALL,ASD,ALL,EO,embedding,cbramod,N/A,subject,balanced
+306,ALL,ALL,ASD,ALL,EC,embedding,cbramod,N/A,subject,balanced
+307,ALL,ALL,ASD,ALL,EO,embedding,reve,N/A,subject,balanced
+308,ALL,ALL,ASD,ALL,EC,embedding,reve,N/A,subject,balanced
+309,ALL,ALL,ASD,ALL,EO,embedding,biot,N/A,subject,balanced
+310,ALL,ALL,ASD,ALL,EC,embedding,biot,N/A,subject,balanced
+311,ALL,ALL,ASD,ALL,EO,embedding,labram,N/A,subject,balanced
+312,ALL,ALL,ASD,ALL,EC,embedding,labram,N/A,subject,balanced
+313,ALL,ALL,ASD,ALL,EO,embedding,luna,N/A,subject,balanced
+314,ALL,ALL,ASD,ALL,EC,embedding,luna,N/A,subject,balanced
+315,ALL,ALL,ASD,ALL,EO,embedding,signaljepa,N/A,subject,balanced
+316,ALL,ALL,ASD,ALL,EC,embedding,signaljepa,N/A,subject,balanced
+317,ALL,ALL,ASD,ALL,EO,embedding,bendr,N/A,subject,balanced
+318,ALL,ALL,ASD,ALL,EC,embedding,bendr,N/A,subject,balanced
+319,ALL,ALL,ASD,ALL,EO,fine_tune,cbramod,N/A,subject,balanced
+320,ALL,ALL,ASD,ALL,EC,fine_tune,cbramod,N/A,subject,balanced
+321,ALL,ALL,ASD,ALL,EO,fine_tune,reve,N/A,subject,balanced
+322,ALL,ALL,ASD,ALL,EC,fine_tune,reve,N/A,subject,balanced
+323,ALL,ALL,ASD,ALL,EO,fine_tune,biot,N/A,subject,balanced
+324,ALL,ALL,ASD,ALL,EC,fine_tune,biot,N/A,subject,balanced
+325,ALL,ALL,ASD,ALL,EO,fine_tune,labram,N/A,subject,balanced
+326,ALL,ALL,ASD,ALL,EC,fine_tune,labram,N/A,subject,balanced
+327,ALL,ALL,ASD,ALL,EO,fine_tune,luna,N/A,subject,balanced
+328,ALL,ALL,ASD,ALL,EC,fine_tune,luna,N/A,subject,balanced
+329,ALL,ALL,ASD,ALL,EO,fine_tune,signaljepa,N/A,subject,balanced
+330,ALL,ALL,ASD,ALL,EC,fine_tune,signaljepa,N/A,subject,balanced
+331,ALL,ALL,ASD,ALL,EO,fine_tune,bendr,N/A,subject,balanced
+332,ALL,ALL,ASD,ALL,EC,fine_tune,bendr,N/A,subject,balanced
+333,ALL,ALL,ADHD,ALL,N/A,dim_reduction,PCA,N/A,subject,balanced
+334,ALL,ALL,ADHD,ALL,N/A,dim_reduction,UMAP,N/A,subject,balanced
+335,ALL,ALL,ADHD,ALL,N/A,dim_reduction,t-SNE,N/A,subject,balanced
+336,ALL,ALL,ADHD,ALL,N/A,handcrafted,LogisticRegression,feature,subject,balanced
+337,ALL,ALL,ADHD,ALL,N/A,handcrafted,RandomForestClassifier,feature,subject,balanced
+338,ALL,ALL,ADHD,ALL,N/A,handcrafted,LogisticRegression,sensor,subject,balanced
+339,ALL,ALL,ADHD,ALL,N/A,handcrafted,RandomForestClassifier,sensor,subject,balanced
+340,ALL,ALL,ADHD,ALL,N/A,handcrafted,LogisticRegression,region,subject,balanced
+341,ALL,ALL,ADHD,ALL,N/A,handcrafted,RandomForestClassifier,region,subject,balanced
+342,ALL,ALL,ADHD,ALL,EO,embedding,cbramod,N/A,subject,balanced
+343,ALL,ALL,ADHD,ALL,EC,embedding,cbramod,N/A,subject,balanced
+344,ALL,ALL,ADHD,ALL,EO,embedding,reve,N/A,subject,balanced
+345,ALL,ALL,ADHD,ALL,EC,embedding,reve,N/A,subject,balanced
+346,ALL,ALL,ADHD,ALL,EO,embedding,biot,N/A,subject,balanced
+347,ALL,ALL,ADHD,ALL,EC,embedding,biot,N/A,subject,balanced
+348,ALL,ALL,ADHD,ALL,EO,embedding,labram,N/A,subject,balanced
+349,ALL,ALL,ADHD,ALL,EC,embedding,labram,N/A,subject,balanced
+350,ALL,ALL,ADHD,ALL,EO,embedding,luna,N/A,subject,balanced
+351,ALL,ALL,ADHD,ALL,EC,embedding,luna,N/A,subject,balanced
+352,ALL,ALL,ADHD,ALL,EO,embedding,signaljepa,N/A,subject,balanced
+353,ALL,ALL,ADHD,ALL,EC,embedding,signaljepa,N/A,subject,balanced
+354,ALL,ALL,ADHD,ALL,EO,embedding,bendr,N/A,subject,balanced
+355,ALL,ALL,ADHD,ALL,EC,embedding,bendr,N/A,subject,balanced
+356,ALL,ALL,ADHD,ALL,EO,fine_tune,cbramod,N/A,subject,balanced
+357,ALL,ALL,ADHD,ALL,EC,fine_tune,cbramod,N/A,subject,balanced
+358,ALL,ALL,ADHD,ALL,EO,fine_tune,reve,N/A,subject,balanced
+359,ALL,ALL,ADHD,ALL,EC,fine_tune,reve,N/A,subject,balanced
+360,ALL,ALL,ADHD,ALL,EO,fine_tune,biot,N/A,subject,balanced
+361,ALL,ALL,ADHD,ALL,EC,fine_tune,biot,N/A,subject,balanced
+362,ALL,ALL,ADHD,ALL,EO,fine_tune,labram,N/A,subject,balanced
+363,ALL,ALL,ADHD,ALL,EC,fine_tune,labram,N/A,subject,balanced
+364,ALL,ALL,ADHD,ALL,EO,fine_tune,luna,N/A,subject,balanced
+365,ALL,ALL,ADHD,ALL,EC,fine_tune,luna,N/A,subject,balanced
+366,ALL,ALL,ADHD,ALL,EO,fine_tune,signaljepa,N/A,subject,balanced
+367,ALL,ALL,ADHD,ALL,EC,fine_tune,signaljepa,N/A,subject,balanced
+368,ALL,ALL,ADHD,ALL,EO,fine_tune,bendr,N/A,subject,balanced
+369,ALL,ALL,ADHD,ALL,EC,fine_tune,bendr,N/A,subject,balanced
+370,ALL,ALL,ASD & ADHD,ALL,N/A,dim_reduction,PCA,N/A,subject,balanced
+371,ALL,ALL,ASD & ADHD,ALL,N/A,dim_reduction,UMAP,N/A,subject,balanced
+372,ALL,ALL,ASD & ADHD,ALL,N/A,dim_reduction,t-SNE,N/A,subject,balanced
+373,ALL,ALL,ASD & ADHD,ALL,N/A,handcrafted,LogisticRegression,feature,subject,balanced
+374,ALL,ALL,ASD & ADHD,ALL,N/A,handcrafted,RandomForestClassifier,feature,subject,balanced
+375,ALL,ALL,ASD & ADHD,ALL,N/A,handcrafted,LogisticRegression,sensor,subject,balanced
+376,ALL,ALL,ASD & ADHD,ALL,N/A,handcrafted,RandomForestClassifier,sensor,subject,balanced
+377,ALL,ALL,ASD & ADHD,ALL,N/A,handcrafted,LogisticRegression,region,subject,balanced
+378,ALL,ALL,ASD & ADHD,ALL,N/A,handcrafted,RandomForestClassifier,region,subject,balanced
+379,ALL,ALL,ASD & ADHD,ALL,EO,embedding,cbramod,N/A,subject,balanced
+380,ALL,ALL,ASD & ADHD,ALL,EC,embedding,cbramod,N/A,subject,balanced
+381,ALL,ALL,ASD & ADHD,ALL,EO,embedding,reve,N/A,subject,balanced
+382,ALL,ALL,ASD & ADHD,ALL,EC,embedding,reve,N/A,subject,balanced
+383,ALL,ALL,ASD & ADHD,ALL,EO,embedding,biot,N/A,subject,balanced
+384,ALL,ALL,ASD & ADHD,ALL,EC,embedding,biot,N/A,subject,balanced
+385,ALL,ALL,ASD & ADHD,ALL,EO,embedding,labram,N/A,subject,balanced
+386,ALL,ALL,ASD & ADHD,ALL,EC,embedding,labram,N/A,subject,balanced
+387,ALL,ALL,ASD & ADHD,ALL,EO,embedding,luna,N/A,subject,balanced
+388,ALL,ALL,ASD & ADHD,ALL,EC,embedding,luna,N/A,subject,balanced
+389,ALL,ALL,ASD & ADHD,ALL,EO,embedding,signaljepa,N/A,subject,balanced
+390,ALL,ALL,ASD & ADHD,ALL,EC,embedding,signaljepa,N/A,subject,balanced
+391,ALL,ALL,ASD & ADHD,ALL,EO,embedding,bendr,N/A,subject,balanced
+392,ALL,ALL,ASD & ADHD,ALL,EC,embedding,bendr,N/A,subject,balanced
+393,ALL,ALL,ASD & ADHD,ALL,EO,fine_tune,cbramod,N/A,subject,balanced
+394,ALL,ALL,ASD & ADHD,ALL,EC,fine_tune,cbramod,N/A,subject,balanced
+395,ALL,ALL,ASD & ADHD,ALL,EO,fine_tune,reve,N/A,subject,balanced
+396,ALL,ALL,ASD & ADHD,ALL,EC,fine_tune,reve,N/A,subject,balanced
+397,ALL,ALL,ASD & ADHD,ALL,EO,fine_tune,biot,N/A,subject,balanced
+398,ALL,ALL,ASD & ADHD,ALL,EC,fine_tune,biot,N/A,subject,balanced
+399,ALL,ALL,ASD & ADHD,ALL,EO,fine_tune,labram,N/A,subject,balanced
+400,ALL,ALL,ASD & ADHD,ALL,EC,fine_tune,labram,N/A,subject,balanced
+401,ALL,ALL,ASD & ADHD,ALL,EO,fine_tune,luna,N/A,subject,balanced
+402,ALL,ALL,ASD & ADHD,ALL,EC,fine_tune,luna,N/A,subject,balanced
+403,ALL,ALL,ASD & ADHD,ALL,EO,fine_tune,signaljepa,N/A,subject,balanced
+404,ALL,ALL,ASD & ADHD,ALL,EC,fine_tune,signaljepa,N/A,subject,balanced
+405,ALL,ALL,ASD & ADHD,ALL,EO,fine_tune,bendr,N/A,subject,balanced
+406,ALL,ALL,ASD & ADHD,ALL,EC,fine_tune,bendr,N/A,subject,balanced
+407,ALL,ALL,ALL,ASM,N/A,handcrafted,LogisticRegression,feature,subject,balanced
+408,ALL,ALL,ALL,ASM,N/A,handcrafted,RandomForestClassifier,feature,subject,balanced
+409,ALL,ALL,ALL,ASM,N/A,handcrafted,LogisticRegression,sensor,subject,balanced
+410,ALL,ALL,ALL,ASM,N/A,handcrafted,RandomForestClassifier,sensor,subject,balanced
+411,ALL,ALL,ALL,ASM,N/A,handcrafted,LogisticRegression,region,subject,balanced
+412,ALL,ALL,ALL,ASM,N/A,handcrafted,RandomForestClassifier,region,subject,balanced
+413,ALL,ALL,ALL,no med,N/A,handcrafted,LogisticRegression,feature,subject,balanced
+414,ALL,ALL,ALL,no med,N/A,handcrafted,RandomForestClassifier,feature,subject,balanced
+415,ALL,ALL,ALL,no med,N/A,handcrafted,LogisticRegression,sensor,subject,balanced
+416,ALL,ALL,ALL,no med,N/A,handcrafted,RandomForestClassifier,sensor,subject,balanced
+417,ALL,ALL,ALL,no med,N/A,handcrafted,LogisticRegression,region,subject,balanced
+418,ALL,ALL,ALL,no med,N/A,handcrafted,RandomForestClassifier,region,subject,balanced
+419,ALL,ALL,ALL,psychostimulant,N/A,handcrafted,LogisticRegression,feature,subject,balanced
+420,ALL,ALL,ALL,psychostimulant,N/A,handcrafted,RandomForestClassifier,feature,subject,balanced
+421,ALL,ALL,ALL,psychostimulant,N/A,handcrafted,LogisticRegression,sensor,subject,balanced
+422,ALL,ALL,ALL,psychostimulant,N/A,handcrafted,RandomForestClassifier,sensor,subject,balanced
+423,ALL,ALL,ALL,psychostimulant,N/A,handcrafted,LogisticRegression,region,subject,balanced
+424,ALL,ALL,ALL,psychostimulant,N/A,handcrafted,RandomForestClassifier,region,subject,balanced
+425,ALL,ALL,ALL,ASM & psychostimulant,N/A,handcrafted,LogisticRegression,feature,subject,balanced
+426,ALL,ALL,ALL,ASM & psychostimulant,N/A,handcrafted,RandomForestClassifier,feature,subject,balanced
+427,ALL,ALL,ALL,ASM & psychostimulant,N/A,handcrafted,LogisticRegression,sensor,subject,balanced
+428,ALL,ALL,ALL,ASM & psychostimulant,N/A,handcrafted,RandomForestClassifier,sensor,subject,balanced
+429,ALL,ALL,ALL,ASM & psychostimulant,N/A,handcrafted,LogisticRegression,region,subject,balanced
+430,ALL,ALL,ALL,ASM & psychostimulant,N/A,handcrafted,RandomForestClassifier,region,subject,balanced
+431,ALL,ALL,ALL,ALL,EO,frozen_fine_tune,signaljepa,N/A,subject,balanced
+432,ALL,ALL,ALL,ALL,EC,frozen_fine_tune,signaljepa,N/A,subject,balanced

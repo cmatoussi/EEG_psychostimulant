@@ -1,0 +1,116 @@
+# -----------------------------------------------------------------------------
+# Configuration for Feature Importance (Lasso) ML analyses
+# -----------------------------------------------------------------------------
+
+global_experiment_id: "epilepsy_feature_importance_lasso_pooled_epoch"
+pooling: "region"  
+representation: "epoch"  
+data_path: "/home/mat/scratch/signal_features/descriptors/combined/pooled_epoch_features.csv"
+results_dir: "/home/mat/scratch/EEG_results/results/ml/new_ml/feature_importance"
+results_file: "feature_importance_lasso_pooled_epoch"
+
+defaults:
+  random_state: 42
+  n_jobs: -1
+  cv_kwargs:
+    cv_strategy: "stratified"
+    n_splits: 5
+    shuffle: true
+    random_state: 42
+  
+  clean_cfg:
+    mode: "any"
+    sep: "_chgrp-" 
+    reverse: true
+    verbose: true
+    min_abs_fraction: 0.0
+
+  grid_balance: false
+  require_full_grid: false
+  target_columns: ["Epilepsy"]
+  sep: "_chgrp-"
+  reverse: true
+  spatial_units: ['front_left', 'front_midline', 'front_right', 'central_left', 'central_midline', 'central_right', 'posterior_left', 'posterior_midline', 'posterior_right']
+  
+  feature_names: "all"
+  
+  balance:
+    strategy: "undersample"
+    covariates: ["Age", "Sex"]
+    qbins: 5
+    binning: "quantile"
+    seed: 42
+    prefer_clean_rows: true
+
+analyses:
+  # 1. All Features & All Sensors (Lasso to extract coefficients)
+  - id: "classification_lasso_all"
+    task: "classification"
+    analysis_type: "baseline"
+    analysis_unit: "all"
+    row_filter:
+      - column: "TDAH"
+        values: "0"
+        operator: "=="
+      - column: "TSA"
+        values: "0"
+        operator: "=="
+      - column: "Epilepsy"
+        values: "2"
+        operator: "!="
+    models:
+      - "Logistic Regression"
+    metrics:
+      - "accuracy" 
+      - "roc_auc"
+      - "f1"
+      - "balanced_accuracy"
+    scoring: "balanced_accuracy"
+
+  # 2. Per-Feature Decoding (1 filter feature x All Sensors)
+  - id: "classification_lasso_per_feature"
+    task: "classification"
+    analysis_type: "baseline"
+    analysis_unit: "feature"
+    row_filter:
+      - column: "TDAH"
+        values: "0"
+        operator: "=="
+      - column: "TSA"
+        values: "0"
+        operator: "=="
+      - column: "Epilepsy"
+        values: "2"
+        operator: "!="
+    models:
+      - "Logistic Regression"
+    metrics:
+      - "accuracy" 
+      - "roc_auc"
+      - "f1"
+      - "balanced_accuracy"
+    scoring: "balanced_accuracy"
+    
+  # 3. Per-Sensor Decoding (1 Sensor x All its internal features)
+  - id: "classification_lasso_per_sensor"
+    task: "classification"
+    analysis_type: "baseline"
+    analysis_unit: "sensor"
+    row_filter:
+      - column: "TDAH"
+        values: "0"
+        operator: "=="
+      - column: "TSA"
+        values: "0"
+        operator: "=="
+      - column: "Epilepsy"
+        values: "2"
+        operator: "!="
+    models:
+      - "Logistic Regression"
+    metrics:
+      - "accuracy" 
+      - "roc_auc"
+      - "f1"
+      - "balanced_accuracy"
+    scoring: "balanced_accuracy"

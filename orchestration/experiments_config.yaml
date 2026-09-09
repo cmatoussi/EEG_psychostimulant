@@ -1,0 +1,61 @@
+# Orchestration Configuration for EEG Epilepsy Prediction
+
+paths:
+  data_root: "/home/mat/scratch/preproc/"
+  base_label_csv: "/home/mat/scratch/epilepsy_label_cleaned.csv"
+  output_dir: "/home/mat/projects/EEG_psychostimulant/orchestration/results"
+
+groups:
+  sex: 
+    - "F"
+    - "M"
+    - "ALL"
+  age: 
+    - "0-4"
+    - "5-8"
+    - "9-12"
+    - "13-18"
+    - "ALL"
+  comorbidities: 
+    - "none"       # Epilepsy alone (Controls without ASD/ADHD vs Epilepsy without ASD/ADHD)
+    - "ASD"         # +ASD (TSA==1 & TDAH==0)
+    - "ADHD"        # +ADHD (TDAH==1 & TSA==0)
+    - "ASD&ADHD"    # +ASD+ADHD (TSA==1 & TDAH==1)
+  medication: 
+    - "ASM"
+    - "no med"
+    - "psychostimulant"
+    - "ASM+psychostimulant"
+
+# Define the scripts to run across all cohort combinations
+jobs:
+  - name: "reve_finetune"
+    run: true
+    type: "deep_learning_finetune"
+    script_path: "/home/mat/projects/EEG_psychostimulant/eeg_adhd_epilepsy/dl/reve/fine_tune/reve_finetune_large.py"
+    # Slurm SBATCH arguments
+    slurm_args:
+      gres: "gpu:2"
+      cpus-per-task: "8"
+      mem: "64G"
+      time: "24:00:00"
+      # partition: "gpu" # Uncomment and specify your GPU partition if needed
+    
+  - name: "reve_embed"
+    run: false # Set to true to run
+    type: "embedding_extraction"
+    script_path: "/home/mat/projects/EEG_psychostimulant/eeg_adhd_epilepsy/dl/reve/embed/extract.py"
+    slurm_args:
+      gres: "gpu:1"
+      cpus-per-task: "8"
+      mem: "64G"
+      time: "12:00:00"
+
+  - name: "shallow_analysis"
+    run: false # Set to true to run
+    type: "shallow"
+    script_path: "/home/mat/projects/EEG_psychostimulant/shallow_analysis.py"
+    slurm_args:
+      cpus-per-task: "16"
+      mem: "32G"
+      time: "08:00:00"

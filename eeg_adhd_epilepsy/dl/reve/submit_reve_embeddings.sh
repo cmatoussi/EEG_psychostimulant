@@ -2,9 +2,9 @@
 #SBATCH --job-name=embed_reve
 #SBATCH --output=/home/mat/projects/EEG_psychostimulant/eeg_adhd_epilepsy/data/results/dl/logs/reve/embed_%j.out
 #SBATCH --error=/home/mat/projects/EEG_psychostimulant/eeg_adhd_epilepsy/data/results/dl/logs/reve/embed_%j.err
-#SBATCH --time=01:00:00
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=16G
+#SBATCH --time=03:00:00
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=128G
 #SBATCH --partition=gpubase_bygpu_b1
 #SBATCH --gres=gpu:1
 
@@ -54,6 +54,8 @@ LIMIT=${LIMIT:-""}
 echo "  - Limit: $LIMIT"
 NO_POOL=${NO_POOL:-""}
 echo "  - No Pool: $NO_POOL"
+USE_EPOCHS=${USE_EPOCHS:-""}
+echo "  - Use Epochs: $USE_EPOCHS"
 
 cmd=(python eeg_adhd_epilepsy/dl/reve/reve_extract.py \
   --data-root "$DATA_ROOT" \
@@ -75,6 +77,11 @@ fi
 # Disable pooling if specified
 if [ -n "$NO_POOL" ]; then
   cmd+=(--no-pool)
+fi
+
+# Enable epoch processing if specified
+if [ -n "$USE_EPOCHS" ]; then
+  cmd+=(--use-epochs)
 fi
 
 # 4. Execute

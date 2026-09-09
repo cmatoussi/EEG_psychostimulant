@@ -1,4 +1,4 @@
-
+ 
 import os
 import argparse
 import json
@@ -139,6 +139,9 @@ def extract_features(args):
             data_batch = data_batch.permute(1, 0, 2) # (S, C, W)
             
             subject_embs = []
+            data_batch = data_tensor.view(data_tensor.shape[0], n_segments, window_size).permute(1, 0, 2)
+            
+            emb_array = None
             
             # Process in batches to manage memory
             batch_size = 4
@@ -152,13 +155,49 @@ def extract_features(args):
                     # Model expects (Batch, Channels, Time)
                     do_pool = not getattr(args, "no_pool", False)
                     emb_batch = model(batch, channel_names=ch_names, pool=do_pool) 
-
                     
-                    emb_batch = emb_batch.cpu().numpy()
-                    subject_embs.append(emb_batch)
+                    emb_batch_np = emb_batch.cpu().numpy()
+                    
+                    # Pre-allocate emb_array once we know the shape of the first batch
+                    if emb_array is None:
+                        total_shape = (n_segments,) + emb_batch_np.shape[1:]
+                        print(f"Pre-allocating embedding array of shape {total_shape} ({np.prod(total_shape)*4/1e9:.2f} GB)")
+                        emb_array = np.zeros(total_shape, dtype=np.float32)
+                    
+                    # Fill the pre-allocated array slice-by-slice
+                    emb_array[i : i + emb_batch_np.shape[0]] = emb_batch_np
+                    
+                    # Explicit cleanup of the batch
+                    del batch
+                    del emb_batch
+                    del emb_batch_np
+                    if args.device != "cpu":
+                        torch.cuda.empty_cache()
             
-            # Concatenate all segments: (S, Dim)
-            emb_array = np.concatenate(subject_embs, axis=0)
+            # emb_array is now fully populated
+            
+            # Extract event labels from annotations
+            # We categorize segments by BLOCK_* annotations
+            segment_labels = []
+            annots = raw.annotations
+            if len(annots) > 0:
+                block_annots = [a for a in annots if a['description'].startswith('BLOCK_')]
+                if block_annots:
+                    # Sort by onset to be safe
+                    block_annots.sort(key=lambda x: x['onset'])
+                    
+                    for s_idx in range(n_segments):
+                        t_start = s_idx * 10.0
+                        t_stop = (s_idx + 1) * 10.0
+                        t_mid = (t_start + t_stop) / 2.0
+                        
+                        # Find block that contains the midpoint of segment
+                        found_label = "unknown"
+                        for a in block_annots:
+                            if a['onset'] <= t_mid <= a['onset'] + a['duration']:
+                                found_label = a['description'].replace('BLOCK_', '')
+                                break
+                        segment_labels.append(found_label)
             
             # Save embeddings with BIDS naming
             meta_file = os.path.join(sub_out_dir, f"{sub_id}_{desc}_metadata_reve_{args.model_size}{suffix}.json")
@@ -170,7 +209,8 @@ def extract_features(args):
                 "subject": sub_id,
                 "n_segments": int(n_segments),
                 "embedding_shape": list(emb_array.shape),
-                "all_layers": True
+                "all_layers": True,
+                "event_labels": segment_labels
             }
             if len(emb_array.shape) > 1:
                 metadata["n_features"] = int(emb_array.shape[-1])
@@ -179,6 +219,19 @@ def extract_features(args):
             
             print(f"SAVED [{sub_id}]: {n_segments} segments, shape {emb_array.shape} → {emb_file}")
             success_count += 1
+
+            # --- MEMORY CLEANUP ---
+            del emb_array
+            del data_batch
+            if not getattr(args, "use_epochs", False):
+                if 'data' in locals(): del data
+                if 'data_tensor' in locals(): del data_tensor
+            
+            import gc
+            gc.collect()
+            if args.device != "cpu":
+                torch.cuda.empty_cache()
+            # ----------------------
             
         except Exception as e:
             import traceback

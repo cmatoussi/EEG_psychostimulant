@@ -34,8 +34,6 @@ PLOT_META_EXCLUDED_COLUMNS = {
     "VPA",
     "ETH",
     "n_epilepsy_meds",
-    "has_epilepsy",
-    "TSA",
     "Age",
 }
 
@@ -200,7 +198,7 @@ def build_meta_dict(container: DataContainer) -> Dict[str, np.ndarray]:
     """Build metadata dictionary for interactive coloring."""
     n_samples = container.X.shape[0]
     return {
-        col_name: np.asarray(col_values)
+        col_name: np.asarray(col_values).astype(str)
         for col_name, col_values in container.coords.items()
         if col_name not in PLOT_META_EXCLUDED_COLUMNS
         and not col_name.endswith("_bool")
