@@ -28,7 +28,6 @@ import pandas as pd
 
 sys.path.insert(0, "/home/mat/projects/coco-pipe")
 sys.path.insert(0, str(Path(__file__).parent))
-from coco_pipe.decoding._metrics import _balanced_accuracy_optimal_score  # noqa: E402
 from run_analysis import load_eeg_epochs, normalize_label_df, _to_modern_nomenclature  # noqa: E402
 from tune_lora import _prep_model_data  # noqa: E402
 
@@ -152,8 +151,9 @@ def main():
     if args.model in {"labram", "bendr"}:
         bkw["interpolate_channels"] = True
 
-    METRICS = ["accuracy", "balanced_accuracy", "balanced_accuracy_optimal", "roc_auc",
-               "balanced_accuracy_calibrated", "subj_roc_auc", "subj_balanced_accuracy_calibrated"]
+    METRICS = ["accuracy", "balanced_accuracy", "roc_auc",
+               "youden_threshold_balanced_accuracy", "subj_roc_auc",
+               "subj_youden_threshold_balanced_accuracy"]
     folds = {m: [] for m in METRICS}
     sgkf = StratifiedGroupKFold(n_splits=N_SPLITS, shuffle=True, random_state=42)
     for k, (tr, te) in enumerate(sgkf.split(X, y, groups)):
@@ -203,14 +203,14 @@ def main():
         pred = (p_te >= 0.5).astype(int)
         folds["accuracy"].append(float(accuracy_score(y[te], pred)))
         folds["balanced_accuracy"].append(float(balanced_accuracy_score(y[te], pred)))
-        folds["balanced_accuracy_optimal"].append(_balanced_accuracy_optimal_score(y[te], p_te))
         folds["roc_auc"].append(float(roc_auc_score(y[te], p_te)))
-        folds["balanced_accuracy_calibrated"].append(_calib(y[tr], p_tr, y[te], p_te))
+        folds["youden_threshold_balanced_accuracy"].append(_calib(y[tr], p_tr, y[te], p_te))
         sytr, sptr = _subj(y[tr], p_tr, groups[tr]); syte, spte = _subj(y[te], p_te, groups[te])
         folds["subj_roc_auc"].append(float(roc_auc_score(syte, spte)) if len(np.unique(syte)) > 1 else float("nan"))
-        folds["subj_balanced_accuracy_calibrated"].append(
+        folds["subj_youden_threshold_balanced_accuracy"].append(
             _calib(sytr, sptr, syte, spte) if len(np.unique(syte)) > 1 else float("nan"))
-        print(f"  fold {k}: roc={folds['roc_auc'][-1]:.3f} bacc_calib={folds['balanced_accuracy_calibrated'][-1]:.3f} "
+        print(f"  fold {k}: roc={folds['roc_auc'][-1]:.3f} "
+              f"bacc_youden={folds['youden_threshold_balanced_accuracy'][-1]:.3f} "
               f"subj_roc={folds['subj_roc_auc'][-1]:.3f}", flush=True)
 
     metrics = {m: {"mean": float(np.nanmean(v)) if v else float("nan"),
@@ -224,7 +224,7 @@ def main():
     p.write_text(json.dumps(payload, indent=2))
     print(f"--> wrote {p}  (roc={metrics['roc_auc']['mean']:.3f} "
           f"subj_roc={metrics['subj_roc_auc']['mean']:.3f} "
-          f"bacc_calib={metrics['balanced_accuracy_calibrated']['mean']:.3f})", flush=True)
+          f"bacc_youden={metrics['youden_threshold_balanced_accuracy']['mean']:.3f})", flush=True)
 
 
 if __name__ == "__main__":

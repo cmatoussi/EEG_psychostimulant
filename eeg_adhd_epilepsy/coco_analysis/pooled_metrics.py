@@ -45,7 +45,7 @@ def _perfold(fa):
     if not ba:
         return None
     ms = lambda v: {"mean": round(float(np.mean(v)), 4), "std": round(float(np.std(v)), 4)}
-    return {"balanced_accuracy": ms(ba), "balanced_accuracy_calibrated": ms(bacal),
+    return {"balanced_accuracy": ms(ba), "youden_threshold_balanced_accuracy": ms(bacal),
             "roc_auc": ms(auc), "weighted_f1": ms(f1), "n_folds": len(ba)}
 
 
@@ -96,7 +96,7 @@ def pooled(fa, calibrated=True, per_fold=False, n_boot=300, seed=0):
            "weighted_f1": {"mean": mn(f1), "std": sd(bf1)},
            "n_folds": len(fa), "n": int(len(Y))}
     if cal is not None:
-        out["balanced_accuracy_calibrated"] = {"mean": mn(balanced_accuracy_score(Y, cal)), "std": sd(bcal)}
+        out["youden_threshold_balanced_accuracy"] = {"mean": mn(balanced_accuracy_score(Y, cal)), "std": sd(bcal)}
     if per_fold:
         pf = _perfold(fa)
         if pf is not None:

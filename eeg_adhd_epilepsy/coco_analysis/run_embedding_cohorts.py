@@ -62,11 +62,10 @@ COLUMNS = [
     "adhd", "epilepsy", "autism",
     "accuracy_mean", "accuracy_std",
     "balanced_accuracy_mean", "balanced_accuracy_std",
-    "balanced_accuracy_optimal_mean", "balanced_accuracy_optimal_std",
     "f1_mean", "f1_std",
     "roc_auc_mean", "roc_auc_std",
 ]
-_METRICS = ["accuracy", "balanced_accuracy", "balanced_accuracy_optimal", "f1", "roc_auc"]
+_METRICS = ["accuracy", "balanced_accuracy", "f1", "roc_auc"]
 
 # Subject-level aggregation modes:
 #   averaged_predictions - score each epoch, then average the per-epoch
@@ -210,7 +209,7 @@ def run_one_cohort(cohort_key, csv_name, mask_fn, label_df, out_dir,
                         erows.append({**base, "aggregation": "per_epoch", "head": h,
                                       "status": estatus, **counts, **emcols})
                     print(f"  {model}/{cond_s}/{agg}/{h}: roc_auc={mcols['roc_auc_mean']} "
-                          f"bal_acc_opt={mcols['balanced_accuracy_optimal_mean']} "
+                          f"bal_acc={mcols['balanced_accuracy_mean']} "
                           f"(subj={counts['n_subjects']}, win={counts['n_windows']})", flush=True)
                 _flush()  # incremental save after each model x condition x aggregation
 

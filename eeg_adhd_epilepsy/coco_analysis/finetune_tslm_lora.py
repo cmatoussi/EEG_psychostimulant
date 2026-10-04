@@ -277,7 +277,7 @@ def run_finetune(args):
     cohort_ft_metrics.save_preds(args.out_dir, args.level, args.strategy, args.model, cshort, fold_preds)
     cohort_metrics = cohort_ft_metrics.compute(fold_preds, args.label_csv)
     for cname, cm in cohort_metrics.items():
-        print(f"    cohort {cname}: honest_bal_acc={cm.get('balanced_accuracy_calibrated',{}).get('mean')} "
+        print(f"    cohort {cname}: honest_bal_acc={cm.get('youden_threshold_balanced_accuracy',{}).get('mean')} "
               f"(n={cm.get('n')})", flush=True)
     written = cohort_ft_metrics.write_split(args.out_dir, args.level, args.strategy,
                                             args.model, cshort, metrics, cohort_metrics)

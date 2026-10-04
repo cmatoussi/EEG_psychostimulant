@@ -24,7 +24,6 @@ import pandas as pd
 
 sys.path.insert(0, "/home/mat/projects/coco-pipe")
 sys.path.insert(0, str(Path(__file__).parent))
-from coco_pipe.decoding._metrics import _balanced_accuracy_optimal_score  # noqa: E402
 from run_analysis import load_eeg_epochs, normalize_label_df  # noqa: E402
 from tune_lora import _prep_model_data  # noqa: E402  (model-specific preprocessing)
 
@@ -185,7 +184,7 @@ def main():
     cohort_ft_metrics.save_preds(args.out_dir, args.level, args.strategy, args.model, cshort, fold_preds)
     cohort_metrics = cohort_ft_metrics.compute(fold_preds, args.label_csv)
     for cname, cm in cohort_metrics.items():
-        hb = cm.get("balanced_accuracy_calibrated", {}).get("mean")
+        hb = cm.get("youden_threshold_balanced_accuracy", {}).get("mean")
         print(f"    cohort {cname}: honest_bal_acc={hb} (n={cm.get('n')})", flush=True)
     written = cohort_ft_metrics.write_split(args.out_dir, args.level, args.strategy,
                                             args.model, cshort, metrics, cohort_metrics)

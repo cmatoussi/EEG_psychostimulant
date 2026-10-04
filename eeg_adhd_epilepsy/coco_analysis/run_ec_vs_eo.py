@@ -18,7 +18,6 @@ from sklearn.metrics import (
     accuracy_score, balanced_accuracy_score, f1_score, roc_auc_score,
 )
 
-from coco_pipe.decoding._metrics import _balanced_accuracy_optimal_score
 
 sys.path.insert(0, str(Path(__file__).parent))
 import run_analysis as ra  # noqa: E402
@@ -61,11 +60,10 @@ COLUMNS = [
     "n_eo", "n_ec",
     "accuracy_mean", "accuracy_std",
     "balanced_accuracy_mean", "balanced_accuracy_std",
-    "balanced_accuracy_optimal_mean", "balanced_accuracy_optimal_std",
     "f1_mean", "f1_std",           # f1 = WEIGHTED
     "roc_auc_mean", "roc_auc_std",
 ]
-_METRICS = ["accuracy", "balanced_accuracy", "balanced_accuracy_optimal", "f1", "roc_auc"]
+_METRICS = ["accuracy", "balanced_accuracy", "f1", "roc_auc"]
 AGG = "averaged_epochs"
 LOAD_LEVEL = "subject"   # averaged_epochs -> per-subject-per-condition embeddings
 
@@ -80,7 +78,6 @@ def _score(yt, yp, p1):
     return {
         "accuracy": float(accuracy_score(yt, yp)),
         "balanced_accuracy": float(balanced_accuracy_score(yt, yp)),
-        "balanced_accuracy_optimal": _balanced_accuracy_optimal_score(yt, p1) if two else float("nan"),
         "f1": float(f1_score(yt, yp, average="weighted", zero_division=0)),
         "roc_auc": float(roc_auc_score(yt, p1)) if two else float("nan"),
     }

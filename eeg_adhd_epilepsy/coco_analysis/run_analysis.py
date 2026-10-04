@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 SUMMARY_FIELDNAMES = [
     "model", "condition", "sex", "age", "comorbidities", "medication",
     "status", "accuracy_mean", "accuracy_std", "balanced_accuracy_mean",
-    "balanced_accuracy_std", "balanced_accuracy_optimal_mean", "balanced_accuracy_optimal_std",
+    "balanced_accuracy_std", "youden_threshold_balanced_accuracy_mean", "youden_threshold_balanced_accuracy_std",
     "f1_mean", "f1_std", "roc_auc_mean", "roc_auc_std",
 ]
 
@@ -48,7 +48,7 @@ SUMMARY_FIELDNAMES = [
 EMB_SUMMARY_FIELDNAMES = [
     "fm_model", "condition", "head", "status", "n_subjects", "n_windows",
     "accuracy_mean", "accuracy_std", "balanced_accuracy_mean", "balanced_accuracy_std",
-    "balanced_accuracy_optimal_mean", "balanced_accuracy_optimal_std",
+    "youden_threshold_balanced_accuracy_mean", "youden_threshold_balanced_accuracy_std",
     "f1_mean", "f1_std", "roc_auc_mean", "roc_auc_std",
 ]
 
@@ -569,7 +569,7 @@ def run_fm_embed(analysis_cfg, X, y, groups, output_dir, signal_cfg, result_name
     ch_names = signal_cfg.get("ch_names")
     models_raw = analysis_cfg.get("models", {})
     cv_raw = analysis_cfg.get("cv", {})
-    metrics = analysis_cfg.get("metrics", ["accuracy", "roc_auc", "balanced_accuracy", "balanced_accuracy_optimal", "f1"])
+    metrics = analysis_cfg.get("metrics", ["accuracy", "roc_auc", "balanced_accuracy", "youden_threshold_balanced_accuracy", "f1"])
 
     models = {}
     for name, mcfg in models_raw.items():
@@ -608,7 +608,7 @@ def run_embed_head(analysis_cfg, X, y, groups, output_dir, result_name="results"
     models_raw = analysis_cfg.get("models", {})
     cv_raw = analysis_cfg.get("cv", {})
     metrics = analysis_cfg.get(
-        "metrics", ["accuracy", "roc_auc", "balanced_accuracy", "balanced_accuracy_optimal", "f1"]
+        "metrics", ["accuracy", "roc_auc", "balanced_accuracy", "youden_threshold_balanced_accuracy", "f1"]
     )
     model_key = analysis_cfg.get("model_key", "fm")
     exp = Experiment(
@@ -625,7 +625,7 @@ def run_embed_head(analysis_cfg, X, y, groups, output_dir, result_name="results"
     json_path = Path(output_dir) / f"{result_name}.json"
     result.save(json_path)
 
-    # Post-hoc metrics (balanced_accuracy_optimal + subject-level aggregation),
+    # Post-hoc metrics (youden_threshold_balanced_accuracy + subject-level aggregation),
     # computed from the saved fold predictions so results match the CV loop.
     level = "subject_level" if cv_raw.get("subject_level_metrics") else "epoch_level"
     summary, sidecar = augment_posthoc_metrics(json_path, analysis_level=level)
@@ -795,7 +795,7 @@ def run_fm_extract(
     cv_raw = analysis_cfg.get("cv", {})
     metrics = analysis_cfg.get(
         "metrics",
-        ["accuracy", "roc_auc", "balanced_accuracy", "balanced_accuracy_optimal", "f1"],
+        ["accuracy", "roc_auc", "balanced_accuracy", "youden_threshold_balanced_accuracy", "f1"],
     )
     head_out_dir = model_root / f"task-{cond}" / "head_cv"
     exp = Experiment(
@@ -828,7 +828,7 @@ def run_fm_frozen(analysis_cfg, X, y, groups, output_dir, signal_cfg, result_nam
     ch_names = signal_cfg.get("ch_names")
     trainer_raw = analysis_cfg.get("trainer", {})
     cv_raw = analysis_cfg.get("cv", {})
-    metrics = analysis_cfg.get("metrics", ["accuracy", "roc_auc", "balanced_accuracy", "balanced_accuracy_optimal", "f1"])
+    metrics = analysis_cfg.get("metrics", ["accuracy", "roc_auc", "balanced_accuracy", "youden_threshold_balanced_accuracy", "f1"])
 
     backend_kwargs = {}
     if model_key in {"labram", "bendr"}:
@@ -877,7 +877,7 @@ def run_fm_lora(analysis_cfg, X, y, groups, output_dir, signal_cfg, result_name=
     lora_raw = analysis_cfg.get("lora", {})
     trainer_raw = analysis_cfg.get("trainer", {})
     cv_raw = analysis_cfg.get("cv", {})
-    metrics = analysis_cfg.get("metrics", ["accuracy", "roc_auc", "balanced_accuracy", "balanced_accuracy_optimal", "f1"])
+    metrics = analysis_cfg.get("metrics", ["accuracy", "roc_auc", "balanced_accuracy", "youden_threshold_balanced_accuracy", "f1"])
 
     backend_kwargs = {}
     if model_key in {"labram", "bendr"}:
@@ -944,7 +944,7 @@ def run_fm_partial(analysis_cfg, X, y, groups, output_dir, signal_cfg, result_na
     ch_names = signal_cfg.get("ch_names")
     trainer_raw = analysis_cfg.get("trainer", {})
     cv_raw = analysis_cfg.get("cv", {})
-    metrics = analysis_cfg.get("metrics", ["accuracy", "roc_auc", "balanced_accuracy", "balanced_accuracy_optimal", "f1"])
+    metrics = analysis_cfg.get("metrics", ["accuracy", "roc_auc", "balanced_accuracy", "youden_threshold_balanced_accuracy", "f1"])
 
     backend_kwargs = {"unfreeze_last_k": int(analysis_cfg.get("unfreeze_last_k", 2))}
     if model_key in {"labram", "bendr"}:
@@ -991,7 +991,7 @@ def run_handcrafted(analysis_cfg, X, y, groups, output_dir, result_name="results
     """Mode 3: Classical ML on handcrafted features."""
     models_raw = analysis_cfg.get("models", {})
     cv_raw = analysis_cfg.get("cv", {})
-    metrics = analysis_cfg.get("metrics", ["accuracy", "roc_auc", "balanced_accuracy", "balanced_accuracy_optimal", "f1"])
+    metrics = analysis_cfg.get("metrics", ["accuracy", "roc_auc", "balanced_accuracy", "youden_threshold_balanced_accuracy", "f1"])
     outer_cv = _build_cv(cv_raw)
 
     fs_raw = analysis_cfg.get("feature_selection", {})
@@ -1244,13 +1244,13 @@ def main():
         logger.info(f"Analysis '{args.analysis_id}' is disabled, skipping.")
         return
 
-    # Global toggle: add or strip balanced_accuracy_optimal from the metrics list
-    _bao = config.get("balanced_accuracy_optimal", True)
+    # Global toggle: add or strip youden_threshold_balanced_accuracy from the metrics list
+    _youden = config.get("youden_threshold_balanced_accuracy", True)
     _metrics = analysis_cfg.setdefault("metrics", ["accuracy", "roc_auc", "balanced_accuracy", "f1"])
-    if _bao and "balanced_accuracy_optimal" not in _metrics:
-        _metrics.append("balanced_accuracy_optimal")
-    elif not _bao and "balanced_accuracy_optimal" in _metrics:
-        _metrics.remove("balanced_accuracy_optimal")
+    if _youden and "youden_threshold_balanced_accuracy" not in _metrics:
+        _metrics.append("youden_threshold_balanced_accuracy")
+    elif not _youden and "youden_threshold_balanced_accuracy" in _metrics:
+        _metrics.remove("youden_threshold_balanced_accuracy")
 
     _balanced_sample = config.get("balanced_sample", False)
 

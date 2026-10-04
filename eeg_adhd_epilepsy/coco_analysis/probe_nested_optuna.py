@@ -51,7 +51,7 @@ COLUMNS = ["fm_model", "condition", "cohort_group", "cohort", "aggregation", "he
            "n_subjects", "n_windows", "adhd", "epilepsy", "autism",
            "accuracy_mean", "accuracy_std",
            "balanced_accuracy_mean", "balanced_accuracy_std",
-           "balanced_accuracy_calibrated_mean", "balanced_accuracy_calibrated_std",
+           "youden_threshold_balanced_accuracy_mean", "youden_threshold_balanced_accuracy_std",
            "weighted_f1_mean", "weighted_f1_std", "roc_auc_mean", "roc_auc_std"]
 
 
@@ -296,7 +296,7 @@ def _metrics(fa):
         return None
     g = lambda k: (r[k]["mean"], r[k].get("std", 0.0))
     return {"accuracy": (r["accuracy"]["mean"], 0.0), "balanced_accuracy": g("balanced_accuracy"),
-            "balanced_accuracy_calibrated": g("balanced_accuracy_calibrated"),
+            "youden_threshold_balanced_accuracy": g("youden_threshold_balanced_accuracy"),
             "weighted_f1": g("weighted_f1"), "roc_auc": g("roc_auc")}
 
 
@@ -448,7 +448,7 @@ def main():
                     rec[f"{k}_mean"] = mean; rec[f"{k}_std"] = std
                 rows.append(rec)
                 print(f"  {ckey}/{agg}/{head}: bal_acc={mt['balanced_accuracy'][0]} "
-                      f"calibrated={mt['balanced_accuracy_calibrated'][0]}", flush=True)
+                      f"youden={mt['youden_threshold_balanced_accuracy'][0]}", flush=True)
                 _flush()   # flush after every head
     _flush()
     print(f"--> wrote {out}/{{group}}/{args.condition}/results_{tag}_{args.model}.csv "

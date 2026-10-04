@@ -56,7 +56,7 @@ def cv_score(clf_fn, X, y, g):
         fold_arrays.append((y[te], clf.predict_proba(X[te])[:, 1]))
     if not fold_arrays:
         return float("nan")
-    # calibrated=True so balanced_accuracy_calibrated is available if requested
+    # calibrated=True so youden_threshold_balanced_accuracy is available if requested
     r = pooled_metrics.pooled(fold_arrays, calibrated=True)
     return r[METRIC]["mean"] if r else float("nan")
 
@@ -209,7 +209,7 @@ def main():
                     choices=["logreg", "rf", "svm", "histgb"],
                     help="which heads to tune (drop svm to avoid the slow probability=True search)")
     ap.add_argument("--metric", default="balanced_accuracy",
-                    choices=["balanced_accuracy", "balanced_accuracy_calibrated", "roc_auc",
+                    choices=["balanced_accuracy", "youden_threshold_balanced_accuracy", "roc_auc",
                              "accuracy", "weighted_f1"],
                     help="objective the coarse-to-fine search maximizes (default balanced_accuracy)")
     args = ap.parse_args()
