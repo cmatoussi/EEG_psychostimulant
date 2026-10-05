@@ -131,7 +131,7 @@ def main():
                         status = "success" if mcols["roc_auc_mean"] == mcols["roc_auc_mean"] else "degenerate"
                         rows.append({**base, "head": h, "status": status, **counts, **mcols})
                         print(f"  {model}/{cond_s}/{agg}/{h}: roc_auc={mcols['roc_auc_mean']} "
-                              f"bal_acc_opt={mcols['balanced_accuracy_optimal_mean']} "
+                              f"bal_acc={mcols['balanced_accuracy_mean']} "
                               f"(subj={counts['n_subjects']}, win={counts['n_windows']})", flush=True)
                     _flush()
     _flush()
