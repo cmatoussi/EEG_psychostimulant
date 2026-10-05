@@ -307,7 +307,8 @@ def main():
     ap.add_argument("--level", required=True, choices=["subject", "epoch"])
     ap.add_argument("--cohort-group", default="all",
                     choices=list(COHORT_GROUPS) + ["all", "everything"])
-    ap.add_argument("--label-csv", required=True)
+    ap.add_argument("--label-csv", default=None,
+                    help="override; default = earliest-per-condition file")
     ap.add_argument("--out-dir", required=True)
     # fast heads first so incremental writes bank them before slow RF/SVM (which,
     # for averaged_predictions/epoch, fit on 35-50k windows) risk timing out.
@@ -337,6 +338,7 @@ def main():
                          "(e.g. epilepsy for asm_resistant: resistant-vs-non-resistant WITHIN epilepsy)")
     args = ap.parse_args()
 
+    args.label_csv = ra.resolve_label_csv(args.condition, args.label_csv)
     label_df = ra.normalize_label_df(pd.read_csv(args.label_csv))
     label_df["study_id"] = label_df["study_id"].astype(str)
     cond = f"{args.condition}_baseline"

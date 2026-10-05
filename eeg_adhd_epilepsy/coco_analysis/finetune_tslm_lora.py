@@ -228,7 +228,8 @@ def _avg_by_subject(X, y, groups):
     return Xs, ys, u
 
 
-def load_data(condition, level, label_csv=LABEL_CSV):
+def load_data(condition, level, label_csv=None):
+    label_csv = ra.resolve_label_csv(condition, label_csv)
     config = {"paths": {"data_root": DATA_ROOT},
               "signal": {"sfreq": 200.0, "conditions": [condition], "epoch_desc": "base",
                          "ch_names": CH19}}
@@ -333,10 +334,12 @@ def main():
     ap.add_argument("--level", default="epoch", choices=["epoch", "subject"])
     ap.add_argument("--tune-level", default="subject", choices=["epoch", "subject"])
     ap.add_argument("--out-dir", default=".")
-    ap.add_argument("--label-csv", default=LABEL_CSV)
+    ap.add_argument("--label-csv", default=None,
+                    help="override; default = earliest-per-condition file.")
     ap.add_argument("--batch", type=int, default=16)
     ap.add_argument("--num-samples", type=int, default=16)
     args = ap.parse_args()
+    args.label_csv = ra.resolve_label_csv(args.condition, args.label_csv)
     if args.stage == "tune":
         run_tune(args)
     else:

@@ -527,7 +527,8 @@ td,th{{border:1px solid #ccc;padding:3px 6px}}</style></head><body>
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--level", required=True, choices=["epoch", "subject"])
-    ap.add_argument("--label-csv", default=LABEL_CSV)
+    ap.add_argument("--label-csv", default=None,
+                    help="override; default = earliest-per-condition file")
     ap.add_argument("--out-dir", required=True)
     ap.add_argument("--cohort-group", default="all", choices=list(COHORT_GROUPS))
     ap.add_argument("--cohort", default=None,
@@ -559,13 +560,16 @@ def main():
     _TARGET_COL = args.target_col
     _REPORTS_DIR = Path(args.reports_dir) if args.reports_dir else None
 
-    label_df = ra.normalize_label_df(pd.read_csv(args.label_csv))
-    if args.restrict_col:                # e.g. asm_resistant restricted to epilepsy==1
-        keep = pd.to_numeric(label_df[args.restrict_col], errors="coerce").fillna(0) == 1
-        label_df = label_df[keep].copy()
-        print(f"restricted to {args.restrict_col}==1: {label_df['study_id'].nunique()} subjects", flush=True)
-    if args.cohort_group == "drug":
-        label_df = add_drug_flags(label_df)
+    # each condition uses its own earliest-recording labels
+    def _load_labels(cond):
+        ldf = ra.normalize_label_df(pd.read_csv(ra.resolve_label_csv(cond, args.label_csv)))
+        if args.restrict_col:            # e.g. asm_resistant restricted to epilepsy==1
+            keep = pd.to_numeric(ldf[args.restrict_col], errors="coerce").fillna(0) == 1
+            ldf = ldf[keep].copy()
+        if args.cohort_group == "drug":
+            ldf = add_drug_flags(ldf)
+        return ldf
+    label_dfs = {cond: _load_labels(cond) for cond in conds}
     out = Path(args.out_dir); out.mkdir(parents=True, exist_ok=True)
 
     cohorts = COHORT_GROUPS[args.cohort_group]
@@ -577,21 +581,22 @@ def main():
             print(f"=== {args.cohort_group}/{key}: SKIP (too small / undecodable) ===", flush=True)
             continue
         subdir, mask_fn = cohorts[key]
-        cohort_df = label_df[mask_fn(label_df)].copy()
-        if args.balanced:
-            cohort_df, n_bal, drop_reason = cohort_balance.build_balanced(
-                cohort_df, _TARGET_COL, args.cohort_group)
-            if drop_reason:
-                print(f"=== {args.cohort_group}/{key}: BALANCED SKIP ({drop_reason}) ===", flush=True)
-                continue
         cout = out / subdir
         cout.mkdir(parents=True, exist_ok=True)
-        n_epi = int((cohort_df[_TARGET_COL] == 1).sum())
-        n_ctrl = int((cohort_df[_TARGET_COL] == 0).sum())
-        print(f"=== {args.cohort_group}/{key} -> {subdir} "
-              f"({cohort_df['study_id'].nunique()} subj: {n_epi} {_TARGET_COL}+, {n_ctrl} ctrl), "
-              f"{args.level}-level ===", flush=True)
         for cond in conds:
+            ldf = label_dfs[cond]
+            cohort_df = ldf[mask_fn(ldf)].copy()
+            if args.balanced:
+                cohort_df, n_bal, drop_reason = cohort_balance.build_balanced(
+                    cohort_df, _TARGET_COL, args.cohort_group)
+                if drop_reason:
+                    print(f"=== {args.cohort_group}/{key} [{cond}]: BALANCED SKIP ({drop_reason}) ===", flush=True)
+                    continue
+            n_epi = int((cohort_df[_TARGET_COL] == 1).sum())
+            n_ctrl = int((cohort_df[_TARGET_COL] == 0).sum())
+            print(f"=== {args.cohort_group}/{key} -> {subdir} [{cond}] "
+                  f"({cohort_df['study_id'].nunique()} subj: {n_epi} {_TARGET_COL}+, {n_ctrl} ctrl), "
+                  f"{args.level}-level ===", flush=True)
             run_condition(cond, cohort_df, args.level, cout, label=subdir)
 
 

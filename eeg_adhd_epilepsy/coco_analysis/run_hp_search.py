@@ -201,7 +201,8 @@ def main():
     ap.add_argument("--model", default=None, help="FM model key (embeddings source only)")
     ap.add_argument("--condition", required=True, choices=["EO_baseline", "EC_baseline"])
     ap.add_argument("--target-col", default="epilepsy")
-    ap.add_argument("--label-csv", default=LABEL_CSV)
+    ap.add_argument("--label-csv", default=None,
+                    help="override; default = earliest-per-condition file.")
     ap.add_argument("--out-dir", required=True)
     ap.add_argument("--level", default="subject", choices=["subject", "epoch"],
                     help="embedding level to tune on (epoch = per-window, subsampled)")
@@ -218,6 +219,7 @@ def main():
     global METRIC
     METRIC = args.metric
 
+    args.label_csv = ra.resolve_label_csv(args.condition, args.label_csv)
     label_df = ra.normalize_label_df(pd.read_csv(args.label_csv))
     if args.target_col == "asm_resistant":
         label_df = label_df[label_df.epilepsy == 1].copy()

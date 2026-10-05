@@ -11,6 +11,7 @@ one study_id per patient for that condition).
 """
 from __future__ import annotations
 import argparse
+import glob
 from pathlib import Path
 import pandas as pd
 
@@ -20,11 +21,13 @@ EMB = ("/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/BIDS/derivatives
 
 
 def _avail(cond):
-    """study_ids that have <cond> data (from a reference embeddings CSV)."""
-    f = f"{EMB}/bendr_{cond}_baseline_epoch_embeddings.csv"
-    c = pd.read_csv(f, nrows=1).columns
-    ic = "subject" if "subject" in c else "study_id"
-    return set(pd.read_csv(f, usecols=[ic])[ic].astype(str))
+    """study_ids with <cond> data in EVERY model's epoch embeddings (intersection:
+    identical cohort across models for fair comparison)."""
+    sets = []
+    for f in glob.glob(f"{EMB}/*_{cond}_baseline_epoch_embeddings.csv"):
+        ic = "subject" if "subject" in pd.read_csv(f, nrows=1).columns else "study_id"
+        sets.append(set(pd.read_csv(f, usecols=[ic])[ic].astype(str)))
+    return set.intersection(*sets) if sets else set()
 
 
 def select_for_condition(df, avail):

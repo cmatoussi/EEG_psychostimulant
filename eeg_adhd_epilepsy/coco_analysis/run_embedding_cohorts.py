@@ -88,19 +88,24 @@ def _empty_metrics():
     return {f"{m}_{s}": np.nan for m in _METRICS for s in ("mean", "std")}
 
 
-def run_one_cohort(cohort_key, csv_name, mask_fn, label_df, out_dir,
+def run_one_cohort(cohort_key, csv_name, mask_fn, label_dfs, out_dir,
                    cv_strategy="stratified_group_kfold",
                    aggregations=("averaged_predictions",), epoch_out_dir=None,
                    target_col="epilepsy", cohort_group=None, balanced=False):
-    cohort_df = label_df[mask_fn(label_df)].copy()
-    if balanced:
-        cohort_df, n_bal, drop_reason = cohort_balance.build_balanced(
-            cohort_df, target_col, cohort_group)
-        if drop_reason:
-            print(f"=== cohort {cohort_key}: BALANCED SKIP ({drop_reason}) ===", flush=True)
-            return
-        print(f"=== cohort {cohort_key}: balanced to {n_bal} subjects "
-              f"(sex+age matched, target={target_col}) ===", flush=True)
+    def _cohort_for(cond):
+        cdf = label_dfs[cond][mask_fn(label_dfs[cond])].copy()
+        if balanced:
+            cdf, n_bal, drop_reason = cohort_balance.build_balanced(cdf, target_col, cohort_group)
+            if drop_reason:
+                print(f"=== cohort {cohort_key} [{cond}]: BALANCED SKIP ({drop_reason}) ===", flush=True)
+                return None
+            print(f"=== cohort {cohort_key} [{cond}]: balanced to {n_bal} subjects "
+                  f"(sex+age matched, target={target_col}) ===", flush=True)
+        print(f"=== cohort {cohort_key} [{cond}]: {cdf['study_id'].nunique()} subjects ===", flush=True)
+        return cdf
+    cohort_dfs = {cond: _cohort_for(cond) for cond in CONDITIONS}
+    if all(v is None for v in cohort_dfs.values()):
+        return
     run_root = Path(out_dir) / "runs" / cohort_key
     out_csv = Path(out_dir) / csv_name
     Path(out_dir).mkdir(parents=True, exist_ok=True)
@@ -113,7 +118,6 @@ def run_one_cohort(cohort_key, csv_name, mask_fn, label_df, out_dir,
     eout_csv = Path(epoch_out_dir) / csv_name if epoch_out_dir else None
     if epoch_out_dir:
         Path(epoch_out_dir).mkdir(parents=True, exist_ok=True)
-    print(f"=== cohort {cohort_key}: {cohort_df['study_id'].nunique()} subjects ===", flush=True)
 
     def _merge_write(new_rows, path):
         """Preserve existing rows for models NOT in this run (so a --models subset
@@ -132,6 +136,9 @@ def run_one_cohort(cohort_key, csv_name, mask_fn, label_df, out_dir,
 
     for model in MODELS:
         for cond in CONDITIONS:
+            cohort_df = cohort_dfs.get(cond)
+            if cohort_df is None:          # balanced-skipped for this condition
+                continue
             cond_s = _cond_short(cond)
             for agg in aggregations:
                 base = {"fm_model": model, "condition": cond_s, "aggregation": agg}
@@ -229,8 +236,8 @@ def main():
     ap.add_argument("--source", default=None,
                     help="restrict to a single source_dataset (e.g. 'adhd') to remove "
                          "the study/source confound where epilepsy is entangled with provenance.")
-    ap.add_argument("--label-csv", default=LABEL_CSV,
-                    help="metadata CSV to use (default: patients_metadata_clean.csv).")
+    ap.add_argument("--label-csv", default=None,
+                    help="override; default = earliest-per-condition file")
     ap.add_argument("--epoch-out-dir", default=None,
                     help="if set, also write an epoch-level (per-epoch, no subject pooling) "
                          "table here, from the same runs' epoch_level posthoc block.")
@@ -261,18 +268,18 @@ def main():
         HEADS = {h: HEADS[h] for h in HEADS if h in set(args.heads)}
     print(f"models={MODELS} heads={list(HEADS)}", flush=True)
 
-    label_df = ra.normalize_label_df(pd.read_csv(args.label_csv))
-    if "source_dataset" not in label_df.columns:
-        print("note: label CSV has no source_dataset column (dropped upstream).", flush=True)
-    if args.source:
-        if "source_dataset" not in label_df.columns:
-            raise SystemExit("--source given but no 'source_dataset' column in label CSV.")
-        n0 = len(label_df)
-        label_df = label_df[label_df.source_dataset == args.source].copy()
-        print(f"source filter '{args.source}': {n0} -> {len(label_df)} subjects", flush=True)
-    if args.target_col == "asm_resistant":
-        label_df = label_df[label_df.epilepsy == 1].copy()
-        print(f"asm_resistant target: restricted to epilepsy==1 -> {len(label_df)} subjects", flush=True)
+    # each condition uses its own earliest-recording labels (override: --label-csv)
+    def _load_labels(cond):
+        ldf = ra.normalize_label_df(pd.read_csv(ra.resolve_label_csv(cond, args.label_csv)))
+        if args.source:
+            if "source_dataset" not in ldf.columns:
+                raise SystemExit("--source given but no 'source_dataset' column in label CSV.")
+            ldf = ldf[ldf.source_dataset == args.source].copy()
+        if args.target_col == "asm_resistant":
+            ldf = ldf[ldf.epilepsy == 1].copy()
+        return ldf
+    label_dfs = {cond: _load_labels(cond) for cond in CONDITIONS}
+    print(f"labels: { {c: ldf['study_id'].nunique() for c, ldf in label_dfs.items()} } subjects/condition", flush=True)
     cohorts = COHORT_GROUPS[args.cohort_group]
     keys = [args.cohort] if args.cohort else list(cohorts)
     for key in keys:
@@ -282,7 +289,7 @@ def main():
             print(f"skip cohort {key!r} (in --skip)", flush=True)
             continue
         csv_name, mask_fn = cohorts[key]
-        run_one_cohort(key, csv_name, mask_fn, label_df, args.out_dir,
+        run_one_cohort(key, csv_name, mask_fn, label_dfs, args.out_dir,
                        cv_strategy=args.cv_strategy, aggregations=aggregations,
                        epoch_out_dir=args.epoch_out_dir, target_col=args.target_col,
                        cohort_group=args.cohort_group, balanced=args.balanced)

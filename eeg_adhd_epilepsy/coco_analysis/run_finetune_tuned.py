@@ -24,7 +24,7 @@ import pandas as pd
 
 sys.path.insert(0, "/home/mat/projects/coco-pipe")
 sys.path.insert(0, str(Path(__file__).parent))
-from run_analysis import load_eeg_epochs, normalize_label_df  # noqa: E402
+from run_analysis import load_eeg_epochs, normalize_label_df, resolve_label_csv  # noqa: E402
 from tune_lora import _prep_model_data  # noqa: E402  (model-specific preprocessing)
 
 N_SPLITS = 5
@@ -120,10 +120,12 @@ def main():
     ap.add_argument("--strategy", required=True, choices=["ft_only", "lp_ft"])
     ap.add_argument("--level", required=True, choices=["epoch", "subject"])
     ap.add_argument("--out-dir", required=True)
-    ap.add_argument("--label-csv", default=LABEL_CSV)
+    ap.add_argument("--label-csv", default=None,
+                    help="override; default = earliest-per-condition file.")
     ap.add_argument("--batch", type=int, default=BATCH,
                     help="batch size (lower for LaBraM's 3000-sample windows to avoid OOM)")
     args = ap.parse_args()
+    args.label_csv = resolve_label_csv(args.condition, args.label_csv)
     BATCH = args.batch
 
     cfg = tuned_config(args.model)

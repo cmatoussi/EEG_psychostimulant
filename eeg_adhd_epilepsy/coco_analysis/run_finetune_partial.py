@@ -28,7 +28,8 @@ import pandas as pd
 
 sys.path.insert(0, "/home/mat/projects/coco-pipe")
 sys.path.insert(0, str(Path(__file__).parent))
-from run_analysis import load_eeg_epochs, normalize_label_df, _to_modern_nomenclature  # noqa: E402
+from run_analysis import (load_eeg_epochs, normalize_label_df,  # noqa: E402
+                          _to_modern_nomenclature, resolve_label_csv)
 from tune_lora import _prep_model_data  # noqa: E402
 
 N_SPLITS = 5
@@ -123,8 +124,10 @@ def main():
     ap.add_argument("--lr", type=float, default=LR, help="learning rate (use a lower value, e.g. 1e-4, for --full)")
     ap.add_argument("--batch", type=int, default=32, help="batch size (lower for LaBraM's 3000-sample windows)")
     ap.add_argument("--out-dir", required=True)
-    ap.add_argument("--label-csv", default=LABEL_CSV)
+    ap.add_argument("--label-csv", default=None,
+                    help="override; default = earliest-per-condition file.")
     args = ap.parse_args()
+    args.label_csv = resolve_label_csv(args.condition, args.label_csv)
     global BATCH
     BATCH = args.batch
 

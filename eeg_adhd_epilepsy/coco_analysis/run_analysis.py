@@ -37,6 +37,23 @@ from coco_pipe.io.embeddings import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Earliest-per-condition labels: one recording/patient -> group-CV stays patient-level.
+EARLIEST_LABELS = {
+    "EO": "/home/mat/scratch/labels_earliest_EO.csv",
+    "EC": "/home/mat/scratch/labels_earliest_EC.csv",
+}
+
+
+def resolve_label_csv(condition, override=None):
+    """`override` if given, else the earliest-recording file for `condition`."""
+    if override:
+        return override
+    cond = str(condition).replace("_baseline", "")
+    if cond not in EARLIEST_LABELS:
+        raise ValueError(f"no earliest-label file for condition {condition!r}; "
+                         f"pass --label-csv explicitly.")
+    return EARLIEST_LABELS[cond]
+
 SUMMARY_FIELDNAMES = [
     "model", "condition", "sex", "age", "comorbidities", "medication",
     "status", "accuracy_mean", "accuracy_std", "balanced_accuracy_mean",

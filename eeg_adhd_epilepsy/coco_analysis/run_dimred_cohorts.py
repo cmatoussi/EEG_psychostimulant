@@ -227,8 +227,8 @@ def main():
                     choices=list(COHORT_GROUPS) + ["everything"])
     ap.add_argument("--cohort", default=None)
     ap.add_argument("--source", default=None, help="filter to a source_dataset (e.g. adhd)")
-    ap.add_argument("--label-csv", default=LABEL_CSV,
-                    help="metadata CSV to use (default: patients_metadata_clean.csv).")
+    ap.add_argument("--label-csv", default=None,
+                    help="override; default = earliest-per-condition file")
     ap.add_argument("--out-dir", required=True)
     ap.add_argument("--condition", default="EO_baseline")
     ap.add_argument("--no-reject", action="store_true",
@@ -250,6 +250,7 @@ def main():
                          "cohorts that can't reach 30 matched subjects are skipped.")
     args = ap.parse_args()
 
+    args.label_csv = ra.resolve_label_csv(args.condition, args.label_csv)
     label_df = ra.normalize_label_df(pd.read_csv(args.label_csv))
     if args.source:
         label_df = label_df[label_df.source_dataset == args.source].copy()

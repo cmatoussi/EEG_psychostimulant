@@ -122,7 +122,8 @@ def main():
     ap.add_argument("--model", required=True, choices=MODELS)
     ap.add_argument("--out-dir", required=True)
     ap.add_argument("--condition", default=CONDITION)
-    ap.add_argument("--label-csv", default=LABEL_CSV)
+    ap.add_argument("--label-csv", default=None,
+                    help="override; default = earliest-per-condition file")
     ap.add_argument("--levels", default="both",
                     choices=["epoch", "averaged_epoch", "both"])
     ap.add_argument("--target-col", default="epilepsy",
@@ -137,6 +138,7 @@ def main():
                          "cohorts that can't reach 30 matched subjects are skipped.")
     args = ap.parse_args()
 
+    args.label_csv = ra.resolve_label_csv(args.condition, args.label_csv)
     label_df = ra.normalize_label_df(pd.read_csv(args.label_csv))
     if args.target_col == "asm_resistant":
         label_df = label_df[label_df.epilepsy == 1].copy()

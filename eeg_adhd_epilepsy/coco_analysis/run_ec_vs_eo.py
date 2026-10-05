@@ -110,13 +110,16 @@ def _load_condition(model, cond, cohort_df):
     return X, groups
 
 
-def run_one_cohort(cohort_key, csv_name, mask_fn, label_df, out_dir):
-    cohort_df = label_df[mask_fn(label_df)].copy()
+def run_one_cohort(cohort_key, csv_name, mask_fn, label_dfs, out_dir):
+    # group by patient_id so a patient's EO+EC rows share a fold (no leak)
+    cohort_dfs = {cond: label_dfs[cond][mask_fn(label_dfs[cond])].copy() for cond, _ in CONDITIONS}
+    pid_lut = {str(s): str(p) for cdf in cohort_dfs.values()
+               for s, p in zip(cdf["study_id"], cdf["patient_id"])}
     run_root = Path(out_dir) / "runs" / cohort_key
     out_csv = Path(out_dir) / csv_name
     Path(out_dir).mkdir(parents=True, exist_ok=True)
     rows = []
-    print(f"=== cohort {cohort_key}: {cohort_df['study_id'].nunique()} subjects ===", flush=True)
+    print(f"=== cohort {cohort_key}: {len(set(pid_lut.values()))} patients ===", flush=True)
 
     def _flush():
         pd.DataFrame(rows, columns=COLUMNS).to_csv(out_csv, index=False)
@@ -127,9 +130,10 @@ def run_one_cohort(cohort_key, csv_name, mask_fn, label_df, out_dir):
         try:
             Xs, ys, gs = [], [], []
             for cond, lab in CONDITIONS:
-                Xc, gc = _load_condition(model, cond, cohort_df)
+                Xc, gc = _load_condition(model, cond, cohort_dfs[cond])
                 Xs.append(Xc); ys.append(np.full(len(Xc), lab, dtype=int)); gs.append(gc)
-            X = np.vstack(Xs); y = np.concatenate(ys); groups = np.concatenate(gs)
+            X = np.vstack(Xs); y = np.concatenate(ys)
+            groups = np.array([pid_lut.get(str(g), str(g)) for g in np.concatenate(gs)])
             n_eo = int((y == 0).sum()); n_ec = int((y == 1).sum())
         except FileNotFoundError as e:
             print(f"  {model}: MISSING ({e})", flush=True)
@@ -183,17 +187,19 @@ def main():
     ap.add_argument("--cohort-group", required=True, choices=list(COHORT_GROUPS))
     ap.add_argument("--cohort", default=None, help="single cohort key; omit for all in the group")
     ap.add_argument("--out-dir", required=True)
-    ap.add_argument("--label-csv", default=LABEL_CSV)
+    ap.add_argument("--label-csv", default=None,
+                    help="override; default = earliest-per-condition file")
     args = ap.parse_args()
 
-    label_df = ra.normalize_label_df(pd.read_csv(args.label_csv))
+    label_dfs = {cond: ra.normalize_label_df(pd.read_csv(ra.resolve_label_csv(cond, args.label_csv)))
+                 for cond, _ in CONDITIONS}
     cohorts = COHORT_GROUPS[args.cohort_group]
     keys = [args.cohort] if args.cohort else list(cohorts)
     for key in keys:
         if key not in cohorts:
             raise SystemExit(f"Unknown cohort {key!r}; options: {list(cohorts)}")
         csv_name, mask_fn = cohorts[key]
-        run_one_cohort(key, csv_name, mask_fn, label_df, args.out_dir)
+        run_one_cohort(key, csv_name, mask_fn, label_dfs, args.out_dir)
 
 
 if __name__ == "__main__":
