@@ -76,20 +76,6 @@ def _clf_key(pipe):  # the classifier step name in the pipeline
     return pipe.steps[-1][0]
 
 
-# optimized-head mode: {head: {param: value}} loaded from an hp_search summary CSV.
-_TUNED: dict[str, dict] = {}
-
-
-def _head(head):
-    """Base pipeline for `head`, with hp_search-tuned params applied if available."""
-    p = _base(head)
-    tp = _TUNED.get(head)
-    if tp:
-        clf = _clf_key(p)
-        p = p.set_params(**{f"{clf}__{k}": v for k, v in tp.items()})
-    return p
-
-
 # space entries: (kind, *args). kind in {float, int} ; float has optional log flag.
 SPACES = {
     "logreg": {"C": ("float", 1e-3, 1e2, True), "penalty": ("cat", ["l1", "l2"])},
@@ -274,9 +260,8 @@ def nested_eval(head, X, y, g, n_trials, inner_folds, pool_subject, tune=True, s
             cfgs.append({"outer_fold": k, "best_params": est.best_params_,
                          "best_inner_roc": est.best_value_, "trials": est.trials_})
         else:
-            est = clone(_head(head)).fit(X[tr], y[tr])
-            cfgs.append({"outer_fold": k, "best_params": (_TUNED.get(head) or "fixed_default"),
-                         "trials": []})
+            est = clone(_base(head)).fit(X[tr], y[tr])
+            cfgs.append({"outer_fold": k, "best_params": "fixed_default", "trials": []})
         p = np.nan_to_num(est.predict_proba(X[te])[:, 1], nan=0.5)
         yt, pt = (y[te], p)
         if pool_subject:
@@ -326,11 +311,7 @@ def main():
                     help="uniform sex x age (x comorbidity) matched case/control cohort per group "
                          "(via cohort_balance.build_balanced) before the nested CV.")
     ap.add_argument("--fixed", action="store_true",
-                    help="skip nested Optuna; fit default heads directly (fast baseline)")
-    ap.add_argument("--tuned-params-dir", default=None,
-                    help="dir of hp_search summaries; load per-head best params from "
-                         "hp_search_{model}_{condition}.csv and fit those tuned heads "
-                         "(implies fixed mode; output tag = 'optimized')")
+                    help="skip nested search; fit default heads directly (fast baseline)")
     ap.add_argument("--target-col", default="epilepsy",
                     help="label column to predict (epilepsy | asm_resistant | ...)")
     ap.add_argument("--restrict-col", default=None,
@@ -342,20 +323,8 @@ def main():
     label_df = ra.normalize_label_df(pd.read_csv(args.label_csv))
     label_df["study_id"] = label_df["study_id"].astype(str)
     cond = f"{args.condition}_baseline"
-    # optimized-head mode: load hp_search best params for this model+condition into _TUNED.
-    if args.tuned_params_dir:
-        f = Path(args.tuned_params_dir) / f"hp_search_{args.model}_{args.condition}.csv"
-        if f.exists():
-            row = pd.read_csv(f).iloc[0]
-            for head in args.heads:
-                col = f"{head}_best_params"
-                if col in row and pd.notna(row[col]):
-                    _TUNED[head] = json.loads(row[col])
-            print(f"loaded tuned params from {f.name}: {_TUNED}", flush=True)
-        else:
-            print(f"WARNING: no tuned params at {f}; falling back to default heads", flush=True)
-    fixed_mode = args.fixed or bool(args.tuned_params_dir)
-    tag = "optimized" if args.tuned_params_dir else ("fixed" if args.fixed else "nested")
+    fixed_mode = args.fixed
+    tag = "fixed" if args.fixed else "nested"
     Xep, yep, gep = _load_embeddings(args.model, cond, label_df, args.level, target=args.target_col)
     print(f"{args.model}/{args.condition}/{args.level}: loaded {Xep.shape} "
           f"classes={np.bincount(yep).tolist()} subj={len(np.unique(gep))}", flush=True)
