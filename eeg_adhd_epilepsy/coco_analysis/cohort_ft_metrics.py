@@ -81,6 +81,15 @@ def _norm(s):
         return str(s)
 
 
+def _pool_by_subject(y, p, g):
+    """Pool epoch predictions to one per subject: mean probability, majority label
+    (the honest subject-level aggregation -- no waveform averaging)."""
+    u = np.unique(g)
+    sy = np.array([int(round(float(y[g == k].mean()))) for k in u])
+    sp = np.array([float(p[g == k].mean()) for k in u])
+    return sy, sp
+
+
 def compute(fold_preds, label_csv):
     """fold_preds: list of (y_te, proba_te, groups_te[study_id]) per outer fold.
     Slices held-out predictions per cohort and scores them POOLED (shared helper).
@@ -91,16 +100,22 @@ def compute(fold_preds, label_csv):
     out = {}
     for name, mask_fn in COHORTS.items():
         sids = set(lab[mask_fn(lab)].index)
-        fa = []
-        n = 0
+        fa, fa_subj, n = [], [], 0
         for y, p, g in fold_preds:
             g = np.array([_norm(x) for x in np.asarray(g)])  # canonical ids on both sides
             m = np.isin(g, list(sids))
             if m.sum() == 0:
                 continue
-            fa.append((np.asarray(y)[m], np.asarray(p)[m])); n += int(m.sum())
+            ym, pm, gm = np.asarray(y)[m], np.asarray(p)[m], g[m]
+            fa.append((ym, pm)); n += int(m.sum())
+            fa_subj.append(_pool_by_subject(ym, pm, gm))   # epoch preds -> one per subject
         res = pooled_metrics.pooled(fa, calibrated=True, per_fold=(name == "all"))
         if res is not None:
             res["n"] = n
+            # honest subject-level: pool epoch predictions per subject, then score.
+            # (For subject-level runs each group is already one row, so this is a no-op.)
+            sres = pooled_metrics.pooled(fa_subj, calibrated=True)
+            if sres is not None:
+                res["subject_pooled"] = sres
             out[name] = res
     return out
