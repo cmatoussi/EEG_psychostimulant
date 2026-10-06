@@ -28,13 +28,13 @@ import optuna
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 from sklearn.base import clone
 from sklearn.model_selection import StratifiedGroupKFold
-from sklearn.pipeline import make_pipeline, Pipeline
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
 from sklearn.dummy import DummyClassifier
-from sklearn.metrics import roc_auc_score, balanced_accuracy_score, f1_score, accuracy_score
+from sklearn.metrics import roc_auc_score
 
 import run_analysis as ra
 import pooled_metrics
@@ -45,7 +45,6 @@ EMB_FM = ("/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/BIDS/derivati
           "signal_features/eeg_foundation_embeddings/combined")
 EMB_TS = "/home/mat/scratch/results/extraceted_embeddings_files"  # moirai / neurolm
 N_OUTER = 5
-_GRID = np.linspace(0.05, 0.95, 91)
 
 COLUMNS = ["fm_model", "condition", "cohort_group", "cohort", "aggregation", "head", "status",
            "n_subjects", "n_windows", "adhd", "epilepsy", "autism",
@@ -235,10 +234,6 @@ def _aggregate_by_group(y, p, g):
             np.array([float(p[g == s].mean()) for s in u]))
 
 
-def _best_thr(y, p):
-    if len(np.unique(y)) < 2:
-        return 0.5
-    return float(_GRID[np.argmax([balanced_accuracy_score(y, (p >= t).astype(int)) for t in _GRID])])
 
 
 def nested_eval(head, X, y, g, n_trials, inner_folds, pool_subject, tune=True, search="grid"):

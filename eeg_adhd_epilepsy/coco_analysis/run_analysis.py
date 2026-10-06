@@ -4,7 +4,6 @@ import fcntl
 import json
 import logging
 import yaml
-from collections import defaultdict
 from pathlib import Path
 
 import mne
@@ -26,7 +25,6 @@ from coco_pipe.decoding.experiment import Experiment
 from coco_pipe.decoding.posthoc import posthoc_metrics_from_result as augment_posthoc_metrics
 from coco_pipe.decoding._specs import SignalMetadata
 from coco_pipe.decoding.foundation_models import FoundationEmbeddingExtractor
-from coco_pipe.dim_reduction.core import DimReduction
 from coco_pipe.io.embeddings import (
     load_embedding_derivatives,
     save_embedding_derivative,
@@ -1140,33 +1138,6 @@ def _to_modern_nomenclature(ch_names: list[str]) -> list[str]:
     return [_MODERN_NOMENCLATURE.get(c, c) for c in ch_names]
 
 
-# ---------------------------------------------------------------------------
-# BIOT bipolar derivation (legacy: kept for reference; coco-pipe now derives
-# the montage internally, so run_analysis only renames channels for BIOT)
-# ---------------------------------------------------------------------------
-
-# 16 TCP bipolar pairs that BIOT was pretrained on, expressed in 10-20 names.
-# Every electrode here is present in our 19-channel unipolar set.
-_BIOT_BIPOLAR_PAIRS = [
-    ("Fp1", "F7"), ("F7", "T3"), ("T3", "T5"), ("T5", "O1"),   # left temporal
-    ("Fp2", "F8"), ("F8", "T4"), ("T4", "T6"), ("T6", "O2"),   # right temporal
-    ("Fp1", "F3"), ("F3", "C3"), ("C3", "P3"), ("P3", "O1"),   # left parasagittal
-    ("Fp2", "F4"), ("F4", "C4"), ("C4", "P4"), ("P4", "O2"),   # right parasagittal
-]
-_BIOT_BIPOLAR_NAMES = [f"{a}-{b}" for a, b in _BIOT_BIPOLAR_PAIRS]
-
-
-def _to_biot_bipolar(
-    X: np.ndarray,
-    ch_names: list[str],
-) -> tuple[np.ndarray, list[str]]:
-    """Convert (N, 19, T) unipolar data to (N, 16, T) TCP bipolar derivations."""
-    idx = {name: i for i, name in enumerate(ch_names)}
-    X_bip = np.stack(
-        [X[:, idx[a], :] - X[:, idx[b], :] for a, b in _BIOT_BIPOLAR_PAIRS],
-        axis=1,
-    )
-    return X_bip, _BIOT_BIPOLAR_NAMES
 
 
 # ---------------------------------------------------------------------------

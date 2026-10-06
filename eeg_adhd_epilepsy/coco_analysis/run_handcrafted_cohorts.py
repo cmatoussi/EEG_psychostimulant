@@ -32,7 +32,6 @@ from sklearn.ensemble import RandomForestClassifier  # noqa: E402
 from sklearn.feature_selection import SequentialFeatureSelector  # noqa: E402
 from sklearn.inspection import permutation_importance  # noqa: E402
 from sklearn.linear_model import LogisticRegression  # noqa: E402
-from sklearn.metrics import roc_auc_score, balanced_accuracy_score, f1_score  # noqa: E402
 from sklearn.model_selection import StratifiedGroupKFold  # noqa: E402
 from sklearn.pipeline import make_pipeline  # noqa: E402
 from sklearn.preprocessing import StandardScaler  # noqa: E402
@@ -275,17 +274,7 @@ def cv_auc(clf_fn, X, y, g, tune=None):
         else:
             clf = clf_fn(); clf.fit(X[tr], y[tr])
         fa.append((y[te], clf.predict_proba(X[te])[:, 1]))
-    r = pooled_metrics.pooled(fa, calibrated=False)
-    nan = float("nan")
-    if r is None:
-        return {"roc_auc_mean": nan, "roc_auc_std": nan, "balanced_accuracy_mean": nan,
-                "balanced_accuracy_std": nan, "weighted_f1_mean": nan, "weighted_f1_std": nan,
-                "n_folds": 0}
-    return {"roc_auc_mean": r["roc_auc"]["mean"], "roc_auc_std": r["roc_auc"]["std"],
-            "balanced_accuracy_mean": r["balanced_accuracy"]["mean"],
-            "balanced_accuracy_std": r["balanced_accuracy"]["std"],
-            "weighted_f1_mean": r["weighted_f1"]["mean"], "weighted_f1_std": r["weighted_f1"]["std"],
-            "n_folds": r["n_folds"]}
+    return _pack(fa)
 
 
 def _fig_b64(fig):

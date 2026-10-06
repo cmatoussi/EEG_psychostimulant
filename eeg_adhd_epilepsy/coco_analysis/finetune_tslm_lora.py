@@ -213,14 +213,6 @@ def train_eval(model_key, cfg, strategy, Xtr, ytr, Xte, yte, device, batch=16, m
             "accuracy": float(accuracy_score(yte, pred))}, p1
 
 
-def _bacc_opt(y, p):
-    from sklearn.metrics import balanced_accuracy_score
-    if len(np.unique(y)) < 2:
-        return float("nan")
-    grid = np.linspace(0.05, 0.95, 91)
-    return float(max(balanced_accuracy_score(y, (p >= t).astype(int)) for t in grid))
-
-
 def _avg_by_subject(X, y, groups):
     u = np.unique(groups)
     Xs = np.stack([X[groups == g].mean(0) for g in u]).astype(np.float32)
