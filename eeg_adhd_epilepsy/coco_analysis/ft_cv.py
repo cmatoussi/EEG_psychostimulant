@@ -1,4 +1,4 @@
-"""Shared 5-fold CV harness for the LoRA finetune drivers (run_finetune_tuned,
+"""Shared 5-fold CV harness for the LoRA finetune drivers (run_finetune_lora,
 finetune_tslm_lora). The two drivers build and train different model families, but
 the fold loop, scoring, and per-cohort output are identical -- that lives here.
 

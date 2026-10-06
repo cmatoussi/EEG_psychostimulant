@@ -29,8 +29,7 @@ import pandas as pd
 sys.path.insert(0, "/home/mat/projects/coco-pipe")
 sys.path.insert(0, str(Path(__file__).parent))
 from run_analysis import (load_eeg_epochs, normalize_label_df,  # noqa: E402
-                          _to_modern_nomenclature, resolve_label_csv)
-from tune_lora import _prep_model_data  # noqa: E402
+                          _to_modern_nomenclature, resolve_label_csv, _prep_model_data)
 
 N_SPLITS = 5
 MAX_EPOCHS = 15

@@ -16,7 +16,7 @@ optimistic; a fixed default avoids that leak with no real loss (the search was
 noise-level).
 
 Usage:
-    python run_finetune_tuned.py --model reve --condition EO_baseline \
+    python run_finetune_lora.py --model reve --condition EO_baseline \
         --strategy lp_ft --level subject --out-dir .../ray_tuned/lp_ft_subject
 """
 from __future__ import annotations
@@ -27,8 +27,8 @@ import pandas as pd
 
 sys.path.insert(0, "/home/mat/projects/coco-pipe")
 sys.path.insert(0, str(Path(__file__).parent))
-from run_analysis import load_eeg_epochs, normalize_label_df, resolve_label_csv  # noqa: E402
-from tune_lora import _prep_model_data  # noqa: E402  (model-specific preprocessing)
+from run_analysis import (  # noqa: E402
+    load_eeg_epochs, normalize_label_df, resolve_label_csv, _prep_model_data)
 
 MAX_EPOCHS = 15
 LP_EPOCHS = 5

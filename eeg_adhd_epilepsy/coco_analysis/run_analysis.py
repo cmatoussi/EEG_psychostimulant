@@ -1204,6 +1204,20 @@ def _concat_and_slice_epochs(
     )
 
 
+def _prep_model_data(X, y, groups, model_key, signal_cfg):
+    """Model-specific input preprocessing for the finetune drivers."""
+    ch_names = signal_cfg.get("ch_names")
+    if model_key == "biot":
+        # Modern channel names (T3/T4/T5/T6 -> T7/T8/P7/P8) so BIOT's TCP-bipolar
+        # montage resolves; the montage itself is applied by coco-pipe.
+        ch_names = _to_modern_nomenclature(signal_cfg.get("ch_names", []))
+    if model_key == "labram" and X.shape[-1] < 3000:
+        X, y, groups = _concat_and_slice_epochs(X, y, groups, window=3000)
+    if model_key == "signaljepa" and X.shape[-1] > 400:
+        X, y, groups = _slice_epochs(X, y, groups, window=400)
+    return X, y, groups, ch_names
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
