@@ -10,7 +10,10 @@ Four variants (strategy x level):
                                note: averaging non-phase-locked EEG attenuates
                                oscillations, mirroring the embedding-averaging case).
 
-Config (r/alpha/dropout/lr) is read from the model's optuna trials.csv (best ROC-AUC row).
+LoRA config (r/alpha/dropout/lr) is fixed (see LORA). The old per-model Optuna
+search tuned on a split that overlapped the reported folds, so its numbers were
+optimistic; a fixed default avoids that leak with no real loss (the search was
+noise-level).
 
 Usage:
     python run_finetune_tuned.py --model reve --condition EO_baseline \
@@ -27,20 +30,14 @@ sys.path.insert(0, str(Path(__file__).parent))
 from run_analysis import load_eeg_epochs, normalize_label_df, resolve_label_csv  # noqa: E402
 from tune_lora import _prep_model_data  # noqa: E402  (model-specific preprocessing)
 
-N_SPLITS = 5
 MAX_EPOCHS = 15
 LP_EPOCHS = 5
 LABEL_CSV = "/home/mat/scratch/patients_metadata_clean_without_source.csv"
 BATCH = 32
 _HEAD = ("final_layer", "classifier", "head")
 
-
-def tuned_config(model):
-    f = f"/home/mat/scratch/results/fine_tune/ray_tuned/raytune/optuna/{model}/{model}_optuna_trials.csv"
-    df = pd.read_csv(f).rename(columns={
-        "config/r": "r", "config/alpha": "alpha", "config/dropout": "dropout", "config/lr": "lr"})
-    b = df.loc[df.roc_auc.idxmax()]
-    return {"r": int(b.r), "alpha": int(b.alpha), "dropout": float(b.dropout), "lr": float(b.lr)}
+# Fixed LoRA config for all models (what moirai/neurolm/labram already defaulted to).
+LORA = {"r": 8, "alpha": 16, "dropout": 0.05, "lr": 1e-3}
 
 
 def _average_by_subject(X, y, groups):
@@ -110,9 +107,8 @@ def _fit(backend, X_tr, y_tr, cfg, strategy):
 
 def main():
     global BATCH
-    from sklearn.model_selection import StratifiedGroupKFold
-    from sklearn.metrics import (accuracy_score, balanced_accuracy_score, roc_auc_score)
     from coco_pipe.decoding.foundation_models.estimators import prepare_backend
+    import ft_cv
 
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", required=True)
@@ -128,9 +124,9 @@ def main():
     args.label_csv = resolve_label_csv(args.condition, args.label_csv)
     BATCH = args.batch
 
-    cfg = tuned_config(args.model)
+    cfg = dict(LORA)
     cshort = args.condition.replace("_baseline", "")
-    print(f"[{args.model}/{cshort}/{args.strategy}/{args.level}] tuned config: {cfg}", flush=True)
+    print(f"[{args.model}/{cshort}/{args.strategy}/{args.level}] LoRA config: {cfg}", flush=True)
 
     # data (ALL cohort)
     config = {"paths": {"data_root": "/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/"
@@ -151,14 +147,8 @@ def main():
     if args.model in {"labram", "bendr"}:
         bkw["interpolate_channels"] = True
 
-    METRIC_NAMES = ["accuracy", "balanced_accuracy", "roc_auc"]   # balanced_accuracy is main; oracle removed
-    folds = {m: [] for m in METRIC_NAMES}
-    fold_preds = []   # (y_te, proba1, groups_te) per fold, for the cohort breakdown
-    sgkf = StratifiedGroupKFold(n_splits=N_SPLITS, shuffle=True, random_state=42)
-    for k, (tr, te) in enumerate(sgkf.split(X, y, groups)):
-        if len(np.unique(y[te])) < 2:
-            print(f"  fold {k}: single-class test, skip", flush=True); continue
-        prepared = prepare_backend(args.model, X=X[tr], backend="auto", n_outputs=2,
+    def fit_predict(X_tr, y_tr, X_te, strategy, k):
+        prepared = prepare_backend(args.model, X=X_tr, backend="auto", n_outputs=2,
                                    device="auto", train_mode="lora", sfreq=sfreq,
                                    ch_names=ch_names, backend_kwargs=bkw)
         backend = prepared.backend
@@ -167,32 +157,11 @@ def main():
         # backend.fit()/predict_proba() which this driver bypasses. Apply it here so the
         # model sees its native channel count (fixes BIOT IndexError; no-op otherwise).
         _native = getattr(backend, "_construct_channels", lambda z: z)
-        net = _fit(backend, _native(prepared.adapt(X[tr])), y[tr], cfg, args.strategy)
-        Xte = _native(prepared.adapt(X[te]))
-        pred = net.predict(Xte)
-        proba1 = net.predict_proba(Xte)[:, 1]
-        folds["accuracy"].append(float(accuracy_score(y[te], pred)))
-        folds["balanced_accuracy"].append(float(balanced_accuracy_score(y[te], pred)))
-        folds["roc_auc"].append(float(roc_auc_score(y[te], proba1)))
-        fold_preds.append((y[te], proba1, groups[te]))
-        print(f"  fold {k}: acc={folds['accuracy'][-1]:.3f} "
-              f"bacc={folds['balanced_accuracy'][-1]:.3f} auc={folds['roc_auc'][-1]:.3f}", flush=True)
+        net = _fit(backend, _native(prepared.adapt(X_tr)), y_tr, cfg, strategy)
+        return net.predict_proba(_native(prepared.adapt(X_te)))[:, 1]
 
-    metrics = {m: {"mean": float(np.mean(v)) if v else float("nan"),
-                   "std": float(np.std(v)) if v else float("nan"), "folds": v}
-               for m, v in folds.items()}
-    # per-cohort breakdown (all/sex/age/comorbidity) from the held-out predictions
-    import cohort_ft_metrics
-    cohort_ft_metrics.save_preds(args.out_dir, args.level, args.strategy, args.model, cshort, fold_preds)
-    cohort_metrics = cohort_ft_metrics.compute(fold_preds, args.label_csv)
-    for cname, cm in cohort_metrics.items():
-        hb = cm.get("youden_threshold_balanced_accuracy", {}).get("mean")
-        print(f"    cohort {cname}: honest_bal_acc={hb} (n={cm.get('n')})", flush=True)
-    written = cohort_ft_metrics.write_split(args.out_dir, args.level, args.strategy,
-                                            args.model, cshort, metrics, cohort_metrics)
-    print(f"--> wrote {len(written)} group files under {args.out_dir}/{args.level}/{args.strategy}/ "
-          f"(bacc={metrics['balanced_accuracy']['mean']:.3f} auc={metrics['roc_auc']['mean']:.3f})",
-          flush=True)
+    ft_cv.run_cv(args.model, cshort, args.strategy, args.level, args.out_dir,
+                 args.label_csv, X, y, groups, fit_predict)
 
 
 if __name__ == "__main__":

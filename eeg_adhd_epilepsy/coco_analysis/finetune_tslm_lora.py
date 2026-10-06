@@ -6,13 +6,11 @@ cluster ships 1.24), so we inject LoRA MANUALLY (a few lines, zero extra deps) a
 run a plain PyTorch train loop with Schedule-Free AdamW -- mirroring the ray_tuned
 tune->finetune flow used for the braindecode FMs.
 
-Stages:
-  --stage tune      Ray Tune Optuna over LoRA r/alpha/dropout/lr (one train/val
-                    split, metric balanced_accuracy) ->
-                    raytune/optuna/{model}/{model}_optuna_trials.csv
-  --stage finetune  read the tuned config, 5-fold StratifiedGroupKFold,
-                    {ft_only,lp_ft} x {epoch,subject} ->
-                    ray_tuned/{strat}_{level}/results_{model}_{cond}.json
+LoRA config is fixed (see LORA). The old Optuna stage tuned on a split that
+overlapped every reported fold (tune seed 0 vs eval seed 42), inflating all five;
+it has been removed. Only the fine-tune stage remains:
+  5-fold StratifiedGroupKFold, {ft_only,lp_ft} x {epoch,subject} ->
+  ray_tuned/{strat}_{level}/results_{model}_{cond}.json
 
 The wrapped module is  raw EEG epoch (B,19,T) -> model-specific tokenization ->
 base encoder (LoRA-injected, grad flows through the adapters) -> mean-pool ->
@@ -36,7 +34,8 @@ CH19 = ["Fp1", "Fp2", "F7", "F3", "Fz", "F4", "F8", "T3", "C3", "Cz",
         "C4", "T4", "T5", "P3", "Pz", "P4", "T6", "O1", "O2"]
 MAX_EPOCHS = 15
 LP_EPOCHS = 5
-N_SPLITS = 5
+# Fixed LoRA config (shared with the braindecode driver; no per-model search).
+LORA = {"r": 8, "alpha": 16, "dropout": 0.05, "lr": 1e-3}
 
 
 # ------------------------- manual LoRA -------------------------
@@ -162,8 +161,8 @@ def _sf_opt(params, lr):
     return AdamWScheduleFree(params, lr=lr, weight_decay=0.01)
 
 
-def train_eval(model_key, cfg, strategy, Xtr, ytr, Xte, yte, device, batch=16, max_epochs=MAX_EPOCHS):
-    from sklearn.metrics import roc_auc_score, balanced_accuracy_score, accuracy_score
+def train_eval(model_key, cfg, strategy, Xtr, ytr, Xte, device, batch=16, max_epochs=MAX_EPOCHS):
+    """Train LoRA on (Xtr, ytr); return P(class=1) on Xte. Scoring is done by ft_cv."""
     from sklearn.utils.class_weight import compute_class_weight
     net = build_model(model_key, cfg).to(device)
 
@@ -206,11 +205,7 @@ def train_eval(model_key, cfg, strategy, Xtr, ytr, Xte, yte, device, batch=16, m
             xb = Xt[i:i + batch].to(device)
             p = torch.softmax(net(xb), dim=1)[:, 1]
             proba.append(p.float().cpu().numpy())
-    p1 = np.nan_to_num(np.concatenate(proba), nan=0.5, posinf=1.0, neginf=0.0)
-    pred = (p1 >= 0.5).astype(int)
-    return {"roc_auc": float(roc_auc_score(yte, p1)) if len(np.unique(yte)) > 1 else float("nan"),
-            "balanced_accuracy": float(balanced_accuracy_score(yte, pred)),
-            "accuracy": float(accuracy_score(yte, pred))}, p1
+    return np.concatenate(proba)
 
 
 def _avg_by_subject(X, y, groups):
@@ -232,110 +227,36 @@ def load_data(condition, level, label_csv=None):
     return X.astype(np.float32), y.astype(int), np.asarray(groups)
 
 
-def tuned_config(model):
-    f = f"/home/mat/scratch/results/fine_tune/ray_tuned/raytune/optuna/{model}/{model}_optuna_trials.csv"
-    import pandas as pd
-    df = pd.read_csv(f)
-    b = df.loc[df.balanced_accuracy.idxmax()]
-    return {"r": int(b.r), "alpha": int(b.alpha), "dropout": float(b.dropout), "lr": float(b.lr)}
-
-
 # ------------------------- stages -------------------------
 def run_finetune(args):
-    from sklearn.model_selection import StratifiedGroupKFold
+    import ft_cv
     dev = "cuda" if torch.cuda.is_available() else "cpu"
-    cfg = tuned_config(args.model)
+    cfg = dict(LORA)
     cshort = args.condition.replace("_baseline", "")
     print(f"[{args.model}/{cshort}/{args.strategy}/{args.level}] cfg={cfg}", flush=True)
     X, y, groups = load_data(args.condition, args.level, args.label_csv)
     print(f"  data {X.shape} classes={np.bincount(y).tolist()} subj={len(np.unique(groups))}", flush=True)
-    sgkf = StratifiedGroupKFold(n_splits=N_SPLITS, shuffle=True, random_state=42)
-    metric_names = ["accuracy", "balanced_accuracy", "roc_auc"]   # balanced_accuracy is main; oracle removed
-    folds = {m: [] for m in metric_names}
-    fold_preds = []
-    for k, (tr, te) in enumerate(sgkf.split(X, y, groups)):
-        if len(np.unique(y[te])) < 2:
-            print(f"  fold {k}: single-class test, skip", flush=True); continue
-        res, p1 = train_eval(args.model, cfg, args.strategy, X[tr], y[tr], X[te], y[te],
-                             dev, batch=args.batch)
-        for m in metric_names:
-            folds[m].append(res[m])
-        fold_preds.append((y[te], p1, groups[te]))
-        print(f"  fold {k}: acc={res['accuracy']:.3f} bacc={res['balanced_accuracy']:.3f} "
-              f"auc={res['roc_auc']:.3f}", flush=True)
-    metrics = {m: {"mean": float(np.nanmean(v)) if v else float("nan"),
-                   "std": float(np.nanstd(v)) if v else float("nan"), "folds": v}
-               for m, v in folds.items()}
-    import cohort_ft_metrics
-    cohort_ft_metrics.save_preds(args.out_dir, args.level, args.strategy, args.model, cshort, fold_preds)
-    cohort_metrics = cohort_ft_metrics.compute(fold_preds, args.label_csv)
-    for cname, cm in cohort_metrics.items():
-        print(f"    cohort {cname}: honest_bal_acc={cm.get('youden_threshold_balanced_accuracy',{}).get('mean')} "
-              f"(n={cm.get('n')})", flush=True)
-    written = cohort_ft_metrics.write_split(args.out_dir, args.level, args.strategy,
-                                            args.model, cshort, metrics, cohort_metrics)
-    print(f"--> wrote {len(written)} group files under {args.out_dir}/{args.level}/{args.strategy}/ "
-          f"(auc={metrics['roc_auc']['mean']:.3f})", flush=True)
 
+    def fit_predict(X_tr, y_tr, X_te, strategy, k):
+        return train_eval(args.model, cfg, strategy, X_tr, y_tr, X_te, dev, batch=args.batch)
 
-def run_tune(args):
-    import pandas as pd
-    from ray import tune
-    from ray.tune.search.optuna import OptunaSearch
-    from sklearn.model_selection import StratifiedGroupKFold
-    dev = "cuda" if torch.cuda.is_available() else "cpu"
-    X, y, groups = load_data(args.condition, "subject" if args.tune_level == "subject" else "epoch")
-    # single train/val split for tuning
-    tr, va = next(StratifiedGroupKFold(n_splits=N_SPLITS, shuffle=True, random_state=0).split(X, y, groups))
-    Xtr, ytr, Xva, yva = X[tr], y[tr], X[va], y[va]
-    model_key = args.model
-    batch = args.batch
-
-    def trainable(cfg):
-        res, _ = train_eval(model_key, cfg, "ft_only", Xtr, ytr, Xva, yva, dev, batch=batch,
-                            max_epochs=MAX_EPOCHS)
-        tune.report({"balanced_accuracy": res["balanced_accuracy"], "roc_auc": res["roc_auc"]})
-
-    space = {"r": tune.choice([4, 8, 16, 32]), "alpha": tune.choice([8, 16, 32, 64]),
-             "dropout": tune.choice([0.0, 0.05, 0.1]), "lr": tune.loguniform(1e-5, 1e-2)}
-    tuner = tune.Tuner(
-        tune.with_resources(trainable, {"gpu": 1}),
-        param_space=space,
-        tune_config=tune.TuneConfig(metric="balanced_accuracy", mode="max",
-                                    num_samples=args.num_samples,
-                                    search_alg=OptunaSearch(metric="balanced_accuracy", mode="max")),
-        run_config=tune.RunConfig(name=f"{model_key}_optuna",
-                                  storage_path=str(Path(args.out_dir) / "ray")),
-    )
-    res = tuner.fit()
-    rows = [{**r.config, "balanced_accuracy": r.metrics.get("balanced_accuracy"),
-             "roc_auc": r.metrics.get("roc_auc")} for r in res]
-    out = Path(f"/home/mat/scratch/results/fine_tune/raytune/optuna/{model_key}")
-    out.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(rows).sort_values("balanced_accuracy", ascending=False).to_csv(
-        out / f"{model_key}_optuna_trials.csv", index=False)
-    print(f"--> wrote {out}/{model_key}_optuna_trials.csv ({len(rows)} trials)", flush=True)
+    ft_cv.run_cv(args.model, cshort, args.strategy, args.level, args.out_dir,
+                 args.label_csv, X, y, groups, fit_predict)
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", required=True, choices=["moirai", "neurolm"])
-    ap.add_argument("--stage", required=True, choices=["tune", "finetune"])
     ap.add_argument("--condition", default="EO_baseline")
     ap.add_argument("--strategy", default="ft_only", choices=["ft_only", "lp_ft"])
     ap.add_argument("--level", default="epoch", choices=["epoch", "subject"])
-    ap.add_argument("--tune-level", default="subject", choices=["epoch", "subject"])
     ap.add_argument("--out-dir", default=".")
     ap.add_argument("--label-csv", default=None,
                     help="override; default = earliest-per-condition file.")
     ap.add_argument("--batch", type=int, default=16)
-    ap.add_argument("--num-samples", type=int, default=16)
     args = ap.parse_args()
     args.label_csv = ra.resolve_label_csv(args.condition, args.label_csv)
-    if args.stage == "tune":
-        run_tune(args)
-    else:
-        run_finetune(args)
+    run_finetune(args)
 
 
 if __name__ == "__main__":
