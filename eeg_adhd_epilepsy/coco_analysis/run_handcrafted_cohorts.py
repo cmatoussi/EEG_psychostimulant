@@ -98,7 +98,7 @@ def add_drug_flags(d):
     d = d.copy()
     present = [c for c in ASM_COLS if c in d.columns]
     d["_n_asm"] = d[present].apply(pd.to_numeric, errors="coerce").fillna(0).sum(axis=1)
-    for c in ["asm", "LEV", "VPA", "asm_resistant"]:
+    for c in ["asm", "LEV", "VPA"]:
         if c in d.columns:
             d[c] = pd.to_numeric(d[c], errors="coerce").fillna(0)
     if "source_dataset" not in d.columns:
@@ -109,18 +109,22 @@ def add_drug_flags(d):
     return d
 
 
-def _ctrl(d):
-    return d.epilepsy == 0
-
-
 def _epi(d):
     return d.epilepsy == 1
 
 
 def _adhd(d):
-    # keep positives within the adhd study so "controls vs drug-X" is not a
-    # controls-vs-other-study (source) contrast in disguise.
+    # keep subjects within the adhd study so a drug-vs-drug contrast is not a
+    # cross-study (source) contrast in disguise.
     return d.source_dataset == "adhd"
+
+
+# within-epilepsy medication subsets (adhd source only). monotherapy = exactly one
+# ASM; "naive" = epilepsy on no ASM. Decoding one of these against another isolates
+# the drug's EEG signature (disease held constant).
+def _lev_mono(d):  return _epi(d) & _adhd(d) & (d.LEV == 1) & (d._n_asm == 1)
+def _vpa_mono(d):  return _epi(d) & _adhd(d) & (d.VPA == 1) & (d._n_asm == 1)
+def _asm_naive(d): return _epi(d) & _adhd(d) & (d.asm == 0)
 
 
 # cohort-group -> {cohort key: (subdir label, mask fn on the normalized label_df)}.
@@ -146,19 +150,14 @@ COHORT_GROUPS = {
         "adhd": ("adhd", lambda d: (d.autism == 0) & (d.adhd == 1)),
         "both": ("both", lambda d: (d.autism == 1) & (d.adhd == 1)),
     },
-    # controls (epilepsy=0) vs each epilepsy+ medication subset. Non-resistant
-    # positives are kept within the adhd source (controls are all adhd); the
-    # `resistant` cohort deliberately spans both sources (per request), so it
-    # carries the study/source confound and its AUC is inflated accordingly.
+    # Drug SIGNATURE, decoded WITHIN epilepsy so the label is the medication, not
+    # the disease: controls-vs-drug would confound the ASM's EEG effect with
+    # epilepsy. Each cohort = (subdir, mask selecting the two drug groups, target
+    # column = the drug flag that is 1 for one group / 0 for the other).
     "drug": {
-        "none":      ("none",      lambda d: _ctrl(d) | (_epi(d) & _adhd(d) & (d.asm == 0))),
-        "LEV_only":  ("LEV_only",  lambda d: _ctrl(d) | (_epi(d) & _adhd(d) & (d.LEV == 1) & (d._n_asm == 1))),
-        "VPA_only":  ("VPA_only",  lambda d: _ctrl(d) | (_epi(d) & _adhd(d) & (d.VPA == 1) & (d._n_asm == 1))),
-        "ASM_other": ("ASM_other", lambda d: _ctrl(d) | (_epi(d) & _adhd(d) & (d.asm == 1)
-                                                         & ~((d.LEV == 1) & (d._n_asm == 1))
-                                                         & ~((d.VPA == 1) & (d._n_asm == 1)))),
-        "ASM_any":   ("ASM_any",   lambda d: _ctrl(d) | (_epi(d) & _adhd(d) & (d.asm == 1))),
-        "resistant": ("resistant", lambda d: _ctrl(d) | (_epi(d) & (d.asm_resistant == 1))),
+        "lev_vs_vpa":   ("lev_vs_vpa",   lambda d: _lev_mono(d) | _vpa_mono(d),  "LEV"),
+        "lev_vs_naive": ("lev_vs_naive", lambda d: _lev_mono(d) | _asm_naive(d), "LEV"),
+        "vpa_vs_naive": ("vpa_vs_naive", lambda d: _vpa_mono(d) | _asm_naive(d), "VPA"),
     },
 }
 
@@ -569,7 +568,8 @@ def main():
         if (args.cohort_group, key) in SKIP_COHORTS:
             print(f"=== {args.cohort_group}/{key}: SKIP (too small / undecodable) ===", flush=True)
             continue
-        subdir, mask_fn = cohorts[key]
+        subdir, mask_fn, *rest = cohorts[key]
+        _TARGET_COL = rest[0] if rest else args.target_col   # drug cohorts decode the medication, not epilepsy
         cout = out / subdir
         cout.mkdir(parents=True, exist_ok=True)
         for cond in conds:
@@ -584,7 +584,7 @@ def main():
             n_epi = int((cohort_df[_TARGET_COL] == 1).sum())
             n_ctrl = int((cohort_df[_TARGET_COL] == 0).sum())
             print(f"=== {args.cohort_group}/{key} -> {subdir} [{cond}] "
-                  f"({cohort_df['study_id'].nunique()} subj: {n_epi} {_TARGET_COL}+, {n_ctrl} ctrl), "
+                  f"({cohort_df['study_id'].nunique()} subj: {n_epi} {_TARGET_COL}+, {n_ctrl} neg), "
                   f"{args.level}-level ===", flush=True)
             run_condition(cond, cohort_df, args.level, cout, label=subdir)
 
