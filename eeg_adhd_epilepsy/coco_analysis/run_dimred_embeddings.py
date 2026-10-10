@@ -141,8 +141,8 @@ def main():
     args.label_csv = ra.resolve_label_csv(args.condition, args.label_csv)
     label_df = ra.normalize_label_df(pd.read_csv(args.label_csv))
     if args.target_col == "asm_resistant":
-        label_df = label_df[label_df.epilepsy == 1].copy()
-        print(f"asm_resistant target: restricted to epilepsy==1 -> {len(label_df)} subjects", flush=True)
+        label_df = ra.restrict_for_asm_resistant(label_df)
+        print(f"asm_resistant target: treated epilepsy only (epilepsy==1 & asm==1) -> {len(label_df)} subjects", flush=True)
     levels = list(LEVELS) if args.levels == "both" else [args.levels]
     for level_name in levels:
         run_model_level(args.model, level_name, LEVELS[level_name],

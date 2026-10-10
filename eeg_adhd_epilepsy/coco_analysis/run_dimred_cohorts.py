@@ -256,8 +256,8 @@ def main():
         label_df = label_df[label_df.source_dataset == args.source].copy()
         print(f"source filter '{args.source}': {len(label_df)} subjects", flush=True)
     if args.target_col == "asm_resistant":
-        label_df = label_df[label_df.epilepsy == 1].copy()
-        print(f"asm_resistant target: restricted to epilepsy==1 -> {len(label_df)} subjects", flush=True)
+        label_df = ra.restrict_for_asm_resistant(label_df)
+        print(f"asm_resistant target: treated epilepsy only (epilepsy==1 & asm==1) -> {len(label_df)} subjects", flush=True)
 
     kw = dict(reject=not args.no_reject, mad_z=args.mad_z, outlier_frac=args.outlier_frac,
               clip=(args.clip if args.clip and args.clip > 0 else None),

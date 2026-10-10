@@ -323,7 +323,13 @@ def main():
     Xep, yep, gep = _load_embeddings(args.model, cond, label_df, args.level, target=args.target_col)
     print(f"{args.model}/{args.condition}/{args.level}: loaded {Xep.shape} "
           f"classes={np.bincount(yep).tolist()} subj={len(np.unique(gep))}", flush=True)
-    if args.restrict_col:   # e.g. asm_resistant restricted to epilepsy==1 subjects
+    if args.target_col == "asm_resistant":   # treated epilepsy w/ known resistance (item 1.8)
+        keep_ids = set(ra.restrict_for_asm_resistant(label_df)["study_id"].astype(str))
+        m = np.isin(gep.astype(str), list(keep_ids))
+        Xep, yep, gep = Xep[m], yep[m], gep[m]
+        print(f"  asm_resistant: treated epilepsy only -> {Xep.shape} "
+              f"classes={np.bincount(yep).tolist()} subj={len(np.unique(gep))}", flush=True)
+    elif args.restrict_col:
         keep_ids = set(label_df[label_df[args.restrict_col] == 1]["study_id"])
         m = np.isin(gep, list(keep_ids))
         Xep, yep, gep = Xep[m], yep[m], gep[m]

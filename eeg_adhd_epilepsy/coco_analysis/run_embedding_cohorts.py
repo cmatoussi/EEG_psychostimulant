@@ -276,7 +276,7 @@ def main():
                 raise SystemExit("--source given but no 'source_dataset' column in label CSV.")
             ldf = ldf[ldf.source_dataset == args.source].copy()
         if args.target_col == "asm_resistant":
-            ldf = ldf[ldf.epilepsy == 1].copy()
+            ldf = ra.restrict_for_asm_resistant(ldf)
         return ldf
     label_dfs = {cond: _load_labels(cond) for cond in CONDITIONS}
     print(f"labels: { {c: ldf['study_id'].nunique() for c, ldf in label_dfs.items()} } subjects/condition", flush=True)
