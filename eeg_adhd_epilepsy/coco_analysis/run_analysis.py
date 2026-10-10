@@ -249,9 +249,13 @@ def load_handcrafted_data(
     y = feat_df[target_col].astype(int).values
     groups = feat_df[subject_col].values
 
-    # Drop non-feature columns
-    drop_cols = {subject_col, target_col, "sex", "age", "autism", "adhd"}
-    X_df = feat_df.drop(columns=[c for c in drop_cols if c in feat_df.columns])
+    # Feature columns from the sidecar; else exclude metadata (keeps patient_group_id,
+    # psychostimulant, epoch_count etc. out of the feature matrix).
+    feats = _dimred_feature_columns(data_path, list(feat_df.columns))
+    if feats is not None:
+        X_df = feat_df[feats]
+    else:
+        X_df = feat_df.drop(columns=[c for c in _DIMRED_META_COLS if c in feat_df.columns])
 
     # Optional spatial / region slicing
     analysis_unit = analysis_cfg.get("analysis_unit", "all")
