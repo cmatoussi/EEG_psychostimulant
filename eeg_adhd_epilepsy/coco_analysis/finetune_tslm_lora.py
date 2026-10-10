@@ -27,7 +27,6 @@ sys.path.insert(0, "/home/mat/projects/coco-pipe")
 sys.path.insert(0, str(Path(__file__).parent))
 import run_analysis as ra  # noqa: E402
 
-LABEL_CSV = "/home/mat/scratch/patients_metadata_clean_without_source.csv"
 DATA_ROOT = ("/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/BIDS/"
              "derivatives/preproc/")
 CH19 = ["Fp1", "Fp2", "F7", "F3", "Fz", "F4", "F8", "T3", "C3", "Cz",

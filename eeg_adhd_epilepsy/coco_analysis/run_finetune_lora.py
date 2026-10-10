@@ -32,7 +32,6 @@ from run_analysis import (  # noqa: E402
 
 MAX_EPOCHS = 15
 LP_EPOCHS = 5
-LABEL_CSV = "/home/mat/scratch/patients_metadata_clean_without_source.csv"
 BATCH = 32
 _HEAD = ("final_layer", "classifier", "head")
 

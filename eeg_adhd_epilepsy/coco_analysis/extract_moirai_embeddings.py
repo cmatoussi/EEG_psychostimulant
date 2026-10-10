@@ -58,7 +58,7 @@ sys.path.insert(0, "/home/mat/.local/lib/python3.11/site-packages")
 sys.path.insert(0, str(Path(__file__).parent))
 import run_analysis as ra  # noqa: E402
 
-LABEL_CSV = "/home/mat/scratch/patients_metadata_clean_without_source.csv"
+LABEL_CSV = "/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/csv/patients_metadata_clean.csv"
 CH19 = ["Fp1", "Fp2", "F7", "F3", "Fz", "F4", "F8", "T3", "C3", "Cz",
         "C4", "T4", "T5", "P3", "Pz", "P4", "T6", "O1", "O2"]
 BATCH = 32
