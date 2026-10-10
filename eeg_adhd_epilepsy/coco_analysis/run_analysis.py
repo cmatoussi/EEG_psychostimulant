@@ -437,7 +437,10 @@ def load_eeg_epochs(
     epoch_desc = signal_cfg.get("epoch_desc", "base")
     ch_names = signal_cfg.get("ch_names")
     conditions = signal_cfg.get("conditions")
-    target_col = "epilepsy"
+    target_col = signal_cfg.get("target_col", "epilepsy")
+    if target_col not in label_df.columns:
+        raise ValueError(f"target_col {target_col!r} not in label_df columns; "
+                         f"pass signal.target_col explicitly.")
 
     all_X, all_y, all_groups = [], [], []
 
