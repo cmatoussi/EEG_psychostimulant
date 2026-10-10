@@ -230,7 +230,7 @@ def restrict_for_asm_resistant(df: pd.DataFrame) -> pd.DataFrame:
     """Cohort for the asm_resistant target: treated epilepsy with a known resistance
     label (epilepsy==1 & asm==1 & asm_resistant present). Resistance is undefined for
     never-treated patients, and asm_resistant==1 with asm==0 is a data mismatch; both
-    are dropped (review item 1.8)."""
+    are dropped."""
     epi = pd.to_numeric(df["epilepsy"], errors="coerce").fillna(0) == 1
     asm = pd.to_numeric(df["asm"], errors="coerce").fillna(0) == 1
     known = df["asm_resistant"].notna()

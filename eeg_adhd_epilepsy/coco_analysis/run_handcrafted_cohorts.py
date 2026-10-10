@@ -551,7 +551,7 @@ def main():
     # each condition uses its own earliest-recording labels
     def _load_labels(cond):
         ldf = ra.normalize_label_df(pd.read_csv(ra.resolve_label_csv(cond, args.label_csv)))
-        if args.target_col == "asm_resistant":   # treated epilepsy w/ known resistance (item 1.8)
+        if args.target_col == "asm_resistant":   # treated epilepsy w/ known resistance
             ldf = ra.restrict_for_asm_resistant(ldf)
         elif args.restrict_col:
             keep = pd.to_numeric(ldf[args.restrict_col], errors="coerce").fillna(0) == 1
