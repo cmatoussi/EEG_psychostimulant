@@ -24,11 +24,11 @@ for an immediate comparable AUC.
 Usage (main env has torch/einops/mne; add the NeuroLM repo to PYTHONPATH):
     PYTHONPATH=/home/mat/projects/coco-pipe:/home/mat/projects/NeuroLM \
     python extract_neurolm_embeddings.py --condition EO_baseline \
-        --vq /home/mat/scratch/neurolm_ckpt/VQ.pt \
+        --vq /home/mat/scratch/neurolm_ckpt/checkpoints/VQ.pt \
         --out-dir /home/mat/scratch/results/extraceted_embeddings_files/moirai/../neurolm
 """
 from __future__ import annotations
-import argparse, sys
+import argparse, re, sys
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -59,8 +59,13 @@ def _load_vq_encoder(vq_path, device):
     vq = VQ(NTConfig(**enc_args), NTConfig(**dec_args))
     sd = torch.load(vq_path, map_location="cpu", weights_only=False)  # trusted official NeuroLM ckpt
     sd = sd.get("model", sd) if isinstance(sd, dict) else sd
+    # drop the torch.compile "_orig_mod.VQ." prefix so the keys match
+    sd = {re.sub(r"^_orig_mod\.VQ\.", "", k): v for k, v in sd.items()}
     missing, unexpected = vq.load_state_dict(sd, strict=False)
     enc_missing = [k for k in missing if k.startswith("encoder.")]
+    if enc_missing:          # never run on a random encoder silently
+        raise RuntimeError(f"NeuroLM encoder weights did not load: {len(enc_missing)} keys "
+                           f"missing (check the checkpoint key names / prefix).")
     print(f"  VQ loaded: {len(enc_missing)} encoder keys missing, {len(unexpected)} unexpected", flush=True)
     enc = vq.encoder.to(device).eval()
     for p in enc.parameters():
@@ -110,7 +115,7 @@ def main():
     import torch
     ap = argparse.ArgumentParser()
     ap.add_argument("--condition", default="EO_baseline")
-    ap.add_argument("--vq", default="/home/mat/scratch/neurolm_ckpt/VQ.pt")
+    ap.add_argument("--vq", default="/home/mat/scratch/neurolm_ckpt/checkpoints/VQ.pt")
     ap.add_argument("--out-dir", default="/home/mat/scratch/results/extraceted_embeddings_files/neurolm")
     ap.add_argument("--label-csv", default=LABEL_CSV)
     args = ap.parse_args()
