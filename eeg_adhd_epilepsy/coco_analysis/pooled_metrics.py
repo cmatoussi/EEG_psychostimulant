@@ -50,9 +50,8 @@ def _perfold(fa):
 
 
 def pooled(fa, calibrated=True, per_fold=False, n_boot=300, seed=0):
-    """fa: list of (y, proba, groups) per fold. Pooled point estimates with a
-    subject bootstrap std (resamples whole subjects via `groups`, since epochs within
-    a subject are correlated); None if <2 classes. `per_fold` adds the old averaging."""
+    """fa: list of (y, proba, groups) per fold. Pooled point estimates with a subject
+    bootstrap std (resamples whole subjects via `groups`); None if <2 classes."""
     fa = [(np.asarray(y), np.asarray(p), np.asarray(g)) for (y, p, g) in fa if len(y)]
     if not fa:
         return None
