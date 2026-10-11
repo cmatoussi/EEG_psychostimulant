@@ -130,6 +130,11 @@ def merge_models(df_a: pd.DataFrame, df_b: pd.DataFrame) -> pd.DataFrame:
     uses to pair predictions within subject (unit='group').
     """
     merged = df_a.merge(df_b, on=["SampleID", "Fold"], suffixes=("_A", "_B"))
+    # guard against mis-pairing: paired rows must share the same ground-truth label
+    # (a positional/mismatched merge would otherwise pass silently).
+    if not (merged["y_true_A"] == merged["y_true_B"]).all():
+        raise ValueError("y_true mismatch after pairing on SampleID+Fold — the two "
+                         "models' predictions are misaligned; check SampleID.")
     merged["y_true"] = merged["y_true_A"]
     return merged
 

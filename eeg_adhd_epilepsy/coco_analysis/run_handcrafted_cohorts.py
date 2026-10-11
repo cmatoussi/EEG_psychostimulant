@@ -210,7 +210,7 @@ def _inner_bal(clf_fn, params, X, y, g, folds=3):
         if len(np.unique(y[te])) < 2:
             continue
         c = clone(clf_fn()).set_params(**params).fit(X[tr], y[tr])
-        fa.append((y[te], c.predict_proba(X[te])[:, 1]))
+        fa.append((y[te], c.predict_proba(X[te])[:, 1], g[te]))
     r = pooled_metrics.pooled(fa, calibrated=False)
     return r["balanced_accuracy"]["mean"] if r else -1.0
 
@@ -254,7 +254,7 @@ def cv_select_tuned(pipe_fn, X, y, g, tune):
         Xtr, Xte = sel.transform(X[tr]), sel.transform(X[te])
         params = _tune_params(head_fn, Xtr, y[tr], g[tr], tune_h)
         clf = clone(head_fn()).set_params(**params).fit(Xtr, y[tr])
-        fa.append((y[te], clf.predict_proba(Xte)[:, 1]))
+        fa.append((y[te], clf.predict_proba(Xte)[:, 1], g[te]))
     return _pack(fa)
 
 
@@ -272,7 +272,7 @@ def cv_auc(clf_fn, X, y, g, tune=None):
             clf = clone(clf_fn()).set_params(**params).fit(X[tr], y[tr])
         else:
             clf = clf_fn(); clf.fit(X[tr], y[tr])
-        fa.append((y[te], clf.predict_proba(X[te])[:, 1]))
+        fa.append((y[te], clf.predict_proba(X[te])[:, 1], g[te]))
     return _pack(fa)
 
 

@@ -53,7 +53,7 @@ def cv_score(clf_fn, X, y, g):
             continue
         clf = clf_fn()
         clf.fit(X[tr], y[tr])
-        fold_arrays.append((y[te], clf.predict_proba(X[te])[:, 1]))
+        fold_arrays.append((y[te], clf.predict_proba(X[te])[:, 1], g[te]))
     if not fold_arrays:
         return float("nan")
     # calibrated=True so youden_threshold_balanced_accuracy is available if requested

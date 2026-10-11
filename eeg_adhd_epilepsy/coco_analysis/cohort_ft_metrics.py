@@ -87,7 +87,7 @@ def _pool_by_subject(y, p, g):
     u = np.unique(g)
     sy = np.array([int(round(float(y[g == k].mean()))) for k in u])
     sp = np.array([float(p[g == k].mean()) for k in u])
-    return sy, sp
+    return sy, sp, u          # u = per-subject group ids (each its own bootstrap unit)
 
 
 def compute(fold_preds, label_csv):
@@ -107,7 +107,7 @@ def compute(fold_preds, label_csv):
             if m.sum() == 0:
                 continue
             ym, pm, gm = np.asarray(y)[m], np.asarray(p)[m], g[m]
-            fa.append((ym, pm)); n += int(m.sum())
+            fa.append((ym, pm, gm)); n += int(m.sum())
             fa_subj.append(_pool_by_subject(ym, pm, gm))   # epoch preds -> one per subject
         res = pooled_metrics.pooled(fa, calibrated=True, per_fold=(name == "all"))
         if res is not None:

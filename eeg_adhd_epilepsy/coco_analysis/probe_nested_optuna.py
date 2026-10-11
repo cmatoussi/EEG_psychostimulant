@@ -148,7 +148,7 @@ def _inner_cv_bal(base, params, X, y, g, folds, seed=42):
         if len(np.unique(y[te])) < 2:
             continue
         est = clone(base).set_params(**params).fit(X[tr], y[tr])
-        fa.append((y[te], est.predict_proba(X[te])[:, 1]))
+        fa.append((y[te], est.predict_proba(X[te])[:, 1], g[te]))
     r = pooled_metrics.pooled(fa, calibrated=False)
     return r["balanced_accuracy"]["mean"] if r else -1.0
 
@@ -231,7 +231,8 @@ def _avg_subject(X, y, g):
 def _aggregate_by_group(y, p, g):
     u = np.unique(g)
     return (np.array([int(round(float(y[g == s].mean()))) for s in u]),
-            np.array([float(p[g == s].mean()) for s in u]))
+            np.array([float(p[g == s].mean()) for s in u]),
+            u)          # per-subject group ids (bootstrap unit for pooled())
 
 
 
@@ -258,11 +259,11 @@ def nested_eval(head, X, y, g, n_trials, inner_folds, pool_subject, tune=True, s
             est = clone(_base(head)).fit(X[tr], y[tr])
             cfgs.append({"outer_fold": k, "best_params": "fixed_default", "trials": []})
         p = np.nan_to_num(est.predict_proba(X[te])[:, 1], nan=0.5)
-        yt, pt = (y[te], p)
+        yt, pt, gt = (y[te], p, g[te])
         if pool_subject:
-            yt, pt = _aggregate_by_group(y[te], p, g[te])
+            yt, pt, gt = _aggregate_by_group(y[te], p, g[te])
         if len(np.unique(yt)) > 1:
-            fa.append((yt, pt))
+            fa.append((yt, pt, gt))
     return fa, cfgs
 
 

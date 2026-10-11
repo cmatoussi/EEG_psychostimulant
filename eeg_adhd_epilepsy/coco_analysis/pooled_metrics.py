@@ -30,7 +30,7 @@ def _perfold(fa):
     """Old per-fold averaging (drops single-class folds). Kept for side-by-side
     comparison on the 'all'/whole cohort only."""
     ba, bacal, auc, f1 = [], [], [], []
-    for i, (yi, pi) in enumerate(fa):
+    for i, (yi, pi, _gi) in enumerate(fa):
         if len(np.unique(yi)) < 2:
             continue
         auc.append(roc_auc_score(yi, pi))
@@ -50,15 +50,19 @@ def _perfold(fa):
 
 
 def pooled(fa, calibrated=True, per_fold=False, n_boot=300, seed=0):
-    """fa: list of (y, proba) per fold, already sliced to a cohort. Returns a dict
-    of pooled point estimates with stratified-bootstrap std; None if <2 classes.
-    metrics: accuracy, balanced_accuracy (+_calibrated if `calibrated`), roc_auc,
-    weighted_f1, plus n, n_folds. `per_fold` adds the old averaging for comparison."""
-    fa = [(np.asarray(y), np.asarray(p)) for (y, p) in fa if len(y)]
+    """fa: list of (y, proba, groups) per fold, already sliced to a cohort. `groups`
+    is the independent unit (subject id) -- the bootstrap resamples whole subjects,
+    not individual rows, because epochs within a subject are correlated and a row
+    bootstrap would understate the std. Returns a dict of pooled point estimates with
+    the subject-bootstrap std; None if <2 classes. metrics: accuracy, balanced_accuracy
+    (+_calibrated if `calibrated`), roc_auc, weighted_f1, plus n, n_folds. `per_fold`
+    adds the old averaging for comparison."""
+    fa = [(np.asarray(y), np.asarray(p), np.asarray(g)) for (y, p, g) in fa if len(y)]
     if not fa:
         return None
-    Y = np.concatenate([y for y, _ in fa])
-    P = np.concatenate([p for _, p in fa])
+    Y = np.concatenate([y for y, _, _ in fa])
+    P = np.concatenate([p for _, p, _ in fa])
+    G = np.concatenate([g for _, _, g in fa])
     if len(np.unique(Y)) < 2:
         return None
     pred = (P >= 0.5).astype(int)
@@ -68,7 +72,7 @@ def pooled(fa, calibrated=True, per_fold=False, n_boot=300, seed=0):
     cal = None
     if calibrated:                                # out-of-fold threshold per fold, pooled binaries
         cal = np.empty(len(Y), int); off = 0
-        for i, (yi, pi) in enumerate(fa):
+        for i, (yi, pi, _gi) in enumerate(fa):
             if len(fa) > 1:
                 oy = np.concatenate([fa[j][0] for j in range(len(fa)) if j != i])
                 op = np.concatenate([fa[j][1] for j in range(len(fa)) if j != i])
@@ -76,12 +80,19 @@ def pooled(fa, calibrated=True, per_fold=False, n_boot=300, seed=0):
                 oy, op = yi, pi
             cal[off:off + len(yi)] = (pi >= _best_thr(oy, op)).astype(int); off += len(yi)
 
-    # stratified subject bootstrap: resample within each class (sizes fixed)
-    pos, neg = np.where(Y == 1)[0], np.where(Y == 0)[0]
+    # stratified SUBJECT bootstrap: resample whole subjects (clusters of rows) within
+    # each class, so class sizes stay fixed and within-subject correlation is respected.
+    subs = np.unique(G)
+    rows_of = {s: np.where(G == s)[0] for s in subs}
+    cls_of = {s: int(Y[rows_of[s]][0]) for s in subs}   # label is constant within a subject
+    pos = [s for s in subs if cls_of[s] == 1]
+    neg = [s for s in subs if cls_of[s] == 0]
     rng = np.random.RandomState(seed)
     bba, bauc, bf1, bcal = [], [], [], []
     for _ in range(n_boot):
-        idx = np.concatenate([rng.choice(pos, len(pos), True), rng.choice(neg, len(neg), True)])
+        pick = ([pos[i] for i in rng.choice(len(pos), len(pos), True)] +
+                [neg[i] for i in rng.choice(len(neg), len(neg), True)])
+        idx = np.concatenate([rows_of[s] for s in pick])
         bba.append(balanced_accuracy_score(Y[idx], pred[idx]))
         bauc.append(roc_auc_score(Y[idx], P[idx]))
         bf1.append(f1_score(Y[idx], pred[idx], average="weighted", zero_division=0))
