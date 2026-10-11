@@ -50,13 +50,9 @@ def _perfold(fa):
 
 
 def pooled(fa, calibrated=True, per_fold=False, n_boot=300, seed=0):
-    """fa: list of (y, proba, groups) per fold, already sliced to a cohort. `groups`
-    is the independent unit (subject id) -- the bootstrap resamples whole subjects,
-    not individual rows, because epochs within a subject are correlated and a row
-    bootstrap would understate the std. Returns a dict of pooled point estimates with
-    the subject-bootstrap std; None if <2 classes. metrics: accuracy, balanced_accuracy
-    (+_calibrated if `calibrated`), roc_auc, weighted_f1, plus n, n_folds. `per_fold`
-    adds the old averaging for comparison."""
+    """fa: list of (y, proba, groups) per fold. Pooled point estimates with a
+    subject bootstrap std (resamples whole subjects via `groups`, since epochs within
+    a subject are correlated); None if <2 classes. `per_fold` adds the old averaging."""
     fa = [(np.asarray(y), np.asarray(p), np.asarray(g)) for (y, p, g) in fa if len(y)]
     if not fa:
         return None
