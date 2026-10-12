@@ -27,6 +27,11 @@ def run_cv(model, cond, strategy, level, out_dir, label_csv, X, y, groups, fit_p
         if len(np.unique(y[te])) < 2:
             print(f"  fold {k}: single-class test, skip", flush=True); continue
         p1 = np.asarray(fit_predict(X[tr], y[tr], X[te], strategy, k), dtype=float)
+        n_nan = int(np.isnan(p1).sum())
+        if n_nan == len(p1):   # diverged model: fail loudly, never report it as chance
+            raise RuntimeError(f"fold {k}: all {n_nan} predicted probabilities are NaN")
+        if n_nan:
+            print(f"  fold {k}: {n_nan}/{len(p1)} NaN probabilities -> 0.5", flush=True)
         p1 = np.nan_to_num(p1, nan=0.5, posinf=1.0, neginf=0.0)
         pred = (p1 >= 0.5).astype(int)
         folds["accuracy"].append(float(accuracy_score(y[te], pred)))

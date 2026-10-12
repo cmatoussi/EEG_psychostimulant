@@ -615,6 +615,10 @@ def main():
                     continue
             n_epi = int((cohort_df[_TARGET_COL] == 1).sum())
             n_ctrl = int((cohort_df[_TARGET_COL] == 0).sum())
+            if min(n_epi, n_ctrl) == 0:
+                print(f"=== {args.cohort_group}/{key} [{cond}]: SKIP "
+                      f"(single class: {n_epi} {_TARGET_COL}+, {n_ctrl} neg) ===", flush=True)
+                continue
             print(f"=== {args.cohort_group}/{key} -> {subdir} [{cond}] "
                   f"({cohort_df['study_id'].nunique()} subj: {n_epi} {_TARGET_COL}+, {n_ctrl} neg), "
                   f"{args.level}-level ===", flush=True)

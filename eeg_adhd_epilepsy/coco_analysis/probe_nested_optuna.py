@@ -249,6 +249,7 @@ def nested_eval(head, X, y, g, n_trials, inner_folds, pool_subject, tune=True, s
     fa, cfgs = [], []
     for k, (tr, te) in enumerate(outer.split(X, y, g)):
         if len(np.unique(y[te])) < 2:
+            print(f"    {head} outer fold {k}: single-class test, skipped", flush=True)
             continue
         if tune and search == "grid":
             params = grid_search_head(head, X[tr], y[tr], g[tr], inner_folds)
@@ -261,7 +262,13 @@ def nested_eval(head, X, y, g, n_trials, inner_folds, pool_subject, tune=True, s
         else:
             est = clone(_base(head)).fit(X[tr], y[tr])
             cfgs.append({"outer_fold": k, "best_params": "fixed_default", "trials": []})
-        p = np.nan_to_num(est.predict_proba(X[te])[:, 1], nan=0.5)
+        p = est.predict_proba(X[te])[:, 1]
+        n_nan = int(np.isnan(p).sum())
+        if n_nan == len(p):   # diverged model: fail loudly, never report it as chance
+            raise RuntimeError(f"{head} outer fold {k}: all predicted probabilities are NaN")
+        if n_nan:
+            print(f"    {head} fold {k}: {n_nan}/{len(p)} NaN probabilities -> 0.5", flush=True)
+        p = np.nan_to_num(p, nan=0.5)
         yt, pt, gt = (y[te], p, g[te])
         if pool_subject:
             yt, pt, gt = _aggregate_by_group(y[te], p, g[te])
