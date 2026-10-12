@@ -287,6 +287,9 @@ def load_eeg_epochs(
         if not fif_files:
             logger.warning(f"No epoch file for sub-{subject_id}, skipping.")
             continue
+        if len(fif_files) > 1:
+            logger.warning(f"sub-{subject_id}: {len(fif_files)} epoch files; using "
+                           f"{fif_files[0].name}, ignoring {len(fif_files) - 1} other(s).")
 
         epochs = mne.read_epochs(fif_files[0], preload=True, verbose=False)
         if ch_names:

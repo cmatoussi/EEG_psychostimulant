@@ -41,8 +41,13 @@ def build_balanced(df, target_col, cohort_group, seed=SEED):
     """Returns (balanced_df, n_total, drop_reason_or_None)."""
     df = df[df["age_group"] != "0-4"].copy()
     strata_cols = strata_for(cohort_group)
+    n_before = len(df)
+    df = df.dropna(subset=strata_cols)          # drop unknown-strata subjects explicitly
+    if len(df) < n_before:
+        print(f"  cohort_balance: dropped {n_before - len(df)} subject(s) with unknown "
+              f"{strata_cols}", flush=True)
     cells = {}
-    for key, cell in df.groupby(strata_cols, dropna=False):
+    for key, cell in df.groupby(strata_cols):
         n0 = int((cell[target_col] == 0).sum())
         n1 = int((cell[target_col] == 1).sum())
         cells[key] = (cell, n0, n1)
