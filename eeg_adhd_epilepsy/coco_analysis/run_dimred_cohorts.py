@@ -32,7 +32,7 @@ LABEL_CSV = "/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/csv/patient
 FEATURE_CSV = ("/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/BIDS/derivatives/"
                "signal_features/descriptors/combined/sensor_subject_features.csv")
 
-REDUCERS = ["PCA", "UMAP", "Isomap"]
+REDUCERS = ["PCA", "UMAP", "Isomap"]   # library-default hyperparameters; only n_components is swept
 COMPONENTS = [2, 3, 5, 10, 15]
 METRICS = ["trustworthiness", "continuity", "lcmc", "separation_logreg_balanced_accuracy"]
 
@@ -43,6 +43,7 @@ METRICS = ["trustworthiness", "continuity", "lcmc", "separation_logreg_balanced_
 # epoch-level default is 0.30, but on the subject-level sensor matrix (2888
 # feats) no row reaches that; 0.11 sits in the natural gap below the two clear
 # extremes (frac~0.116) and above the rest (<=0.105), so it drops exactly them.
+# Both values are fitted to this dataset; re-derive them if the cohort changes.
 MAD_Z = 5.0
 OUTLIER_FRAC = 0.11
 # coco-pipe's reducers feed the raw feature array straight to sklearn PCA/Isomap,

@@ -79,7 +79,7 @@ TUNE = {
 }
 _SEL_TUNE = [("clf__C", 1e-2, 1e2, True, False)]   # final head after SFS / L1
 
-# Cohorts to always skip (too small / undecodable): tiny age bin and ASD comorbidity.
+# Cohorts to always skip for THIS dataset (too small / undecodable); revisit if the cohort changes.
 SKIP_COHORTS = {("age", "0-4"), ("comorbidity", "asd"), ("sex", "ALL")}
 
 # Per-drug anti-seizure-medication flag columns (used to derive monotherapy).
