@@ -58,7 +58,8 @@ COHORT_GROUPS = {
 }
 
 COLUMNS = [
-    "fm_model", "condition", "aggregation", "head", "status", "n_subjects", "n_windows",
+    "fm_model", "condition", "aggregation", "head", "target", "balance",
+    "status", "n_subjects", "n_windows",
     "adhd", "epilepsy", "autism",
     "accuracy_mean", "accuracy_std",
     "balanced_accuracy_mean", "balanced_accuracy_std",
@@ -66,6 +67,20 @@ COLUMNS = [
     "roc_auc_mean", "roc_auc_std",
 ]
 _METRICS = ["accuracy", "balanced_accuracy", "f1", "roc_auc"]
+
+
+def _merge_write(new_rows, path):
+    """Replace only the rows actually recomputed so far (keyed by model/condition/
+    aggregation/head); every other existing row survives, so a timeout mid-sweep
+    can't drop results that were never recomputed."""
+    new = pd.DataFrame(new_rows, columns=COLUMNS)
+    if path.exists():
+        old = pd.read_csv(path)
+        key = ["fm_model", "condition", "aggregation", "head"]
+        done = set(new[key].astype(str).itertuples(index=False, name=None))
+        keep = [t not in done for t in old[key].astype(str).itertuples(index=False, name=None)]
+        new = pd.concat([old[keep], new], ignore_index=True)[COLUMNS]
+    new.to_csv(path, index=False)
 
 # Subject-level aggregation modes:
 #   averaged_predictions - score each epoch, then average the per-epoch
@@ -119,16 +134,6 @@ def run_one_cohort(cohort_key, csv_name, mask_fn, label_dfs, out_dir,
     if epoch_out_dir:
         Path(epoch_out_dir).mkdir(parents=True, exist_ok=True)
 
-    def _merge_write(new_rows, path):
-        """Preserve existing rows for models NOT in this run (so a --models subset
-        fills in the missing ones without wiping already-computed models)."""
-        new = pd.DataFrame(new_rows, columns=COLUMNS)
-        if path.exists():
-            old = pd.read_csv(path)
-            old = old[~old["fm_model"].isin(set(MODELS))]        # drop the models we recomputed
-            new = pd.concat([old, new], ignore_index=True)[COLUMNS]
-        new.to_csv(path, index=False)
-
     def _flush():
         _merge_write(rows, out_csv)
         if erows is not None:
@@ -141,7 +146,9 @@ def run_one_cohort(cohort_key, csv_name, mask_fn, label_dfs, out_dir,
                 continue
             cond_s = _cond_short(cond)
             for agg in aggregations:
-                base = {"fm_model": model, "condition": cond_s, "aggregation": agg}
+                base = {"fm_model": model, "condition": cond_s, "aggregation": agg,
+                        "target": target_col,
+                        "balance": "balanced" if balanced else "baseline"}
                 emb_level = AGG[agg]["embedding_level"]
                 metric_level = AGG[agg]["metric_level"]
                 acfg = {
