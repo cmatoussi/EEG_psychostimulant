@@ -139,7 +139,7 @@ class OptunaSearchCV:
         return self.best_estimator_.predict_proba(X)
 
 
-from run_hp_search import refine_1d  # noqa: E402  reuse the 1-D zoom search
+from refine_1d import refine_1d  # noqa: E402  reuse the 1-D zoom search
 
 _GRID_PTS = (5, 3, 3)   # lighter than the standalone search; runs once per outer fold
 
@@ -300,7 +300,7 @@ def main():
     ap.add_argument("--n-trials", type=int, default=40)
     ap.add_argument("--inner-folds", type=int, default=3)
     ap.add_argument("--search", default="grid", choices=["grid", "optuna"],
-                    help="nested inner search: 'grid' = coarse-to-fine (matches run_hp_search), "
+                    help="nested inner search: 'grid' = coarse-to-fine 1-D zoom, "
                          "'optuna' = TPE. Both run inside each outer fold (leak-free).")
     ap.add_argument("--subject-aggs", nargs="+", default=None,
                     choices=["averaged_epochs", "averaged_predictions"],

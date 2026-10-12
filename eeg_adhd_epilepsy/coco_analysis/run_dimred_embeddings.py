@@ -37,10 +37,21 @@ EPOCH_CAP = 8000  # subsample cap for the epoch level (O(n^2) reducers/metrics)
 
 
 def _subsample(X, y, groups, cap, seed=42):
+    """Row cap by whole subjects, class-stratified to the natural ratio."""
     if X.shape[0] <= cap:
         return X, y, groups
-    rng = np.random.default_rng(seed)
-    idx = np.sort(rng.choice(X.shape[0], size=cap, replace=False))
+    rng = np.random.RandomState(seed)
+    keep = []
+    for cls in np.unique(y):
+        subs = rng.permutation(np.unique(groups[y == cls]))
+        budget = int(round(cap * (y == cls).mean()))
+        tot = 0
+        for s in subs:                       # whole subjects until the class budget
+            idx = np.where(groups == s)[0]
+            keep.append(idx); tot += len(idx)
+            if tot >= budget:
+                break
+    idx = np.sort(np.concatenate(keep))
     return X[idx], y[idx], groups[idx]
 
 

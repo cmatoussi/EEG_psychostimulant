@@ -199,7 +199,7 @@ def load_sensor_data(level, condition, cohort_df):
     return X, y, groups, feats, sensors
 
 
-from run_hp_search import refine_1d  # noqa: E402  coarse-to-fine 1-D zoom (nested head)
+from refine_1d import refine_1d  # noqa: E402  coarse-to-fine 1-D zoom (nested head)
 _GRID_PTS = (5, 3)          # 2-round zoom (kept short; refit inside every fold)
 
 
