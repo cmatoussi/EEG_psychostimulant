@@ -323,25 +323,45 @@ def topomap_png(sensor_auc, sensor_bacc, sensors):
         return f"<p>topomap failed: {e}</p>"
 
 
-def _feature_importance(X, y, feats, perm_top=80):
-    """Rank all features by RF Gini (instant) + L1 |coef|; run the more honest
-    (but expensive) permutation importance only on the top-`perm_top` Gini
-    features so this stays fast even on epoch-level matrices (~36k rows)."""
-    X = SimpleImputer(strategy="mean").fit_transform(X)   # descriptive fit on all rows (no CV split)
-    Xs = StandardScaler().fit_transform(X)
-    l1 = LogisticRegression(penalty="l1", solver="liblinear", max_iter=1000,
-                            class_weight="balanced").fit(Xs, y)
-    coef = np.abs(l1.coef_.ravel())
-    rf = RandomForestClassifier(n_estimators=300, class_weight="balanced",
-                                random_state=42, n_jobs=N_JOBS).fit(X, y)
-    gini = rf.feature_importances_
+def _train_impute(Xtr):
+    """Train-fold column means, all-NaN columns -> 0 (keeps width = n_features)."""
+    cm = np.nanmean(Xtr, axis=0)
+    return np.where(np.isnan(cm), 0.0, cm)
+
+
+def _feature_importance(X, y, g, feats, perm_top=80, n_splits=N_SPLITS):
+    """Out-of-fold importances: L1 |coef|, RF Gini, and (top-`perm_top`) permutation
+    importance are computed INSIDE each CV fold and averaged -- so the ranking reflects
+    features consistently important across folds, not ones that fit the whole dataset by
+    chance. Impute per-fold (train means) to keep the train/test wall; permutation
+    importance is measured on the held-out fold."""
+    sgkf = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=42)
+    splits = [(tr, te) for tr, te in sgkf.split(X, y, g)
+              if len(np.unique(y[tr])) > 1 and len(np.unique(y[te])) > 1]
+    coefs, ginis = [], []
+    for tr, _ in splits:
+        cm = _train_impute(X[tr]); Xtr = np.where(np.isnan(X[tr]), cm, X[tr])
+        l1 = LogisticRegression(penalty="l1", solver="liblinear", max_iter=1000,
+                                class_weight="balanced").fit(StandardScaler().fit_transform(Xtr), y[tr])
+        coefs.append(np.abs(l1.coef_.ravel()))
+        rf = RandomForestClassifier(n_estimators=300, class_weight="balanced",
+                                    random_state=42, n_jobs=N_JOBS).fit(Xtr, y[tr])
+        ginis.append(rf.feature_importances_)
+    coef = np.mean(coefs, axis=0); gini = np.mean(ginis, axis=0)
+    # permutation importance on the HELD-OUT fold, for the top-`perm_top` Gini features
     perm = np.full(len(feats), np.nan)
     top = np.argsort(gini)[::-1][:min(perm_top, len(feats))]
-    rf_top = RandomForestClassifier(n_estimators=300, class_weight="balanced",
-                                    random_state=42, n_jobs=N_JOBS).fit(X[:, top], y)
-    perm[top] = permutation_importance(rf_top, X[:, top], y, n_repeats=3,
-                                       random_state=42, scoring="roc_auc",
-                                       n_jobs=N_JOBS).importances_mean
+    perm_folds = []
+    for tr, te in splits:
+        cm = _train_impute(X[tr][:, top])
+        Xtr_t = np.where(np.isnan(X[tr][:, top]), cm, X[tr][:, top])
+        Xte_t = np.where(np.isnan(X[te][:, top]), cm, X[te][:, top])
+        rf_top = RandomForestClassifier(n_estimators=300, class_weight="balanced",
+                                        random_state=42, n_jobs=N_JOBS).fit(Xtr_t, y[tr])
+        perm_folds.append(permutation_importance(rf_top, Xte_t, y[te], n_repeats=3,
+                                                 random_state=42, scoring="roc_auc",
+                                                 n_jobs=N_JOBS).importances_mean)
+    perm[top] = np.mean(perm_folds, axis=0)
     return pd.DataFrame({
         "feature": feats, "sensor": [_sensor_of(c) for c in feats],
         "family": [_family_of(c) for c in feats],
@@ -387,7 +407,7 @@ def run_condition(condition, cohort_df, level, out_dir, label="all"):
     for mname, mfn in MODELS.items():
         tune = TUNE.get(mname) if NESTED else None
         rows.append({"analysis": "all", "model": mname, "condition": cshort, **cv_auc(mfn, X, y, g, tune=tune)})
-    imp = _feature_importance(X, y, feats)
+    imp = _feature_importance(X, y, g, feats)
     imp.to_csv(out_dir / f"feature_importance_{cshort}.csv", index=False)
     images["feature_importance"] = _importance_png(imp)
     images["sensor_feature_heatmap"] = _sensor_feature_heatmap(imp)
