@@ -30,6 +30,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 from sklearn.dummy import DummyClassifier  # noqa: E402
 from sklearn.ensemble import RandomForestClassifier  # noqa: E402
 from sklearn.feature_selection import SequentialFeatureSelector  # noqa: E402
+from sklearn.impute import SimpleImputer  # noqa: E402
 from sklearn.inspection import permutation_importance  # noqa: E402
 from sklearn.linear_model import LogisticRegression  # noqa: E402
 from sklearn.model_selection import StratifiedGroupKFold  # noqa: E402
@@ -54,22 +55,26 @@ N_JOBS = 4  # bounded parallelism (unbounded -1 broke the process pool on shared
 SFS_MAX_ROWS = 8000
 MODERN = {"T3": "T7", "T4": "T8", "T5": "P7", "T6": "P8"}
 
+# SimpleImputer first in every pipeline so the NaN fill is fit on the train fold
+# only (inside CV), never on the whole matrix.
 MODELS = {
-    "logreg_l2": lambda: make_pipeline(StandardScaler(), LogisticRegression(
-        max_iter=1000, class_weight="balanced")),
-    "logreg_l1": lambda: make_pipeline(StandardScaler(), LogisticRegression(
-        penalty="l1", solver="liblinear", max_iter=1000, class_weight="balanced")),
-    "rf": lambda: RandomForestClassifier(n_estimators=300, class_weight="balanced",
-                                         random_state=42, n_jobs=N_JOBS),
-    "dummy": lambda: DummyClassifier(strategy="stratified", random_state=42),
+    "logreg_l2": lambda: make_pipeline(SimpleImputer(strategy="mean"), StandardScaler(),
+        LogisticRegression(max_iter=1000, class_weight="balanced")),
+    "logreg_l1": lambda: make_pipeline(SimpleImputer(strategy="mean"), StandardScaler(),
+        LogisticRegression(penalty="l1", solver="liblinear", max_iter=1000, class_weight="balanced")),
+    "rf": lambda: make_pipeline(SimpleImputer(strategy="mean"),
+        RandomForestClassifier(n_estimators=300, class_weight="balanced", random_state=42, n_jobs=N_JOBS)),
+    "dummy": lambda: make_pipeline(SimpleImputer(strategy="mean"),
+        DummyClassifier(strategy="stratified", random_state=42)),
 }
 
 NESTED = False   # set by --nested-head: tune the head inside each CV fold
-# 1-D search axes per head (param, lo, hi, log_space, is_int)
+# 1-D search axes per head (param, lo, hi, log_space, is_int); names are pipeline-scoped
 TUNE = {
     "logreg_l2": [("logisticregression__C", 1e-2, 1e2, True, False)],
     "logreg_l1": [("logisticregression__C", 1e-2, 1e2, True, False)],
-    "rf": [("n_estimators", 50, 300, False, True), ("max_depth", 3, 20, False, True)],
+    "rf": [("randomforestclassifier__n_estimators", 50, 300, False, True),
+           ("randomforestclassifier__max_depth", 3, 20, False, True)],
     "dummy": None,
 }
 _SEL_TUNE = [("clf__C", 1e-2, 1e2, True, False)]   # final head after SFS / L1
@@ -189,10 +194,7 @@ def load_sensor_data(level, condition, cohort_df):
     y = df["_label"].astype(int).values
     groups = df["study_id"].values
     X = df[feats].apply(pd.to_numeric, errors="coerce").values.astype(np.float32)
-    if np.isnan(X).any():
-        cm = np.nanmean(X, axis=0)
-        cm = np.where(np.isnan(cm), 0.0, cm)
-        X = np.where(np.isnan(X), cm, X)
+    # NaNs are imputed per-fold inside each model pipeline (SimpleImputer), not here.
     sensors = sorted({_sensor_of(c) for c in feats if _sensor_of(c)})
     return X, y, groups, feats, sensors
 
@@ -325,6 +327,7 @@ def _feature_importance(X, y, feats, perm_top=80):
     """Rank all features by RF Gini (instant) + L1 |coef|; run the more honest
     (but expensive) permutation importance only on the top-`perm_top` Gini
     features so this stays fast even on epoch-level matrices (~36k rows)."""
+    X = SimpleImputer(strategy="mean").fit_transform(X)   # descriptive fit on all rows (no CV split)
     Xs = StandardScaler().fit_transform(X)
     l1 = LogisticRegression(penalty="l1", solver="liblinear", max_iter=1000,
                             class_weight="balanced").fit(Xs, y)
@@ -435,6 +438,7 @@ def run_condition(condition, cohort_df, level, out_dir, label="all"):
 
         def _sfs_pipe():
             return Pipeline([
+                ("impute", SimpleImputer(strategy="mean")),
                 ("scale", StandardScaler()),
                 ("prefilter", SelectKBest(f_classif, k=kbest)),
                 ("sfs", SequentialFeatureSelector(
@@ -468,6 +472,7 @@ def run_condition(condition, cohort_df, level, out_dir, label="all"):
 
             def _l1_pipe():
                 return Pipeline([
+                    ("impute", SimpleImputer(strategy="mean")),
                     ("scale", StandardScaler()),
                     ("select", SelectFromModel(
                         LogisticRegressionCV(penalty="l1", solver="liblinear",

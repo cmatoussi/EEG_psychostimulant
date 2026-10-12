@@ -34,6 +34,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
 from sklearn.dummy import DummyClassifier
+from sklearn.impute import SimpleImputer
 from sklearn.metrics import roc_auc_score
 
 import run_analysis as ra
@@ -56,18 +57,21 @@ COLUMNS = ["fm_model", "condition", "cohort_group", "cohort", "aggregation", "he
 
 # ------------- heads + Optuna search spaces -------------
 def _base(head):
+    # SimpleImputer first so any NaN fill is fit per inner-CV fold (embeddings are
+    # dense today, so this is a no-op in practice; kept for consistency/robustness).
+    imp = SimpleImputer(strategy="mean")
     if head == "logreg":
         # saga solver supports both l1 and l2 (tuned); needs more iters to converge on high-dim embeddings
-        return make_pipeline(StandardScaler(),
+        return make_pipeline(imp, StandardScaler(),
                              LogisticRegression(solver="saga", max_iter=5000, class_weight="balanced"))
     if head == "svm":
-        return make_pipeline(StandardScaler(), SVC(kernel="rbf", probability=True, class_weight="balanced"))
+        return make_pipeline(imp, StandardScaler(), SVC(kernel="rbf", probability=True, class_weight="balanced"))
     if head == "rf":
-        return make_pipeline(StandardScaler(), RandomForestClassifier(class_weight="balanced", n_jobs=1))
+        return make_pipeline(imp, StandardScaler(), RandomForestClassifier(class_weight="balanced", n_jobs=1))
     if head == "histgb":
-        return make_pipeline(StandardScaler(), HistGradientBoostingClassifier(class_weight="balanced"))
+        return make_pipeline(imp, StandardScaler(), HistGradientBoostingClassifier(class_weight="balanced"))
     if head == "dummy":
-        return make_pipeline(StandardScaler(), DummyClassifier(strategy="stratified", random_state=42))
+        return make_pipeline(imp, StandardScaler(), DummyClassifier(strategy="stratified", random_state=42))
     raise ValueError(head)
 
 
@@ -198,8 +202,7 @@ def _load_embeddings(model, condition, label_df, level="epoch", target="epilepsy
         lab["study_id"] = lab["study_id"].astype(str)
         df = df.merge(lab, on="study_id", how="inner")
         X = df[feats].apply(pd.to_numeric, errors="coerce").to_numpy(np.float32)
-        cm = np.nanmean(X, axis=0); cm = np.where(np.isnan(cm), 0.0, cm)   # mean-impute
-        X = np.where(np.isnan(X), cm, X).astype(np.float32)
+        # NaNs (if any) are imputed per-fold inside the head pipeline, not here.
         return X, df[target].astype(int).to_numpy(), df["study_id"].to_numpy()
     if model in ("moirai", "neurolm"):
         f = Path(EMB_TS) / model / f"{model}_{condition}_epoch_embeddings.csv"

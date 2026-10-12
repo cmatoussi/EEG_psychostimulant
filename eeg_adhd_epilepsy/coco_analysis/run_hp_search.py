@@ -24,6 +24,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
+from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.model_selection import StratifiedGroupKFold
@@ -97,7 +98,7 @@ def refine_1d(score_fn, lo, hi, log_space, n_rounds=3, points=(7, 5, 5), is_int=
 
 def search_lr(X, y, g):
     def score(c):
-        return cv_score(lambda: make_pipeline(StandardScaler(),
+        return cv_score(lambda: make_pipeline(SimpleImputer(strategy="mean"), StandardScaler(),
                          LogisticRegression(C=c, max_iter=1000, class_weight="balanced")),
                          X, y, g)
     best_c, best_s, hist = refine_1d(score, 1e-3, 1e3, log_space=True)
@@ -106,9 +107,9 @@ def search_lr(X, y, g):
 
 def search_rf(X, y, g):
     def score_n(n_est, depth=None):
-        return cv_score(lambda: RandomForestClassifier(
+        return cv_score(lambda: make_pipeline(SimpleImputer(strategy="mean"), RandomForestClassifier(
             n_estimators=n_est, max_depth=depth, class_weight="balanced",
-            random_state=SEED, n_jobs=4), X, y, g)
+            random_state=SEED, n_jobs=4)), X, y, g)
 
     best_n, best_s_n, hist_n = refine_1d(lambda v: score_n(v), 50, 2000,
                                          log_space=False, is_int=True)
@@ -124,7 +125,7 @@ def search_rf(X, y, g):
 
 def search_svm(X, y, g):
     def score(c, gamma=None):
-        return cv_score(lambda: make_pipeline(StandardScaler(), SVC(
+        return cv_score(lambda: make_pipeline(SimpleImputer(strategy="mean"), StandardScaler(), SVC(
             kernel="rbf", C=c, gamma=(gamma if gamma is not None else "scale"),
             probability=True, class_weight="balanced")), X, y, g)
 
@@ -140,7 +141,7 @@ def search_svm(X, y, g):
 
 def search_histgb(X, y, g):
     def score(lr, depth=None):
-        return cv_score(lambda: make_pipeline(StandardScaler(), HistGradientBoostingClassifier(
+        return cv_score(lambda: make_pipeline(SimpleImputer(strategy="mean"), StandardScaler(), HistGradientBoostingClassifier(
             learning_rate=lr, max_depth=depth, class_weight="balanced",
             random_state=SEED)), X, y, g)
 
@@ -188,10 +189,7 @@ def load_handcrafted_subject(condition, target_col, label_df):
     y = df["_label"].astype(int).values
     groups = df["study_id"].values
     X = df[feats].apply(pd.to_numeric, errors="coerce").values.astype(np.float32)
-    if np.isnan(X).any():
-        cm = np.nanmean(X, axis=0)
-        cm = np.where(np.isnan(cm), 0.0, cm)
-        X = np.where(np.isnan(X), cm, X)
+    # NaNs are imputed per-fold inside each search pipeline (SimpleImputer), not here.
     return X, y, groups
 
 
