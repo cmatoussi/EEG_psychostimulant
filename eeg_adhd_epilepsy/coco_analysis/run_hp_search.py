@@ -85,8 +85,8 @@ def refine_1d(score_fn, lo, hi, log_space, n_rounds=3, points=(7, 5, 5), is_int=
         # narrow window around the best point found so far
         if log_space:
             half_span_log = (np.log10(hi) - np.log10(lo)) / (2 * (rnd + 2))
-            cur_lo = 10 ** (np.log10(best_v) - half_span_log)
-            cur_hi = 10 ** (np.log10(best_v) + half_span_log)
+            cur_lo = max(lo, 10 ** (np.log10(best_v) - half_span_log))
+            cur_hi = min(hi, 10 ** (np.log10(best_v) + half_span_log))
         else:
             half_span = (hi - lo) / (2 * (rnd + 2))
             cur_lo = max(lo, best_v - half_span)
@@ -106,21 +106,33 @@ def search_lr(X, y, g):
 
 
 def search_rf(X, y, g):
-    def score_n(n_est, depth=None):
-        return cv_score(lambda: make_pipeline(SimpleImputer(strategy="mean"), RandomForestClassifier(
-            n_estimators=n_est, max_depth=depth, class_weight="balanced",
-            random_state=SEED, n_jobs=4)), X, y, g)
+    # n_estimators fixed high (more trees only reduce variance; tuning it chases
+    # noise) -- tune max_features and min_samples_leaf instead.
+    n_est = 500
 
-    best_n, best_s_n, hist_n = refine_1d(lambda v: score_n(v), 50, 2000,
-                                         log_space=False, is_int=True)
-    best_d, best_s_d, hist_d = refine_1d(lambda v: score_n(best_n, v), 3, 30,
-                                         log_space=False, is_int=True)
-    for h in hist_n:
-        h["axis"] = "n_estimators"
+    def score(depth=None, leaf=1, mf="sqrt"):
+        return cv_score(lambda: make_pipeline(SimpleImputer(strategy="mean"), RandomForestClassifier(
+            n_estimators=n_est, max_depth=depth, min_samples_leaf=leaf, max_features=mf,
+            class_weight="balanced", random_state=SEED, n_jobs=4)), X, y, g)
+
+    best_mf, _, hist_mf = refine_1d(lambda v: score(mf=v), 0.02, 1.0, log_space=True)
+    best_leaf, _, hist_leaf = refine_1d(lambda v: score(mf=best_mf, leaf=int(v)), 1, 20,
+                                        log_space=False, is_int=True)
+    best_d, best_s, hist_d = refine_1d(lambda v: score(mf=best_mf, leaf=best_leaf, depth=int(v)),
+                                       3, 30, log_space=False, is_int=True)
+    s_none = score(mf=best_mf, leaf=best_leaf, depth=None)   # unlimited depth, reconsidered
+    hist_d.append({"round": 0, "value": "None", "score": s_none, "axis": "max_depth"})
+    if s_none > best_s:
+        best_d, best_s = None, s_none
+    for h in hist_mf:
+        h["axis"] = "max_features"
+    for h in hist_leaf:
+        h["axis"] = "min_samples_leaf"
     for h in hist_d:
-        h["axis"] = "max_depth"
-    return {"head": "rf", "best_params": {"n_estimators": best_n, "max_depth": best_d},
-            "best_score": best_s_d, "history": hist_n + hist_d}
+        h.setdefault("axis", "max_depth")
+    return {"head": "rf", "best_params": {"n_estimators": n_est, "max_features": best_mf,
+                                          "min_samples_leaf": best_leaf, "max_depth": best_d},
+            "best_score": best_s, "history": hist_mf + hist_leaf + hist_d}
 
 
 def search_svm(X, y, g):
@@ -167,10 +179,21 @@ def load_embeddings(model, condition, target_col, label_df, level="subject"):
 
 
 def _subsample(X, y, g, cap, seed=42):
+    """Row cap by whole subjects, class-stratified to the natural ratio."""
     if X.shape[0] <= cap:
         return X, y, g
-    rng = np.random.default_rng(seed)
-    idx = np.sort(rng.choice(X.shape[0], size=cap, replace=False))
+    rng = np.random.RandomState(seed)
+    keep = []
+    for cls in np.unique(y):
+        subs = rng.permutation(np.unique(g[y == cls]))
+        budget = int(round(cap * (y == cls).mean()))
+        tot = 0
+        for s in subs:                       # whole subjects until the class budget
+            idx = np.where(g == s)[0]
+            keep.append(idx); tot += len(idx)
+            if tot >= budget:
+                break
+    idx = np.sort(np.concatenate(keep))
     return X[idx], y[idx], g[idx]
 
 
