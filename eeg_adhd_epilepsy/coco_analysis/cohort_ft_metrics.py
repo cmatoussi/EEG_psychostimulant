@@ -73,12 +73,8 @@ def save_preds(out_base, level, strategy, model, cond, fold_preds):
 
 
 def _norm(s):
-    """Canonical study_id: strip zero-padding so the finetune's '0089' groups match
-    the label file's plain '89'. Non-numeric ids pass through unchanged."""
-    try:
-        return str(int(str(s).strip()))
-    except (ValueError, TypeError):
-        return str(s)
+    """Canonical study_id (shared normalizer in run_analysis)."""
+    return ra.norm_study_id(s)
 
 
 def _pool_by_subject(y, p, g):

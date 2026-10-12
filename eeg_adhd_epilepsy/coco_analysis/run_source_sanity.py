@@ -75,8 +75,8 @@ def main():
                          "patients_metadata_clean.csv (not the without_source copy).")
     # binary target: adhd = 0, drug_resistant = 1
     label_df["SourceBin"] = (label_df.source_dataset == "drug_resistant").astype(int)
-    src_lut = (label_df.drop_duplicates("study_id")
-               .set_index(label_df["study_id"].astype(str))["SourceBin"])
+    d2 = label_df.drop_duplicates("study_id")   # index from the deduped frame itself,
+    src_lut = d2.set_index(d2["study_id"].astype(str))["SourceBin"]  # not the full series
 
     out = Path(args.out_csv)
     out.parent.mkdir(parents=True, exist_ok=True)

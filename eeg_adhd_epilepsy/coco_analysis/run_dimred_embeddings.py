@@ -59,11 +59,8 @@ SKIP = {("age", "0-4"), ("comorbidity", "asd"), ("sex", "ALL")}  # small/redunda
 
 
 def _norm(s):
-    """Canonical study_id (strip zero-padding) so '0089' groups match a plain '89' label."""
-    try:
-        return str(int(float(s)))
-    except (ValueError, TypeError):
-        return str(s)
+    """Canonical study_id (shared normalizer in run_analysis)."""
+    return ra.norm_study_id(s)
 
 
 def _cohorts_for(group):

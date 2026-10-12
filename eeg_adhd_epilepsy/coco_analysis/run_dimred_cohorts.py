@@ -112,7 +112,8 @@ SKIP = {("age", "0-4"), ("comorbidity", "asd"), ("sex", "ALL")}
 
 def _cohort_metadata(groups, label_df):
     """Per-sample metadata (aligned to embedding rows) for report colouring."""
-    lut = label_df.drop_duplicates("study_id").set_index(label_df["study_id"].astype(str))
+    d2 = label_df.drop_duplicates("study_id")   # index from the deduped frame itself,
+    lut = d2.set_index(d2["study_id"].astype(str))  # not the full-length series (misaligns)
     cols = {"epilepsy": "epilepsy", "sex": "sex", "age_group": "age_group",
             "autism": "autism", "adhd": "adhd", "source_dataset": "source_dataset"}
     meta = {}

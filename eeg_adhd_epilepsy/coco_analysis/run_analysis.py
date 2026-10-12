@@ -93,6 +93,15 @@ def normalize_label_df(df: pd.DataFrame) -> pd.DataFrame:
     return df.rename(columns=rename) if rename else df
 
 
+def norm_study_id(s) -> str:
+    """Canonical study_id: '0089', '89.0', 89 -> '89'; non-numeric pass through stripped."""
+    s = str(s).strip()
+    try:
+        return str(int(float(s)))
+    except (ValueError, TypeError):
+        return s
+
+
 def restrict_for_asm_resistant(df: pd.DataFrame) -> pd.DataFrame:
     """Cohort for the asm_resistant target: treated epilepsy with a known resistance
     label (epilepsy==1 & asm==1 & asm_resistant present). Resistance is undefined for
@@ -169,6 +178,10 @@ def load_dim_reduction_data(
         feat_df[target_col] = feat_df[f"{target_col}_lbl"]
         feat_df = feat_df.drop(columns=[f"{target_col}_lbl"])
 
+    known = feat_df[target_col].notna()
+    if (~known).any():
+        logger.warning(f"dropped {int((~known).sum())} rows with unknown {target_col}")
+        feat_df = feat_df[known]
     y = feat_df[target_col].astype(int).values
     groups = feat_df[subject_col].values
 
@@ -243,6 +256,10 @@ def load_precomputed_embeddings(
     label_sub = label_df[["study_id", target_col]].drop_duplicates(subset=["study_id"])
     df = df.merge(label_sub, left_on="subject", right_on="study_id", how="inner")
 
+    known = df[target_col].notna()
+    if (~known).any():
+        logger.warning(f"dropped {int((~known).sum())} rows with unknown {target_col}")
+        df = df[known]
     y = df[target_col].astype(int).values
     groups = df["subject"].values
     X = df[emb_cols].values.astype(np.float32)

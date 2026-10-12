@@ -201,6 +201,10 @@ def _load_embeddings(model, condition, label_df, level="epoch", target="epilepsy
         lab = label_df[["study_id", target]].drop_duplicates("study_id").copy()
         lab["study_id"] = lab["study_id"].astype(str)
         df = df.merge(lab, on="study_id", how="inner")
+        known = df[target].notna()
+        if (~known).any():
+            print(f"  dropped {int((~known).sum())} rows with unknown {target}", flush=True)
+            df = df[known]
         X = df[feats].apply(pd.to_numeric, errors="coerce").to_numpy(np.float32)
         # NaNs (if any) are imputed per-fold inside the head pipeline, not here.
         return X, df[target].astype(int).to_numpy(), df["study_id"].to_numpy()
@@ -218,6 +222,10 @@ def _load_embeddings(model, condition, label_df, level="epoch", target="epilepsy
     lab = label_df.copy(); lab["study_id"] = lab["study_id"].astype(str)
     lab = lab[["study_id", target]].drop_duplicates("study_id")
     df = df.merge(lab, left_on=idc, right_on="study_id", how="inner")
+    known = df[target].notna()
+    if (~known).any():
+        print(f"  dropped {int((~known).sum())} rows with unknown {target}", flush=True)
+        df = df[known]
     X = df[emb].to_numpy(np.float32)
     y = df[target].astype(int).to_numpy()
     g = df[idc].astype(str).to_numpy()

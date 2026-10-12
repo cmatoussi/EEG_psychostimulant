@@ -102,6 +102,10 @@ def add_drug_flags(d):
     drug cohorts can be defined and kept within a single source."""
     d = d.copy()
     present = [c for c in ASM_COLS if c in d.columns]
+    chk = present + [c for c in ["asm"] if c in d.columns]
+    n_unk = int(d[chk].apply(pd.to_numeric, errors="coerce").isna().sum().sum())
+    if n_unk:
+        print(f"  add_drug_flags: {n_unk} unknown medication values treated as 0", flush=True)
     d["_n_asm"] = d[present].apply(pd.to_numeric, errors="coerce").fillna(0).sum(axis=1)
     for c in ["asm", "LEV", "VPA"]:
         if c in d.columns:
@@ -191,6 +195,10 @@ def load_sensor_data(level, condition, cohort_df):
     lab = (lab[["study_id", _TARGET_COL]].drop_duplicates("study_id")
            .rename(columns={_TARGET_COL: "_label"}))
     df = df.merge(lab, on="study_id", how="inner")
+    known = df["_label"].notna()
+    if (~known).any():
+        print(f"    dropped {int((~known).sum())} rows with unknown {_TARGET_COL}", flush=True)
+        df = df[known]
     y = df["_label"].astype(int).values
     groups = df["study_id"].values
     X = df[feats].apply(pd.to_numeric, errors="coerce").values.astype(np.float32)
