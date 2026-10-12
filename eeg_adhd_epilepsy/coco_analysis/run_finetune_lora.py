@@ -81,13 +81,19 @@ def _fit(backend, X_tr, y_tr, cfg, strategy):
 
     if strategy == "lp_ft":
         # Phase 1: freeze backbone LoRA (keep head + head-LoRA trainable), train head only.
-        frozen = []
+        frozen, kept = [], []
         for src in (getattr(backend, "_model", None), getattr(backend, "_backbone", None)):
             if src is not None:
                 for n, p in src.named_parameters():
-                    if "lora_" in n and p.requires_grad and not any(h in n for h in _HEAD):
-                        p.requires_grad = False; frozen.append(p)
+                    if "lora_" in n and p.requires_grad:
+                        if any(h in n for h in _HEAD):
+                            kept.append(n)
+                        else:
+                            p.requires_grad = False; frozen.append(p)
                 break
+        if frozen and not kept:   # name matching found no head LoRA -- make it visible
+            print(f"  lp_ft: no LoRA param matched head names {_HEAD}; "
+                  f"phase 1 trains the plain head only", flush=True)
         saved = backend._train_mode; backend._train_mode = "frozen"
         lp = _sf_net(backend, y_tr, cfg["lr"], LP_EPOCHS)
         lp.fit(X_tr, y_tr)
