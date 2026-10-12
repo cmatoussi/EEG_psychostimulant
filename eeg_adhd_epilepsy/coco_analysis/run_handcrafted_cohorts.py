@@ -412,21 +412,26 @@ def run_condition(condition, cohort_df, level, out_dir, label="all"):
         kbest = min(200, X.shape[1])
         nsel = min(SFS_N, kbest - 1)
 
-        # subject-grouped subsample for the (expensive, 5x-refit) SFS step only
+        # subject-grouped, class-stratified subsample for the (expensive, 5x-refit)
+        # SFS step only -- keep each class's row share ~ the full data so the SFS
+        # arm stays comparable to the all-rows arms.
         Xf, yf, gf = X, y, g
         if X.shape[0] > SFS_MAX_ROWS:
             rng = np.random.RandomState(42)
-            uniq = rng.permutation(np.unique(g))
-            keep, tot = [], 0
-            for s in uniq:                       # add whole subjects until the cap
-                idx = np.where(g == s)[0]
-                keep.append(idx); tot += len(idx)
-                if tot >= SFS_MAX_ROWS:
-                    break
+            keep = []
+            for cls in (0, 1):
+                subs = rng.permutation(np.unique(g[y == cls]))
+                budget = int(round(SFS_MAX_ROWS * (y == cls).mean()))   # this class's row share
+                tot = 0
+                for s in subs:                   # whole subjects until the class budget
+                    idx = np.where(g == s)[0]
+                    keep.append(idx); tot += len(idx)
+                    if tot >= budget:
+                        break
             sel_rows = np.concatenate(keep)
             Xf, yf, gf = X[sel_rows], y[sel_rows], g[sel_rows]
             print(f"    sfs: subsampled {Xf.shape[0]}/{X.shape[0]} rows "
-                  f"({len(np.unique(gf))} subj) for selection", flush=True)
+                  f"({len(np.unique(gf))} subj, class-stratified) for selection", flush=True)
 
         def _sfs_pipe():
             return Pipeline([

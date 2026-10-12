@@ -89,12 +89,6 @@ def run_model_level(model, level_name, emb_level, label_df, out_root, condition,
         print(f"    subsampled epochs -> {X.shape[0]}", flush=True)
 
     feats = [f"emb_{i}" for i in range(X.shape[1])]
-    X, y, groups, _ = dc.reject_outlier_rows(X, y, groups, feats, dc.MAD_Z, dc.OUTLIER_FRAC, base)
-    if X.shape[0] < 20:
-        print(f"[{model}/{level_name}] too few after rejection; skipping", flush=True)
-        (base / "SKIPPED.txt").write_text(f"only {X.shape[0]} after MAD rejection\n")
-        return
-    X = dc.scale_features(X, clip=dc.CLIP)
     gids = np.array([_norm(g) for g in np.asarray(groups)])
     for path, (gname, mask_fn) in _cohorts_for(cohort_group).items():  # per-cohort projections
         cohort_label_df = label_df[mask_fn(label_df)]
@@ -110,10 +104,18 @@ def run_model_level(model, level_name, emb_level, label_df, out_root, condition,
             print(f"    cohort {path}: skip (n={int(m.sum())})", flush=True)
             continue
         cout = base / path; cout.mkdir(parents=True, exist_ok=True)
-        metac = dc._cohort_metadata(groups[m], label_df)
-        print(f"    cohort {path}: {int(m.sum())} samples "
-              f"(y {np.unique(y[m], return_counts=True)[1].tolist()})", flush=True)
-        dc.reduce_and_report(X[m], y[m], groups[m], metac, cout,
+        # subset -> reject -> scale WITHIN the cohort (matches run_dimred_cohorts;
+        # scaling on everyone first would use out-of-cohort stats).
+        Xc, yc, gc = X[m], y[m], groups[m]
+        Xc, yc, gc, _ = dc.reject_outlier_rows(Xc, yc, gc, feats, dc.MAD_Z, dc.OUTLIER_FRAC, cout)
+        if Xc.shape[0] < 20 or len(np.unique(yc)) < 2:
+            print(f"    cohort {path}: skip after rejection (n={Xc.shape[0]})", flush=True)
+            continue
+        Xc = dc.scale_features(Xc, clip=dc.CLIP)
+        metac = dc._cohort_metadata(gc, label_df)
+        print(f"    cohort {path}: {Xc.shape[0]} samples "
+              f"(y {np.unique(yc, return_counts=True)[1].tolist()})", flush=True)
+        dc.reduce_and_report(Xc, yc, gc, metac, cout,
                              f"Dim-reduction — {model} / {cond_short} / {level_name} / {path}")
 
 
