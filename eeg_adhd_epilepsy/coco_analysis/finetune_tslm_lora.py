@@ -237,6 +237,7 @@ def run_finetune(args):
     print(f"  data {X.shape} classes={np.bincount(y).tolist()} subj={len(np.unique(groups))}", flush=True)
 
     def fit_predict(X_tr, y_tr, X_te, strategy, k):
+        torch.manual_seed(42 + k)   # same init per fold across strategies
         return train_eval(args.model, cfg, strategy, X_tr, y_tr, X_te, dev, batch=args.batch)
 
     ft_cv.run_cv(args.model, cshort, args.strategy, args.level, args.out_dir,

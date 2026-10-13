@@ -30,9 +30,12 @@ CONDITIONS = [("EO_baseline", 0), ("EC_baseline", 1)]
 
 HEADS = {
     "logreg": {"method": "LogisticRegression", "max_iter": 500, "class_weight": "balanced"},
-    "rf":     {"method": "RandomForestClassifier", "n_estimators": 200, "class_weight": "balanced"},
-    "svm":    {"method": "SVC", "kernel": "rbf", "probability": True, "class_weight": "balanced"},
-    "histgb": {"method": "HistGradientBoostingClassifier", "class_weight": "balanced"},
+    "rf":     {"method": "RandomForestClassifier", "n_estimators": 200, "class_weight": "balanced",
+               "random_state": 42},
+    "svm":    {"method": "SVC", "kernel": "rbf", "probability": True, "class_weight": "balanced",
+               "random_state": 42},
+    "histgb": {"method": "HistGradientBoostingClassifier", "class_weight": "balanced",
+               "random_state": 42},
     "dummy":  {"method": "DummyClassifier", "strategy": "stratified", "random_state": 42},
 }
 

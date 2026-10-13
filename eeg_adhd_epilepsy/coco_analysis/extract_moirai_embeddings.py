@@ -118,8 +118,8 @@ def _probe(X, y, groups, name):
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.metrics import roc_auc_score, balanced_accuracy_score
     heads = {"logreg": LogisticRegression(max_iter=1000, class_weight="balanced"),
-             "svm": SVC(kernel="rbf", probability=True, class_weight="balanced"),
-             "rf": RandomForestClassifier(n_estimators=200, class_weight="balanced")}
+             "svm": SVC(kernel="rbf", probability=True, class_weight="balanced", random_state=42),
+             "rf": RandomForestClassifier(n_estimators=200, class_weight="balanced", random_state=42)}
     sgkf = StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42)
     for hn, clf in heads.items():
         aucs, bas = [], []

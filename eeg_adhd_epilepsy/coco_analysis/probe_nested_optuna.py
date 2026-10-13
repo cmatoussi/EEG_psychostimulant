@@ -63,13 +63,17 @@ def _base(head):
     if head == "logreg":
         # saga solver supports both l1 and l2 (tuned); needs more iters to converge on high-dim embeddings
         return make_pipeline(imp, StandardScaler(),
-                             LogisticRegression(solver="saga", max_iter=5000, class_weight="balanced"))
+                             LogisticRegression(solver="saga", max_iter=5000, class_weight="balanced",
+                                                random_state=42))
     if head == "svm":
-        return make_pipeline(imp, StandardScaler(), SVC(kernel="rbf", probability=True, class_weight="balanced"))
+        return make_pipeline(imp, StandardScaler(), SVC(kernel="rbf", probability=True,
+                                                        class_weight="balanced", random_state=42))
     if head == "rf":
-        return make_pipeline(imp, StandardScaler(), RandomForestClassifier(class_weight="balanced", n_jobs=1))
+        return make_pipeline(imp, StandardScaler(), RandomForestClassifier(class_weight="balanced",
+                                                                           n_jobs=1, random_state=42))
     if head == "histgb":
-        return make_pipeline(imp, StandardScaler(), HistGradientBoostingClassifier(class_weight="balanced"))
+        return make_pipeline(imp, StandardScaler(), HistGradientBoostingClassifier(class_weight="balanced",
+                                                                                   random_state=42))
     if head == "dummy":
         return make_pipeline(imp, StandardScaler(), DummyClassifier(strategy="stratified", random_state=42))
     raise ValueError(head)

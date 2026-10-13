@@ -153,6 +153,8 @@ def main():
         bkw["interpolate_channels"] = True
 
     def fit_predict(X_tr, y_tr, X_te, strategy, k):
+        import torch
+        torch.manual_seed(42 + k)   # same init per fold across strategies
         prepared = prepare_backend(args.model, X=X_tr, backend="auto", n_outputs=2,
                                    device="auto", train_mode="lora", sfreq=sfreq,
                                    ch_names=ch_names, backend_kwargs=bkw)
