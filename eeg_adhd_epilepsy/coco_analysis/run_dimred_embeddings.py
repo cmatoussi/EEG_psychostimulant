@@ -55,7 +55,7 @@ def _subsample(X, y, groups, cap, seed=42):
     return X[idx], y[idx], groups[idx]
 
 
-SKIP = {("age", "0-4"), ("comorbidity", "asd"), ("sex", "ALL")}  # small/redundant, per standing rules
+SKIP = dc.SKIP  # shared via cohorts.py
 
 
 def _norm(s):
@@ -146,6 +146,8 @@ def main():
                     help="uniform sex x age (x comorbidity, where free) matched "
                          "case/control cohort instead of the natural baseline population; "
                          "cohorts that can't reach 30 matched subjects are skipped.")
+    ap.add_argument("--smoke", action="store_true",
+                    help="24-subject crash check before submitting long jobs")
     args = ap.parse_args()
 
     args.label_csv = ra.resolve_label_csv(args.condition, args.label_csv)
@@ -153,6 +155,8 @@ def main():
     if args.target_col == "asm_resistant":
         label_df = ra.restrict_for_asm_resistant(label_df)
         print(f"asm_resistant target: treated epilepsy only (epilepsy==1 & asm==1) -> {len(label_df)} subjects", flush=True)
+    if args.smoke:
+        label_df = ra.smoke_subset(label_df, target_col=args.target_col, n_subjects=24)
     levels = list(LEVELS) if args.levels == "both" else [args.levels]
     for level_name in levels:
         run_model_level(args.model, level_name, LEVELS[level_name],

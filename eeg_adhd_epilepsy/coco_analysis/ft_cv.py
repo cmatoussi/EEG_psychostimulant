@@ -12,8 +12,9 @@ N_SPLITS = 5
 METRICS = ["accuracy", "balanced_accuracy", "roc_auc"]
 
 
-def run_cv(model, cond, strategy, level, out_dir, label_csv, X, y, groups, fit_predict):
-    """Run 5-fold StratifiedGroupKFold (subject-grouped), score each fold uniformly,
+def run_cv(model, cond, strategy, level, out_dir, label_csv, X, y, groups, fit_predict,
+           n_splits=N_SPLITS):
+    """Run StratifiedGroupKFold (subject-grouped), score each fold uniformly,
     save the held-out predictions, and write the per-cohort split. Returns the
     whole-model metrics dict."""
     from sklearn.model_selection import StratifiedGroupKFold
@@ -22,7 +23,7 @@ def run_cv(model, cond, strategy, level, out_dir, label_csv, X, y, groups, fit_p
 
     folds = {m: [] for m in METRICS}
     fold_preds = []   # (y_te, proba1, groups_te) per fold, for the cohort breakdown
-    sgkf = StratifiedGroupKFold(n_splits=N_SPLITS, shuffle=True, random_state=42)
+    sgkf = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=42)
     for k, (tr, te) in enumerate(sgkf.split(X, y, groups)):
         if len(np.unique(y[te])) < 2:
             print(f"  fold {k}: single-class test, skip", flush=True); continue
@@ -49,7 +50,11 @@ def run_cv(model, cond, strategy, level, out_dir, label_csv, X, y, groups, fit_p
     for cname, cm in cohort_metrics.items():
         hb = cm.get("youden_threshold_balanced_accuracy", {}).get("mean")
         print(f"    cohort {cname}: honest_bal_acc={hb} (n={cm.get('n')})", flush=True)
-    written = cohort_ft_metrics.write_split(out_dir, level, strategy, model, cond, metrics, cohort_metrics)
+    from run_analysis import git_commit
+    provenance = {"label_csv": str(label_csv), "cv_seed": 42, "n_splits": n_splits,
+                  "git_commit": git_commit()}
+    written = cohort_ft_metrics.write_split(out_dir, level, strategy, model, cond, metrics,
+                                            cohort_metrics, provenance=provenance)
     print(f"--> wrote {len(written)} group files under {out_dir}/{level}/{strategy}/ "
           f"(bacc={metrics['balanced_accuracy']['mean']:.3f} "
           f"auc={metrics['roc_auc']['mean']:.3f})", flush=True)

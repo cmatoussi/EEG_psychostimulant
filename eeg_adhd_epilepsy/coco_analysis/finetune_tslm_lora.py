@@ -214,12 +214,14 @@ def _avg_by_subject(X, y, groups):
     return Xs, ys, u
 
 
-def load_data(condition, level, label_csv=None):
+def load_data(condition, level, label_csv=None, smoke=False):
     label_csv = ra.resolve_label_csv(condition, label_csv)
     config = {"paths": {"data_root": DATA_ROOT},
               "signal": {"sfreq": 200.0, "conditions": [condition], "epoch_desc": "base",
                          "ch_names": CH19}}
     label_df = ra.normalize_label_df(__import__("pandas").read_csv(label_csv))
+    if smoke:
+        label_df = ra.smoke_subset(label_df)
     X, y, groups = ra.load_eeg_epochs(config, label_df)
     if level == "subject":
         X, y, groups = _avg_by_subject(X, y, groups)
@@ -233,15 +235,17 @@ def run_finetune(args):
     cfg = dict(LORA)
     cshort = args.condition.replace("_baseline", "")
     print(f"[{args.model}/{cshort}/{args.strategy}/{args.level}] cfg={cfg}", flush=True)
-    X, y, groups = load_data(args.condition, args.level, args.label_csv)
+    smoke = getattr(args, "smoke", False)
+    X, y, groups = load_data(args.condition, args.level, args.label_csv, smoke=smoke)
     print(f"  data {X.shape} classes={np.bincount(y).tolist()} subj={len(np.unique(groups))}", flush=True)
 
     def fit_predict(X_tr, y_tr, X_te, strategy, k):
         torch.manual_seed(42 + k)   # same init per fold across strategies
-        return train_eval(args.model, cfg, strategy, X_tr, y_tr, X_te, dev, batch=args.batch)
+        return train_eval(args.model, cfg, strategy, X_tr, y_tr, X_te, dev,
+                          batch=args.batch, max_epochs=MAX_EPOCHS)
 
     ft_cv.run_cv(args.model, cshort, args.strategy, args.level, args.out_dir,
-                 args.label_csv, X, y, groups, fit_predict)
+                 args.label_csv, X, y, groups, fit_predict, n_splits=2 if smoke else 5)
 
 
 def main():
@@ -254,8 +258,13 @@ def main():
     ap.add_argument("--label-csv", default=None,
                     help="override; default = earliest-per-condition file.")
     ap.add_argument("--batch", type=int, default=16)
+    ap.add_argument("--smoke", action="store_true",
+                    help="10-subject, 2-fold, 2-epoch crash check before submitting long jobs")
     args = ap.parse_args()
     args.label_csv = ra.resolve_label_csv(args.condition, args.label_csv)
+    if args.smoke:
+        global MAX_EPOCHS, LP_EPOCHS
+        MAX_EPOCHS, LP_EPOCHS = 2, 1
     run_finetune(args)
 
 

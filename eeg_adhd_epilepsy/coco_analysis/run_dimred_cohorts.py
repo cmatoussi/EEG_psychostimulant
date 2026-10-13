@@ -24,6 +24,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).parent))
 import run_analysis as ra  # noqa: E402
 import cohort_balance  # noqa: E402
+import cohorts  # noqa: E402
 from coco_pipe.dim_reduction import DimReduction  # noqa: E402
 from coco_pipe.io.quality import compute_row_outlier_scores  # noqa: E402
 from sklearn.preprocessing import RobustScaler  # noqa: E402
@@ -83,31 +84,9 @@ def reject_outlier_rows(X, y, groups, feats, z_threshold, frac_threshold, out_di
           f"dropped {n_drop}/{len(keep)} rows", flush=True)
     return X[keep], np.asarray(y)[keep], np.asarray(groups)[keep], int(n_drop)
 
-# cohort-group -> {cohort key: (subdir label, mask fn on normalized label_df)}
-COHORT_GROUPS = {
-    "all": {"all": ("all", lambda d: pd.Series(True, index=d.index))},
-    "comorbidity": {
-        "none": ("none", lambda d: (d.autism == 0) & (d.adhd == 0)),
-        "asd":  ("asd",  lambda d: (d.autism == 1) & (d.adhd == 0)),
-        "adhd": ("adhd", lambda d: (d.autism == 0) & (d.adhd == 1)),
-        "both": ("both", lambda d: (d.autism == 1) & (d.adhd == 1)),
-    },
-    "sex": {
-        "F":   ("female", lambda d: d.sex == "F"),
-        "M":   ("male",   lambda d: d.sex == "M"),
-        "ALL": ("all",    lambda d: pd.Series(True, index=d.index)),
-    },
-    "age": {
-        "0-4":   ("age_0_4",   lambda d: d.age_group == "0-4"),
-        "5-8":   ("age_5_8",   lambda d: d.age_group == "5-8"),
-        "9-12":  ("age_9_12",  lambda d: d.age_group == "9-12"),
-        "13-18": ("age_13_18", lambda d: d.age_group == "13-18"),
-    },
-}
-
-# small/redundant cohorts skipped under --cohort-group everything, matching
-# run_dimred_embeddings.py's _cohorts_for()
-SKIP = {("age", "0-4"), ("comorbidity", "asd"), ("sex", "ALL")}
+# cohort masks live in cohorts.py (shared, single source of truth)
+COHORT_GROUPS = cohorts.subdir_groups()
+SKIP = cohorts.SKIP
 
 
 def _cohort_metadata(groups, label_df):
@@ -250,6 +229,8 @@ def main():
                     help="uniform sex x age (x comorbidity, where free) matched "
                          "case/control cohort instead of the natural baseline population; "
                          "cohorts that can't reach 30 matched subjects are skipped.")
+    ap.add_argument("--smoke", action="store_true",
+                    help="24-subject crash check before submitting long jobs")
     args = ap.parse_args()
 
     args.label_csv = ra.resolve_label_csv(args.condition, args.label_csv)
@@ -260,6 +241,8 @@ def main():
     if args.target_col == "asm_resistant":
         label_df = ra.restrict_for_asm_resistant(label_df)
         print(f"asm_resistant target: treated epilepsy only (epilepsy==1 & asm==1) -> {len(label_df)} subjects", flush=True)
+    if args.smoke:
+        label_df = ra.smoke_subset(label_df, target_col=args.target_col, n_subjects=24)
 
     kw = dict(reject=not args.no_reject, mad_z=args.mad_z, outlier_frac=args.outlier_frac,
               clip=(args.clip if args.clip and args.clip > 0 else None),

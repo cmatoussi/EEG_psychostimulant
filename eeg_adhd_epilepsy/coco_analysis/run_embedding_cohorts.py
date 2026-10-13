@@ -20,6 +20,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).parent))
 import run_analysis as ra  # noqa: E402
 import cohort_balance  # noqa: E402
+import cohorts  # noqa: E402
 
 LABEL_CSV = "/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/csv/patients_metadata_clean.csv"
 LEVEL     = "epoch_level"
@@ -37,28 +38,12 @@ HEADS = {
 }
 
 # cohort-group -> {cohort key: (csv name, mask fn on normalized label_df)}
-COHORT_GROUPS = {
-    "comorbidity": {
-        "no_comorbidity":    ("results_embedding_no_comorbidity.csv",    lambda d: (d.autism == 0) & (d.adhd == 0)),
-        "with_asd":          ("results_embedding_with_asd.csv",          lambda d: (d.autism == 1) & (d.adhd == 0)),
-        "with_adhd":         ("results_embedding_with_adhd.csv",         lambda d: (d.autism == 0) & (d.adhd == 1)),
-        "with_adhd_and_asd": ("results_embedding_with_adhd_and_asd.csv", lambda d: (d.autism == 1) & (d.adhd == 1)),
-    },
-    "sex": {
-        "F":   ("results_embedding_female.csv", lambda d: d.sex == "F"),
-        "M":   ("results_embedding_male.csv",   lambda d: d.sex == "M"),
-        "ALL": ("results_embedding_all.csv",    lambda d: pd.Series(True, index=d.index)),
-    },
-    "age": {  # uses the pre-binned age_group column
-        "0-4":   ("results_embedding_age_0_4.csv",   lambda d: d.age_group == "0-4"),
-        "5-8":   ("results_embedding_age_5_8.csv",   lambda d: d.age_group == "5-8"),
-        "9-12":  ("results_embedding_age_9_12.csv",  lambda d: d.age_group == "9-12"),
-        "13-18": ("results_embedding_age_13_18.csv", lambda d: d.age_group == "13-18"),
-    },
-}
+# cohort masks live in cohorts.py (shared, single source of truth)
+COHORT_GROUPS = cohorts.embed_groups()
 
 COLUMNS = [
     "fm_model", "condition", "aggregation", "head", "target", "balance",
+    "label_csv", "git_commit",
     "status", "n_subjects", "n_windows",
     "adhd", "epilepsy", "autism",
     "accuracy_mean", "accuracy_std",
@@ -106,7 +91,9 @@ def _empty_metrics():
 def run_one_cohort(cohort_key, csv_name, mask_fn, label_dfs, out_dir,
                    cv_strategy="stratified_group_kfold",
                    aggregations=("averaged_predictions",), epoch_out_dir=None,
-                   target_col="epilepsy", cohort_group=None, balanced=False):
+                   target_col="epilepsy", cohort_group=None, balanced=False,
+                   label_csvs=None):
+    git = ra.git_commit()
     def _cohort_for(cond):
         cdf = label_dfs[cond][mask_fn(label_dfs[cond])].copy()
         if balanced:
@@ -148,7 +135,8 @@ def run_one_cohort(cohort_key, csv_name, mask_fn, label_dfs, out_dir,
             for agg in aggregations:
                 base = {"fm_model": model, "condition": cond_s, "aggregation": agg,
                         "target": target_col,
-                        "balance": "balanced" if balanced else "baseline"}
+                        "balance": "balanced" if balanced else "baseline",
+                        "label_csv": (label_csvs or {}).get(cond, ""), "git_commit": git}
                 emb_level = AGG[agg]["embedding_level"]
                 metric_level = AGG[agg]["metric_level"]
                 acfg = {
@@ -265,10 +253,16 @@ def main():
                     help="subset of FM models to run (default: all).")
     ap.add_argument("--heads", nargs="+", default=None,
                     help="subset of classifier heads (e.g. drop the slow svm).")
+    ap.add_argument("--smoke", action="store_true",
+                    help="10-subject, 2-fold, 1-model crash check before submitting long jobs")
     args = ap.parse_args()
     aggregations = list(AGG) if args.aggregation == "both" else [args.aggregation]
 
-    global MODELS, HEADS
+    global MODELS, HEADS, N_SPLITS
+    if args.smoke:
+        N_SPLITS = 2
+        if not args.models:
+            args.models = [MODELS[0]]
     if args.models:
         MODELS = [m for m in MODELS if m in set(args.models)]
     if args.heads:
@@ -284,6 +278,8 @@ def main():
             ldf = ldf[ldf.source_dataset == args.source].copy()
         if args.target_col == "asm_resistant":
             ldf = ra.restrict_for_asm_resistant(ldf)
+        if args.smoke:
+            ldf = ra.smoke_subset(ldf, target_col=args.target_col)
         return ldf
     label_dfs = {cond: _load_labels(cond) for cond in CONDITIONS}
     print(f"labels: { {c: ldf['study_id'].nunique() for c, ldf in label_dfs.items()} } subjects/condition", flush=True)
@@ -299,7 +295,8 @@ def main():
         run_one_cohort(key, csv_name, mask_fn, label_dfs, args.out_dir,
                        cv_strategy=args.cv_strategy, aggregations=aggregations,
                        epoch_out_dir=args.epoch_out_dir, target_col=args.target_col,
-                       cohort_group=args.cohort_group, balanced=args.balanced)
+                       cohort_group=args.cohort_group, balanced=args.balanced,
+                       label_csvs={c: ra.resolve_label_csv(c, args.label_csv) for c in CONDITIONS})
 
 
 if __name__ == "__main__":

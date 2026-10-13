@@ -15,18 +15,20 @@ from sklearn.metrics import roc_auc_score, balanced_accuracy_score, f1_score
 
 import run_analysis as ra
 import pooled_metrics
+import cohorts
 
-# cohort -> mask on the normalized label_df (skip small/redundant per standing rules)
+# cohort -> mask, built from the shared definitions in cohorts.py
+# (skips small/redundant cohorts per standing rules; keeps this file's row names)
 COHORTS = {
-    "all":    lambda d: pd.Series(True, index=d.index),
-    "female": lambda d: d.sex == "F",
-    "male":   lambda d: d.sex == "M",
-    "age_5_8":   lambda d: d.age_group == "5-8",
-    "age_9_12":  lambda d: d.age_group == "9-12",
-    "age_13_18": lambda d: d.age_group == "13-18",
-    "como_none": lambda d: (d.autism == 0) & (d.adhd == 0),
-    "como_adhd": lambda d: (d.autism == 0) & (d.adhd == 1),
-    "como_both": lambda d: (d.autism == 1) & (d.adhd == 1),
+    "all":        cohorts.MASKS["all"]["all"],
+    "female":     cohorts.MASKS["sex"]["F"],
+    "male":       cohorts.MASKS["sex"]["M"],
+    "age_5_8":    cohorts.MASKS["age"]["5-8"],
+    "age_9_12":   cohorts.MASKS["age"]["9-12"],
+    "age_13_18":  cohorts.MASKS["age"]["13-18"],
+    "como_none":  cohorts.MASKS["comorbidity"]["none"],
+    "como_adhd":  cohorts.MASKS["comorbidity"]["adhd"],
+    "como_both":  cohorts.MASKS["comorbidity"]["both"],
 }
 
 
@@ -39,7 +41,8 @@ GROUP_OF = {
 }
 
 
-def write_split(out_base, level, strategy, model, cond, whole_metrics, cohort_metrics):
+def write_split(out_base, level, strategy, model, cond, whole_metrics, cohort_metrics,
+                provenance=None):
     """Write cohort-split results into the folder layout:
         {out_base}/{level}/{strategy}/{group}/results_{model}_{cond}.json
     group in {all, sex, age, comorbidity}. The 'all' group file also carries the
@@ -48,11 +51,13 @@ def write_split(out_base, level, strategy, model, cond, whole_metrics, cohort_me
     for cname, cm in cohort_metrics.items():
         groups.setdefault(GROUP_OF.get(cname, "all"), {})[cname] = cm
     written = []
-    for g, cohorts in groups.items():
+    for g, group_cohorts in groups.items():
         d = Path(out_base) / level / strategy / g
         d.mkdir(parents=True, exist_ok=True)
         payload = {"model": model, "condition": cond, "level": level, "strategy": strategy,
-                   "cohort_group": g, "cohorts": cohorts}
+                   "cohort_group": g, "cohorts": group_cohorts}
+        if provenance:
+            payload["provenance"] = provenance   # label csv, cv seed, git commit
         if g == "all":
             payload["whole_metrics"] = whole_metrics   # the driver's own 5-fold metrics block
         p = d / f"results_{model}_{cond}.json"

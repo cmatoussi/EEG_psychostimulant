@@ -127,9 +127,15 @@ def main():
                     help="override; default = earliest-per-condition file.")
     ap.add_argument("--batch", type=int, default=BATCH,
                     help="batch size (lower for LaBraM's 3000-sample windows to avoid OOM)")
+    ap.add_argument("--smoke", action="store_true",
+                    help="10-subject, 2-fold, 2-epoch crash check before submitting long jobs")
     args = ap.parse_args()
     args.label_csv = resolve_label_csv(args.condition, args.label_csv)
     BATCH = args.batch
+    n_splits = 5
+    if args.smoke:
+        global MAX_EPOCHS, LP_EPOCHS
+        MAX_EPOCHS, LP_EPOCHS, n_splits = 2, 1, 2
 
     cfg = dict(LORA)
     cshort = args.condition.replace("_baseline", "")
@@ -142,6 +148,9 @@ def main():
                          "ch_names": ["Fp1", "Fp2", "F7", "F3", "Fz", "F4", "F8", "T3", "C3",
                                       "Cz", "C4", "T4", "T5", "P3", "Pz", "P4", "T6", "O1", "O2"]}}
     label_df = normalize_label_df(pd.read_csv(args.label_csv))
+    if args.smoke:
+        from run_analysis import smoke_subset
+        label_df = smoke_subset(label_df)
     X, y, groups = load_eeg_epochs(config, label_df)
     X, y, groups, ch_names = _prep_model_data(X, y, groups, args.model, config["signal"])
     sfreq = float(config["signal"]["sfreq"])
@@ -170,7 +179,7 @@ def main():
         return net.predict_proba(_native(prepared.adapt(X_te)))[:, 1]
 
     ft_cv.run_cv(args.model, cshort, args.strategy, args.level, args.out_dir,
-                 args.label_csv, X, y, groups, fit_predict)
+                 args.label_csv, X, y, groups, fit_predict, n_splits=n_splits)
 
 
 if __name__ == "__main__":

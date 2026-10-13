@@ -102,6 +102,31 @@ def norm_study_id(s) -> str:
         return s
 
 
+def git_commit() -> str:
+    """Short commit hash of this repo at runtime ('unknown' outside a checkout)."""
+    import subprocess
+    try:
+        r = subprocess.run(["git", "-C", str(Path(__file__).parent), "rev-parse", "--short", "HEAD"],
+                           capture_output=True, text=True, timeout=5)
+        return r.stdout.strip() or "unknown"
+    except Exception:
+        return "unknown"
+
+
+def smoke_subset(label_df, target_col="epilepsy", n_subjects=10, seed=42):
+    """Small balanced subject subset for --smoke driver runs (crash checks before
+    submitting long jobs)."""
+    d = label_df.drop_duplicates("study_id")
+    rng = np.random.RandomState(seed)
+    keep = []
+    for cls in (0, 1):
+        ids = d.loc[pd.to_numeric(d[target_col], errors="coerce") == cls, "study_id"]
+        keep += list(rng.permutation(ids)[: max(2, n_subjects // 2)])
+    sub = label_df[label_df["study_id"].isin(keep)].copy()
+    logger.info(f"SMOKE: {sub['study_id'].nunique()} subjects ({target_col} subset)")
+    return sub
+
+
 def restrict_for_asm_resistant(df: pd.DataFrame) -> pd.DataFrame:
     """Cohort for the asm_resistant target: treated epilepsy with a known resistance
     label (epilepsy==1 & asm==1 & asm_resistant present). Resistance is undefined for

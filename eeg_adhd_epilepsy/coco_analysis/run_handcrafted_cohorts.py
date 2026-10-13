@@ -41,6 +41,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 import run_analysis as ra  # noqa: E402
 import pooled_metrics  # noqa: E402
 import cohort_balance  # noqa: E402
+import cohorts  # noqa: E402
 
 FEATDIR = ("/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/BIDS/derivatives/"
            "signal_features/descriptors/combined")
@@ -80,7 +81,7 @@ TUNE = {
 _SEL_TUNE = [("clf__C", 1e-2, 1e2, True, False)]   # final head after SFS / L1
 
 # Cohorts to always skip for THIS dataset (too small / undecodable).
-SKIP_COHORTS = {("age", "0-4"), ("comorbidity", "asd"), ("sex", "ALL")}
+SKIP_COHORTS = cohorts.SKIP
 
 # Per-drug anti-seizure-medication flag columns (used to derive monotherapy).
 ASM_COLS = ["LEV", "LTG", "LCS", "CLB", "CBZ", "VPA", "ETH", "TPM", "RUF",
@@ -136,33 +137,12 @@ def _vpa_mono(d):  return _epi(d) & _adhd(d) & (d.VPA == 1) & (d._n_asm == 1)
 def _asm_naive(d): return _epi(d) & _adhd(d) & (d.asm == 0)
 
 
-# cohort-group -> {cohort key: (subdir label, mask fn on the normalized label_df)}.
-# Demographic groups subset the sample and decode epilepsy-vs-control within it.
-# The `drug` group keeps the SHARED controls and swaps only the epilepsy+ positive
-# subset, so per-medication feature importance is directly comparable.
+# Demographic cohort masks live in cohorts.py (shared, single source of truth).
+# The `drug` group is handcrafted-specific: drug SIGNATURE decoded WITHIN epilepsy
+# so the label is the medication, not the disease. Each cohort = (subdir, mask
+# selecting the two drug groups, target column = the drug flag).
 COHORT_GROUPS = {
-    "all": {"all": ("all", lambda d: pd.Series(True, index=d.index))},
-    "sex": {
-        "F":   ("female", lambda d: d.sex == "F"),
-        "M":   ("male",   lambda d: d.sex == "M"),
-        "ALL": ("all",    lambda d: pd.Series(True, index=d.index)),
-    },
-    "age": {
-        "0-4":   ("age_0_4",   lambda d: d.age_group == "0-4"),
-        "5-8":   ("age_5_8",   lambda d: d.age_group == "5-8"),
-        "9-12":  ("age_9_12",  lambda d: d.age_group == "9-12"),
-        "13-18": ("age_13_18", lambda d: d.age_group == "13-18"),
-    },
-    "comorbidity": {
-        "none": ("none", lambda d: (d.autism == 0) & (d.adhd == 0)),
-        "asd":  ("asd",  lambda d: (d.autism == 1) & (d.adhd == 0)),
-        "adhd": ("adhd", lambda d: (d.autism == 0) & (d.adhd == 1)),
-        "both": ("both", lambda d: (d.autism == 1) & (d.adhd == 1)),
-    },
-    # Drug SIGNATURE, decoded WITHIN epilepsy so the label is the medication, not
-    # the disease: controls-vs-drug would confound the ASM's EEG effect with
-    # epilepsy. Each cohort = (subdir, mask selecting the two drug groups, target
-    # column = the drug flag that is 1 for one group / 0 for the other).
+    **cohorts.subdir_groups(),
     "drug": {
         "lev_vs_vpa":   ("lev_vs_vpa",   lambda d: _lev_mono(d) | _vpa_mono(d),  "LEV"),
         "lev_vs_naive": ("lev_vs_naive", lambda d: _lev_mono(d) | _asm_naive(d), "LEV"),
@@ -577,9 +557,13 @@ def main():
     ap.add_argument("--nested-head", action="store_true",
                     help="tune the classification head (logreg C / RF depth) INSIDE each CV "
                          "fold for the all/sensor/SFS/L1 analyses (leak-free nested optimisation).")
+    ap.add_argument("--smoke", action="store_true",
+                    help="10-subject, 2-fold crash check before submitting long jobs")
     args = ap.parse_args()
-    global NESTED
+    global NESTED, N_SPLITS, SFS_N
     NESTED = args.nested_head
+    if args.smoke:
+        N_SPLITS, SFS_N = 2, 3
     conds = [args.condition] if args.condition else CONDITIONS
 
     global _TARGET_COL, _REPORTS_DIR
@@ -596,6 +580,8 @@ def main():
             ldf = ldf[keep].copy()
         if args.cohort_group == "drug":
             ldf = add_drug_flags(ldf)
+        if args.smoke:
+            ldf = ra.smoke_subset(ldf, target_col=_TARGET_COL, n_subjects=24)  # >=20-row guard
         return ldf
     label_dfs = {cond: _load_labels(cond) for cond in conds}
     out = Path(args.out_dir); out.mkdir(parents=True, exist_ok=True)

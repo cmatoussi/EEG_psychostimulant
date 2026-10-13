@@ -145,6 +145,8 @@ def main():
     ap.add_argument("--model", default="Salesforce/moirai-1.0-R-small")
     ap.add_argument("--out-dir", default="/home/mat/scratch/results/extraceted_embeddings_files/moirai")
     ap.add_argument("--label-csv", default=LABEL_CSV)
+    ap.add_argument("--smoke", action="store_true",
+                    help="10-subject crash check before submitting long jobs")
     args = ap.parse_args()
     dev = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -153,6 +155,8 @@ def main():
               "signal": {"sfreq": 200.0, "conditions": [args.condition],
                          "epoch_desc": "base", "ch_names": CH19}}
     label_df = ra.normalize_label_df(pd.read_csv(args.label_csv))
+    if args.smoke:
+        label_df = ra.smoke_subset(label_df)
     X, y, groups = ra.load_eeg_epochs(config, label_df)
     print(f"data {X.shape} classes={np.bincount(y).tolist()} subjects={len(np.unique(groups))}", flush=True)
 

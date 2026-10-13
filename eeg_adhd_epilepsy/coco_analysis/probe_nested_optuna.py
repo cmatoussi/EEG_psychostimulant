@@ -335,11 +335,17 @@ def main():
     ap.add_argument("--restrict-col", default=None,
                     help="keep only subjects where this column==1 before cohorting "
                          "(e.g. epilepsy for asm_resistant: resistant-vs-non-resistant WITHIN epilepsy)")
+    ap.add_argument("--smoke", action="store_true",
+                    help="10-subject, 2-fold, 2-trial crash check before submitting long jobs")
     args = ap.parse_args()
 
     args.label_csv = ra.resolve_label_csv(args.condition, args.label_csv)
     label_df = ra.normalize_label_df(pd.read_csv(args.label_csv))
     label_df["study_id"] = label_df["study_id"].astype(str)
+    if args.smoke:
+        global N_OUTER
+        N_OUTER, args.n_trials = 2, 2
+        label_df = ra.smoke_subset(label_df, target_col=args.target_col)
     cond = f"{args.condition}_baseline"
     fixed_mode = args.fixed
     tag = "fixed" if args.fixed else "nested"
