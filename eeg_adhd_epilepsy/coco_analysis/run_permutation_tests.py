@@ -19,6 +19,7 @@ Results saved to permute_testing.csv (one row per test).
 """
 
 import json
+import pickle
 import sys
 from itertools import combinations
 from pathlib import Path
@@ -38,8 +39,10 @@ from coco_pipe.decoding.stats import (
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
-FT_ONLY_DIR = Path("/home/mat/scratch/results/fine_tune/adjusted_lr")
-LP_FT_DIR   = Path("/home/mat/scratch/results/fine_tune/lp_ft/base")
+# per-fold held-out predictions saved by the clean finetune pipeline (ft_cv -> save_preds)
+PREDS_ROOT  = Path("/home/mat/scratch/results/clean_results/finetuning/epilepsy/baseline/epoch")
+FT_ONLY_DIR = PREDS_ROOT / "ft_only" / "_preds"
+LP_FT_DIR   = PREDS_ROOT / "lp_ft" / "_preds"
 OUT_CSV     = Path(__file__).parent / "permute_testing.csv"
 
 MODELS     = ["cbramod", "reve", "biot"]
@@ -59,15 +62,27 @@ METRIC        = "roc_auc"
 # Helpers
 # ---------------------------------------------------------------------------
 def load_res_cond(model: str, cond: str, exp_dir: Path) -> dict | None:
-    p = exp_dir / f"results_{model}_{cond}.json"
+    """Load the clean pipeline's per-fold prediction pickle as the
+    {"predictions": [{y_true, y_proba, sample_id}, ...]} dict the tests consume."""
+    p = exp_dir / f"{model}_{cond}.pkl"
     if not p.exists():
         return None
-    with open(p) as f:
-        data = json.load(f)
-    keys = list(data["results"].keys())
-    if not keys:
-        return None
-    return data["results"][keys[0]]
+    with open(p, "rb") as f:
+        folds = pickle.load(f)
+    preds = []
+    for (y, pr, g) in folds:
+        y, pr = np.asarray(y), np.asarray(pr)
+        preds.append({
+            "y_true": y,
+            "y_proba": np.column_stack([1 - pr, pr]),
+            "y_pred": (pr >= 0.5).astype(int),
+            "group": np.asarray(g),
+            # positional id within the fold: rows come from the same splitter/order
+            # for every model, so position pairs rows across models (the y_true
+            # mismatch guard in merge_models catches any misalignment).
+            "sample_id": np.arange(len(y)),
+        })
+    return {"predictions": preds}
 
 
 def fold_roc(res: dict) -> np.ndarray:

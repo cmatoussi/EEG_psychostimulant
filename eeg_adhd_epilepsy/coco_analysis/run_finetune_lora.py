@@ -95,13 +95,15 @@ def _fit(backend, X_tr, y_tr, cfg, strategy):
             print(f"  lp_ft: no LoRA param matched head names {_HEAD}; "
                   f"phase 1 trains the plain head only", flush=True)
         saved = backend._train_mode; backend._train_mode = "frozen"
-        lp = _sf_net(backend, y_tr, cfg["lr"], LP_EPOCHS)
-        lp.fit(X_tr, y_tr)
-        if hasattr(lp.optimizer_, "eval"):
-            lp.optimizer_.eval()             # bake averaged head weights before phase 2
-        for p in frozen:
-            p.requires_grad = True
-        backend._train_mode = saved
+        try:
+            lp = _sf_net(backend, y_tr, cfg["lr"], LP_EPOCHS)
+            lp.fit(X_tr, y_tr)
+            if hasattr(lp.optimizer_, "eval"):
+                lp.optimizer_.eval()         # bake averaged head weights before phase 2
+        finally:                             # restore even if the LP phase fails
+            for p in frozen:
+                p.requires_grad = True
+            backend._train_mode = saved
 
     net = _sf_net(backend, y_tr, cfg["lr"], MAX_EPOCHS)
     net.fit(X_tr, y_tr)
