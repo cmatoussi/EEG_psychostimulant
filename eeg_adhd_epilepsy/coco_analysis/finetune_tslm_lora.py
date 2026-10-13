@@ -17,7 +17,7 @@ base encoder (LoRA-injected, grad flows through the adapters) -> mean-pool ->
 Linear head -> logits.
 """
 from __future__ import annotations
-import argparse, json, sys
+import argparse, sys
 from pathlib import Path
 import numpy as np
 import torch
@@ -65,10 +65,6 @@ def inject_lora(model, r, alpha, dropout, skip=("head",)):
                 setattr(mod, cname, LoRALinear(child, r, alpha, dropout))
                 n += 1
     return n
-
-
-def trainable_params(model):
-    return [p for p in model.parameters() if p.requires_grad]
 
 
 def lora_params(model):

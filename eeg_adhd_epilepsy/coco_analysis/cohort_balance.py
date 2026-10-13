@@ -20,8 +20,6 @@ subject's rows from spanning train and test after this filter is applied.
 age_group == '0-4' is always excluded first (established separately as too
 small a bin to use anywhere in this project).
 """
-import numpy as np
-import pandas as pd
 
 MIN_N = 30
 SEED = 42

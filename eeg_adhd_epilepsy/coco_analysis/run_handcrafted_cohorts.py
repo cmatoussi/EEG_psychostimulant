@@ -45,7 +45,6 @@ import cohorts  # noqa: E402
 
 FEATDIR = ("/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/BIDS/derivatives/"
            "signal_features/descriptors/combined")
-LABEL_CSV = "/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/csv/patients_metadata_clean.csv"
 CONDITIONS = ["EO_baseline", "EC_baseline"]
 N_SPLITS = 5
 SFS_N = 20

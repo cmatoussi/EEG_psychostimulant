@@ -22,7 +22,6 @@ import run_analysis as ra  # noqa: E402
 import cohort_balance  # noqa: E402
 import cohorts  # noqa: E402
 
-LABEL_CSV = "/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/csv/patients_metadata_clean.csv"
 LEVEL     = "epoch_level"
 N_SPLITS  = 5
 # All models with extracted embeddings; lighter dims first, eegpt (2048-d) last.

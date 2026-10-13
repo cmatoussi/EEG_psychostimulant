@@ -11,7 +11,6 @@ import json
 from pathlib import Path
 import numpy as np
 import pandas as pd
-from sklearn.metrics import roc_auc_score, balanced_accuracy_score, f1_score
 
 import run_analysis as ra
 import pooled_metrics

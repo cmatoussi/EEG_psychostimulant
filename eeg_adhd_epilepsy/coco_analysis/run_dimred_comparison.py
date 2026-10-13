@@ -15,7 +15,6 @@ Usage:
 import argparse
 import base64
 import io
-import json
 from pathlib import Path
 
 import matplotlib

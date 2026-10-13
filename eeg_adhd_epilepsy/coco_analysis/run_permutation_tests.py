@@ -18,7 +18,6 @@ subject aggregation), which does not map onto the paired model-label-swap permut
 Results saved to permute_testing.csv (one row per test).
 """
 
-import json
 import pickle
 import sys
 from itertools import combinations

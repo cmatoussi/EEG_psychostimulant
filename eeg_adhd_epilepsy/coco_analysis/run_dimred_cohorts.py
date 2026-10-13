@@ -29,7 +29,6 @@ from coco_pipe.dim_reduction import DimReduction  # noqa: E402
 from coco_pipe.io.quality import compute_row_outlier_scores  # noqa: E402
 from sklearn.preprocessing import RobustScaler  # noqa: E402
 
-LABEL_CSV = "/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/csv/patients_metadata_clean.csv"
 FEATURE_CSV = ("/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/BIDS/derivatives/"
                "signal_features/descriptors/combined/sensor_subject_features.csv")
 

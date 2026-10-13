@@ -28,7 +28,6 @@ import run_analysis as ra  # noqa: E402
 import run_dimred_cohorts as dc  # noqa: E402  (reuse reject/scale/meta/reduce helpers)
 import cohort_balance  # noqa: E402
 
-LABEL_CSV = "/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/csv/patients_metadata_clean.csv"
 MODELS = ["signaljepa", "labram", "cbramod", "luna", "biot", "bendr", "reve", "eegpt"]
 CONDITION = "EO_baseline"
 # name -> embedding_level passed to load_precomputed_embeddings
