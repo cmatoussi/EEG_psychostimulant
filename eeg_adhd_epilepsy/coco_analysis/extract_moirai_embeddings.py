@@ -30,7 +30,7 @@ Usage:
     python extract_moirai_embeddings.py --condition EO_baseline
 """
 from __future__ import annotations
-import argparse, sys, types
+import argparse, json, sys, types
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -176,7 +176,12 @@ def main():
     df.insert(1, "epilepsy", y.astype(int))
     csv = out / f"moirai_{cond}_epoch_embeddings.csv"
     df.to_csv(csv, index=False)
-    print(f"--> wrote {csv}", flush=True)
+    # provenance sidecar: which settings produced this file
+    meta = {"model": args.model, "condition": cond, "label_csv": args.label_csv,
+            "sfreq": 200.0, "patch": PATCH, "batch": BATCH,
+            "n_rows": int(len(df)), "n_dims": int(E.shape[1])}
+    (out / f"moirai_{cond}_epoch_embeddings_meta.json").write_text(json.dumps(meta, indent=2))
+    print(f"--> wrote {csv} (+ meta sidecar)", flush=True)
 
     print("=== epoch-level classical-head probe ===", flush=True)
     _probe(E, y, np.asarray(groups), "moirai/epoch")

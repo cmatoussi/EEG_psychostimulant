@@ -28,7 +28,7 @@ Usage (main env has torch/einops/mne; add the NeuroLM repo to PYTHONPATH):
         --out-dir /home/mat/scratch/results/extraceted_embeddings_files/moirai/../neurolm
 """
 from __future__ import annotations
-import argparse, re, sys
+import argparse, json, re, sys
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -156,7 +156,13 @@ def main():
     df.insert(1, "epilepsy", y.astype(int))
     csv = out / f"neurolm_{cond}_epoch_embeddings.csv"
     df.to_csv(csv, index=False)
-    print(f"--> wrote {csv}", flush=True)
+    # provenance sidecar: which settings produced this file (encoder_keys_missing is
+    # 0 by construction -- _load_vq_encoder raises otherwise)
+    meta = {"model": "neurolm", "vq_checkpoint": args.vq, "condition": cond,
+            "label_csv": args.label_csv, "sfreq": 200.0, "patch": PATCH, "batch": BATCH,
+            "encoder_keys_missing": 0, "n_rows": int(len(df)), "n_dims": int(E.shape[1])}
+    (out / f"neurolm_{cond}_epoch_embeddings_meta.json").write_text(json.dumps(meta, indent=2))
+    print(f"--> wrote {csv} (+ meta sidecar)", flush=True)
 
     print("=== epoch-level classical-head probe ===", flush=True)
     _probe(E, y, np.asarray(groups), "neurolm/epoch")
