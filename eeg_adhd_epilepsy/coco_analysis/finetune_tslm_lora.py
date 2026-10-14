@@ -67,6 +67,17 @@ def inject_lora(model, r, alpha, dropout, skip=("head",)):
     return n
 
 
+def _random_reinit(module):
+    """Re-randomize via each submodule's default init (call BEFORE inject_lora)."""
+    n = 0
+    for m in module.modules():
+        if hasattr(m, "reset_parameters") and callable(m.reset_parameters):
+            m.reset_parameters(); n += 1
+    if n == 0:
+        raise RuntimeError("random-init: no module exposed reset_parameters()")
+    return n
+
+
 def lora_params(model):
     """All LoRA A/B parameters (regardless of current requires_grad state)."""
     ps = []
@@ -80,13 +91,17 @@ def lora_params(model):
 class MoiraiClassifier(nn.Module):
     PATCH = 128
 
-    def __init__(self, r, alpha, dropout, n_out=2, model_name="Salesforce/moirai-1.0-R-small"):
+    def __init__(self, r, alpha, dropout, n_out=2, model_name="Salesforce/moirai-1.0-R-small",
+                 random_init=False):
         super().__init__()
         import extract_moirai_embeddings as em
         em._install_shims()
         from uni2ts.model.moirai.module import MoiraiModule
         self.em = em
         self.moirai = MoiraiModule.from_pretrained(model_name)
+        if random_init:
+            n = _random_reinit(self.moirai)   # pretraining ablation: same arch, fresh weights
+            print(f"  moirai RANDOM-INIT: reset {n} modules", flush=True)
         for p in self.moirai.parameters():
             p.requires_grad_(False)
         self.d_model = self.moirai.d_model
@@ -115,14 +130,14 @@ class MoiraiClassifier(nn.Module):
 # ------------------------- NeuroLM wrapper -------------------------
 class NeuroLMClassifier(nn.Module):
     def __init__(self, r, alpha, dropout, n_out=2,
-                 vq="/home/mat/scratch/neurolm_ckpt/checkpoints/VQ.pt"):
+                 vq="/home/mat/scratch/neurolm_ckpt/checkpoints/VQ.pt", random_init=False):
         super().__init__()
         sys.path.insert(0, "/home/mat/projects/NeuroLM")
         import extract_neurolm_embeddings as en
         from dataset import standard_1020
         self.en = en
         self.chan_idx = [standard_1020.index(c) for c in en.CH19_NL]
-        self.enc = en._load_vq_encoder(vq, "cpu")
+        self.enc = en._load_vq_encoder(vq, "cpu", random_init=random_init)
         for p in self.enc.parameters():
             p.requires_grad_(False)
         self.d_model = 768
@@ -142,11 +157,13 @@ class NeuroLMClassifier(nn.Module):
         return self.head(feats)
 
 
-def build_model(model_key, cfg, n_out=2):
+def build_model(model_key, cfg, n_out=2, random_init=False):
     if model_key == "moirai":
-        return MoiraiClassifier(cfg["r"], cfg["alpha"], cfg["dropout"], n_out)
+        return MoiraiClassifier(cfg["r"], cfg["alpha"], cfg["dropout"], n_out,
+                                random_init=random_init)
     if model_key == "neurolm":
-        return NeuroLMClassifier(cfg["r"], cfg["alpha"], cfg["dropout"], n_out)
+        return NeuroLMClassifier(cfg["r"], cfg["alpha"], cfg["dropout"], n_out,
+                                 random_init=random_init)
     raise ValueError(model_key)
 
 
@@ -156,10 +173,11 @@ def _sf_opt(params, lr):
     return AdamWScheduleFree(params, lr=lr, weight_decay=0.01)
 
 
-def train_eval(model_key, cfg, strategy, Xtr, ytr, Xte, device, batch=16, max_epochs=MAX_EPOCHS):
+def train_eval(model_key, cfg, strategy, Xtr, ytr, Xte, device, batch=16, max_epochs=MAX_EPOCHS,
+               random_init=False):
     """Train LoRA on (Xtr, ytr); return P(class=1) on Xte. Scoring is done by ft_cv."""
     from sklearn.utils.class_weight import compute_class_weight
-    net = build_model(model_key, cfg).to(device)
+    net = build_model(model_key, cfg, random_init=random_init).to(device)
 
     cw = compute_class_weight("balanced", classes=np.unique(ytr), y=ytr)
     crit = nn.CrossEntropyLoss(weight=torch.tensor(cw, dtype=torch.float32, device=device))
@@ -238,9 +256,11 @@ def run_finetune(args):
     def fit_predict(X_tr, y_tr, X_te, strategy, k):
         torch.manual_seed(42 + k)   # same init per fold across strategies
         return train_eval(args.model, cfg, strategy, X_tr, y_tr, X_te, dev,
-                          batch=args.batch, max_epochs=MAX_EPOCHS)
+                          batch=args.batch, max_epochs=MAX_EPOCHS,
+                          random_init=getattr(args, "random_init", False))
 
-    ft_cv.run_cv(args.model, cshort, args.strategy, args.level, args.out_dir,
+    model_out = f"{args.model}_random_encoder" if getattr(args, "random_init", False) else args.model
+    ft_cv.run_cv(model_out, cshort, args.strategy, args.level, args.out_dir,
                  args.label_csv, X, y, groups, fit_predict, n_splits=2 if smoke else 5)
 
 
@@ -254,6 +274,8 @@ def main():
     ap.add_argument("--label-csv", default=None,
                     help="override; default = earliest-per-condition file.")
     ap.add_argument("--batch", type=int, default=16)
+    ap.add_argument("--random-init", action="store_true",
+                    help="random encoder (pretraining ablation); results under {model}_random_encoder")
     ap.add_argument("--smoke", action="store_true",
                     help="10-subject, 2-fold, 2-epoch crash check before submitting long jobs")
     args = ap.parse_args()

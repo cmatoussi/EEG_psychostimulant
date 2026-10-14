@@ -147,8 +147,11 @@ def main():
     ap.add_argument("--label-csv", default=LABEL_CSV)
     ap.add_argument("--smoke", action="store_true",
                     help="10-subject crash check before submitting long jobs")
+    ap.add_argument("--random-init", action="store_true",
+                    help="random encoder (pretraining ablation); files named moirai_random_encoder_*")
     args = ap.parse_args()
     dev = "cuda" if torch.cuda.is_available() else "cpu"
+    tag = "moirai_random_encoder" if args.random_init else "moirai"
 
     config = {"paths": {"data_root": "/home/mat/projects/rrg-kjerbi/shared/eeg-adhdh-epilepsy/"
                         "BIDS/derivatives/preproc/"},
@@ -161,6 +164,13 @@ def main():
     print(f"data {X.shape} classes={np.bincount(y).tolist()} subjects={len(np.unique(groups))}", flush=True)
 
     model = MoiraiModule.from_pretrained(args.model).to(dev).eval()
+    if args.random_init:
+        torch.manual_seed(42)   # reproducible random encoder
+        n = 0
+        for m in model.modules():
+            if hasattr(m, "reset_parameters") and callable(m.reset_parameters):
+                m.reset_parameters(); n += 1
+        print(f"  moirai RANDOM-INIT (pretraining ablation): reset {n} modules", flush=True)
     for p in model.parameters():
         p.requires_grad = False
     max_patch = max(model.patch_sizes)
@@ -178,22 +188,22 @@ def main():
     df = pd.DataFrame(E, columns=[f"embedding_{i}" for i in range(E.shape[1])])
     df.insert(0, "study_id", np.asarray(groups).astype(str))
     df.insert(1, "epilepsy", y.astype(int))
-    csv = out / f"moirai_{cond}_epoch_embeddings.csv"
+    csv = out / f"{tag}_{cond}_epoch_embeddings.csv"
     df.to_csv(csv, index=False)
     # provenance sidecar: which settings produced this file
-    meta = {"model": args.model, "condition": cond, "label_csv": args.label_csv,
-            "sfreq": 200.0, "patch": PATCH, "batch": BATCH,
+    meta = {"model": args.model, "random_init": bool(args.random_init), "condition": cond,
+            "label_csv": args.label_csv, "sfreq": 200.0, "patch": PATCH, "batch": BATCH,
             "n_rows": int(len(df)), "n_dims": int(E.shape[1])}
-    (out / f"moirai_{cond}_epoch_embeddings_meta.json").write_text(json.dumps(meta, indent=2))
+    (out / f"{tag}_{cond}_epoch_embeddings_meta.json").write_text(json.dumps(meta, indent=2))
     print(f"--> wrote {csv} (+ meta sidecar)", flush=True)
 
     print("=== epoch-level classical-head probe ===", flush=True)
-    _probe(E, y, np.asarray(groups), "moirai/epoch")
+    _probe(E, y, np.asarray(groups), f"{tag}/epoch")
     u = np.unique(groups)
     Xs = np.stack([E[np.asarray(groups) == s].mean(0) for s in u])
     ys = np.array([int(y[np.asarray(groups) == s][0]) for s in u])
     print("=== subject-level (mean-embedding) probe ===", flush=True)
-    _probe(Xs, ys, u, "moirai/subject")
+    _probe(Xs, ys, u, f"{tag}/subject")
 
 
 if __name__ == "__main__":

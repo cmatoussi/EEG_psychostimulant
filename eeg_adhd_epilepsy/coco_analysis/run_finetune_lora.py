@@ -39,6 +39,25 @@ _HEAD = ("final_layer", "classifier", "head")
 LORA = {"r": 8, "alpha": 16, "dropout": 0.05, "lr": 1e-3}
 
 
+def _random_reinit(backend):
+    """Re-randomize backbone weights via each module's default init, leaving the
+    LoRA adapters at their identity init. Same architecture and trainable budget
+    as the pretrained run; the weights are the only difference."""
+    n = 0
+    for src in (getattr(backend, "_model", None), getattr(backend, "_backbone", None)):
+        if src is None:
+            continue
+        for name, m in src.named_modules():
+            if "lora_" in name:
+                continue
+            if hasattr(m, "reset_parameters") and callable(m.reset_parameters):
+                m.reset_parameters(); n += 1
+        break
+    if n == 0:
+        raise RuntimeError("random-init: no module exposed reset_parameters()")
+    return n
+
+
 def _average_by_subject(X, y, groups):
     uniq = np.unique(groups)
     Xs = np.stack([X[groups == g].mean(axis=0) for g in uniq]).astype(np.float32)
@@ -129,6 +148,9 @@ def main():
                     help="batch size (lower for LaBraM's 3000-sample windows to avoid OOM)")
     ap.add_argument("--smoke", action="store_true",
                     help="10-subject, 2-fold, 2-epoch crash check before submitting long jobs")
+    ap.add_argument("--random-init", action="store_true",
+                    help="randomize the backbone after construction (pretraining ablation); "
+                         "results are written under {model}_random_encoder")
     args = ap.parse_args()
     args.label_csv = resolve_label_csv(args.condition, args.label_csv)
     BATCH = args.batch
@@ -170,6 +192,10 @@ def main():
                                    device="auto", train_mode="lora", sfreq=sfreq,
                                    ch_names=ch_names, backend_kwargs=bkw)
         backend = prepared.backend
+        if args.random_init:
+            n_reset = _random_reinit(backend)
+            if k == 0:
+                print(f"  random-init: reset {n_reset} backbone modules", flush=True)
         # prepared.adapt() resamples/interpolates but does NOT apply the fixed-montage
         # channel construction (e.g. BIOT's 19->16 bipolar derivation) -- that lives in
         # backend.fit()/predict_proba() which this driver bypasses. Apply it here so the
@@ -178,7 +204,8 @@ def main():
         net = _fit(backend, _native(prepared.adapt(X_tr)), y_tr, cfg, strategy)
         return net.predict_proba(_native(prepared.adapt(X_te)))[:, 1]
 
-    ft_cv.run_cv(args.model, cshort, args.strategy, args.level, args.out_dir,
+    model_out = f"{args.model}_random_encoder" if args.random_init else args.model
+    ft_cv.run_cv(model_out, cshort, args.strategy, args.level, args.out_dir,
                  args.label_csv, X, y, groups, fit_predict, n_splits=n_splits)
 
 

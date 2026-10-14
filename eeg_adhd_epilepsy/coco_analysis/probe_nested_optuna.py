@@ -212,7 +212,7 @@ def _load_embeddings(model, condition, label_df, level="epoch", target="epilepsy
         X = df[feats].apply(pd.to_numeric, errors="coerce").to_numpy(np.float32)
         # NaNs (if any) are imputed per-fold inside the head pipeline, not here.
         return X, df[target].astype(int).to_numpy(), df["study_id"].to_numpy()
-    if model in ("moirai", "neurolm"):
+    if model in ("moirai", "neurolm", "moirai_random_encoder", "neurolm_random_encoder"):
         f = Path(EMB_TS) / model / f"{model}_{condition}_epoch_embeddings.csv"
         df = pd.read_csv(f); idc = "study_id"
     else:

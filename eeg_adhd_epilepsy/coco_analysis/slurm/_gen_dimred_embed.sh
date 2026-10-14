@@ -5,7 +5,7 @@
 # rrg-kjerbi / 64 CPU.
 SLURM=/home/mat/scratch/results/slurm_scripts
 CA=/home/mat/projects/EEG_psychostimulant/eeg_adhd_epilepsy/coco_analysis
-OUT=/home/mat/scratch/results/clean_results/dim_reduction/embed_extraction
+OUT=/home/mat/scratch/results/clean_results/dim_reduction/epilepsy/baseline/embed_extraction
 MODELS="signaljepa labram cbramod luna biot bendr reve eegpt"
 ENV="export PYTHONPATH=/home/mat/projects/coco-pipe OMP_NUM_THREADS=64 OPENBLAS_NUM_THREADS=64 MPLBACKEND=Agg;"
 

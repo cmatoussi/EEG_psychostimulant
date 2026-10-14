@@ -48,7 +48,7 @@ BATCH = 64
 PATCH = 200  # 1 s at 200 Hz
 
 
-def _load_vq_encoder(vq_path, device):
+def _load_vq_encoder(vq_path, device, random_init=False):
     import torch
     from model.model_vq import VQ
     from model.model_neural_transformer import NTConfig
@@ -57,6 +57,13 @@ def _load_vq_encoder(vq_path, device):
     dec_args = dict(n_layer=4, n_head=12, n_embd=768, block_size=1024,
                     bias=False, dropout=0.0, num_classes=0, in_chans=128)
     vq = VQ(NTConfig(**enc_args), NTConfig(**dec_args))
+    if random_init:
+        # pretraining ablation: keep the fresh architecture init, skip the checkpoint
+        print("  VQ RANDOM-INIT (pretraining ablation): checkpoint not loaded", flush=True)
+        enc = vq.encoder.to(device).eval()
+        for p in enc.parameters():
+            p.requires_grad = False
+        return enc
     sd = torch.load(vq_path, map_location="cpu", weights_only=False)  # trusted official NeuroLM ckpt
     sd = sd.get("model", sd) if isinstance(sd, dict) else sd
     # drop the torch.compile "_orig_mod.VQ." prefix so the keys match
@@ -120,8 +127,13 @@ def main():
     ap.add_argument("--label-csv", default=LABEL_CSV)
     ap.add_argument("--smoke", action="store_true",
                     help="10-subject crash check before submitting long jobs")
+    ap.add_argument("--random-init", action="store_true",
+                    help="random encoder (pretraining ablation); files named neurolm_random_encoder_*")
     args = ap.parse_args()
     dev = "cuda" if torch.cuda.is_available() else "cpu"
+    tag = "neurolm_random_encoder" if args.random_init else "neurolm"
+    if args.random_init:
+        torch.manual_seed(42)   # reproducible random encoder
 
     from dataset import standard_1020
     chan_idx = [standard_1020.index(c) for c in CH19_NL]  # errors loudly if a name is absent
@@ -136,7 +148,7 @@ def main():
     X, y, groups = ra.load_eeg_epochs(config, label_df)
     print(f"data {X.shape} classes={np.bincount(y).tolist()} subjects={len(np.unique(groups))}", flush=True)
 
-    enc = _load_vq_encoder(args.vq, dev)
+    enc = _load_vq_encoder(args.vq, dev, random_init=args.random_init)
     toks, ich, itime = _epoch_tokens(X, chan_idx)
     ich_t = torch.as_tensor(ich, device=dev).unsqueeze(0)
     itime_t = torch.as_tensor(itime, device=dev).unsqueeze(0)
@@ -158,24 +170,25 @@ def main():
     df = pd.DataFrame(E, columns=[f"embedding_{i}" for i in range(E.shape[1])])
     df.insert(0, "study_id", np.asarray(groups).astype(str))
     df.insert(1, "epilepsy", y.astype(int))
-    csv = out / f"neurolm_{cond}_epoch_embeddings.csv"
+    csv = out / f"{tag}_{cond}_epoch_embeddings.csv"
     df.to_csv(csv, index=False)
     # provenance sidecar: which settings produced this file (encoder_keys_missing is
     # 0 by construction -- _load_vq_encoder raises otherwise)
-    meta = {"model": "neurolm", "vq_checkpoint": args.vq, "condition": cond,
+    meta = {"model": tag, "vq_checkpoint": None if args.random_init else args.vq,
+            "random_init": bool(args.random_init), "condition": cond,
             "label_csv": args.label_csv, "sfreq": 200.0, "patch": PATCH, "batch": BATCH,
             "encoder_keys_missing": 0, "n_rows": int(len(df)), "n_dims": int(E.shape[1])}
-    (out / f"neurolm_{cond}_epoch_embeddings_meta.json").write_text(json.dumps(meta, indent=2))
+    (out / f"{tag}_{cond}_epoch_embeddings_meta.json").write_text(json.dumps(meta, indent=2))
     print(f"--> wrote {csv} (+ meta sidecar)", flush=True)
 
     print("=== epoch-level classical-head probe ===", flush=True)
-    _probe(E, y, np.asarray(groups), "neurolm/epoch")
+    _probe(E, y, np.asarray(groups), f"{tag}/epoch")
     # subject level: mean embedding per subject
     u = np.unique(groups)
     Xs = np.stack([E[np.asarray(groups) == s].mean(0) for s in u])
     ys = np.array([int(y[np.asarray(groups) == s][0]) for s in u])
     print("=== subject-level (mean-embedding) probe ===", flush=True)
-    _probe(Xs, ys, u, "neurolm/subject")
+    _probe(Xs, ys, u, f"{tag}/subject")
 
 
 if __name__ == "__main__":
